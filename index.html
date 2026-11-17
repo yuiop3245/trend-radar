@@ -41,8 +41,6 @@ h2{margin:0;font-size:16px;font-weight:700;letter-spacing:-.01em}
 .layout{display:grid;grid-template-columns:290px 1fr;gap:14px;align-items:start}
 .layout>*{min-width:0}
 @media (max-width:900px){.layout{grid-template-columns:1fr}.onboard{grid-template-columns:1fr}}
-#list{display:flex;flex-direction:column;gap:8px;position:sticky;top:10px}
-@media (max-width:900px){#list{position:static;flex-direction:row;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;align-items:stretch}#list .tk{flex:0 0 205px;scroll-snap-align:start}}
 .tk{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;transition:border-color .12s}
 .tk:hover{border-color:var(--faint)}
 .tk.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
@@ -131,6 +129,37 @@ details{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
 summary{cursor:pointer;font-weight:700}
 .card details{margin:0;border:0;padding:0}
 .addq{margin-top:6px}
+.radar{background:var(--panel);border:1px solid var(--line);border-radius:18px;margin-top:16px;overflow:hidden}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:16px 18px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:500;color:var(--ink);white-space:nowrap}
+.chip b{margin-left:5px;font-weight:900}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.radar .toolbar{padding:0 18px;margin:12px 0 14px}
+.todaybar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel2);font-size:13px}
+.todaybar .dt{font-weight:700}.todaybar .hint2{color:var(--muted);font-size:12.5px;flex-basis:100%}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:7px;white-space:nowrap}
+.pill.buy{background:var(--upS);color:var(--up)}.pill.sell{background:var(--downS);color:var(--down)}.pill.warn{background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber)}.pill.rec{background:color-mix(in srgb,var(--rec) 14%,transparent);color:var(--rec)}
+.tblwrap{overflow-x:auto}
+table.rt{font-size:13.5px;min-width:820px}
+.rt th{padding:12px 12px;background:var(--panel)}
+.rt td{padding:13px 12px;vertical-align:middle}
+.rt tr{cursor:pointer}.rt tbody tr:hover td{background:var(--panel2)}
+.rt tr.sel td{background:var(--hl)}
+.rt .sym{font-weight:900;font-size:14.5px}.rt .nm{color:var(--muted);font-size:12px}
+.rt td.c,.rt th.c{text-align:center}
+.rt .why{color:var(--ink);font-size:13px;max-width:430px;line-height:1.5}
+.rt .np{white-space:nowrap}.rt .np small{display:block;color:var(--muted);font-size:11.5px}
+.vd{display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
+.vd i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.g{font-weight:900}.g.s2{color:var(--up)}.g.s1{color:var(--amber)}.g.s0{color:var(--muted)}.g.sm1{color:var(--down)}
+.rt td.sticky,.rt th.sticky{position:sticky;left:0;background:var(--panel);z-index:1}
+.rt tbody tr:hover td.sticky{background:var(--panel2)}.rt tr.sel td.sticky{background:var(--hl)}
+.detailwrap{margin-top:14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.tile span{display:block;color:var(--muted);font-size:12px}.tile b{display:block;font-size:20px;font-weight:900;margin-top:2px}.tile small{color:var(--muted);font-size:12px}
+.dash td:first-child{color:var(--muted);white-space:nowrap;width:140px}
+@media (max-width:700px){.chips{padding:12px 12px 0;gap:6px}.chip{padding:5px 11px;font-size:13px}.radar .toolbar,.todaybar{padding-left:12px;padding-right:12px}.rt .why{min-width:240px}}
 </style>
 </head>
 <body class="easy">
@@ -148,22 +177,26 @@ summary{cursor:pointer;font-weight:700}
   </header>
   <div id="demoBanner" class="banner" hidden></div>
   <section class="onboard easy-only">
-    <div><b>1</b>왼쪽 목록에서 <strong>레이더 판정</strong>을 먼저 보세요.</div>
-    <div><b>2</b><strong>조건 점검</strong>이 모두 '예'일 때만 매수를 검토해요.</div>
-    <div><b>3</b><strong>매수 검토가</strong>에 알림을 걸고, 5분봉 타이밍을 기다려요.</div>
+    <div><b>1</b><strong>레이더 판정</strong>을 먼저 봅니다.</div>
+    <div><b>2</b><strong>체크 5개</strong>가 모두 '예'일 때만 매수를 생각합니다.</div>
+    <div><b>3</b><strong>다음 가격</strong>에 알림을 걸어 두고 기다립니다.</div>
   </section>
-  <div class="toolbar">
-    <input id="q" type="search" placeholder="종목 검색 (예: SOXL, 반도체)" autocomplete="off">
-    <select id="sort" aria-label="정렬">
-      <option value="verdict">레이더 판정 순</option>
-      <option value="near">매수 검토가에 가까운 순</option>
-      <option value="chg">오늘 등락 순</option>
-      <option value="name">종목명 순</option>
-    </select>
-    <button class="btn primary" id="openData">데이터 입력</button>
-  </div>
-  <div class="layout">
-    <aside id="list"></aside>
+  <section class="radar">
+    <div class="chips" id="chips"></div>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="종목 찾기 (예: SOXL, 반도체)" autocomplete="off">
+      <select id="sort" aria-label="정렬">
+        <option value="verdict">레이더 판정 순</option>
+        <option value="near">매수 검토가에 가까운 순</option>
+        <option value="chg">오늘 등락 순</option>
+        <option value="name">종목명 순</option>
+      </select>
+      <button class="btn sm" id="openData">데이터 입력</button>
+    </div>
+    <div class="todaybar" id="todayBar"></div>
+    <div class="tblwrap"><table class="rt" id="list"></table></div>
+  </section>
+  <div class="detailwrap">
     <main id="detail"></main>
   </div>
 </div>
@@ -749,14 +782,58 @@ function parseRec(text) {
 /* ============ 상태 ============ */
 let D = load();
 const ui = (() => { try { return JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) { return {}; } })();
-const state = { mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd' };
+const state = { mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd' };
 function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort })); } catch (e) {} }
 function syms() { return (D.order || Object.keys(D.tickers)).filter(s => D.tickers[s]); }
 
-/* ============ 목록 ============ */
+/* ============ 목록 (고버니식 표) ============ */
+const CAT = { buy: 'buy', wait: 'wait', neutral: 'neutral', partial: 'sell', exit: 'sell', none: 'none' };
+const CHIPS = [['all', '전체'], ['today', '오늘 새 신호'], ['buy', '매수 검토'], ['wait', '매수 대기'], ['neutral', '관망'], ['sell', '매도 신호']];
+const VDOT = { 'v-buy': 'var(--up)', 'v-wait': 'var(--amber)', 'v-neutral': 'var(--faint)', 'v-warn': 'var(--down)', 'v-sell': 'var(--down)', 'v-none': 'var(--line)' };
+const STS = { 3: '반등', 2: '정렬↑', 1: '↑', 0: '중립', '-1': '↓', '-2': '정렬↓', '-3': '꺾임' };
+const stCls = v => v == null ? 's0' : v >= 2 ? 's2' : v > 0 ? 's1' : v === 0 ? 's0' : 'sm1';
+function lastDay(sym) { const T = D.tickers[sym]; const x = T?.m5?.length ? T.m5[T.m5.length - 1] : T?.d?.length ? T.d[T.d.length - 1] : null; return x ? x.t.slice(0, 10) : null; }
+function todayList(sym) { const d = lastDay(sym); return d ? dailySignals(sym).filter(x => x.t.slice(0, 10) === d && !x.type.startsWith('REC:')) : []; }
+function pillOf(type, n) { const m = SIG[type] || metaOf(type); const c = type === 'PS' ? 'warn' : m.side; return `<span class="pill ${c}">${esc(m.n)}${n > 1 ? ' ×' + n : ''}</span>`; }
+function todayPills(list) { const m = new Map(); list.forEach(x => m.set(x.type, (m.get(x.type) || 0) + 1)); return [...m].map(([t, n]) => pillOf(t, n)).join(' '); }
+function reason(e) {
+  if (e.empty) return '5분·30분·1시간 데이터가 아직 없습니다.';
+  const T = D.tickers[e.sym], base = T.base || '기준지수';
+  const key = e.v === VERDICT.exit ? 'exit' : e.v === VERDICT.partial ? 'partial' : e.v === VERDICT.buy ? 'buy' : e.v === VERDICT.wait ? 'wait' : 'neutral';
+  if (key === 'exit') return `30분·60분봉이 함께 약해지고 ${e.sell.s30b ? '30분 120선' : '60분 60선'} 아래로 내려왔습니다. 보유 중이면 정리하는 자리입니다.`;
+  if (key === 'partial') return '30분봉 스토캐스틱 막내·둘째가 꺾이고 RSI·MACD도 힘이 빠졌습니다. 보유 중이면 일부를 덜어냅니다.';
+  if (key === 'buy') return `${e.recentBuy.t.slice(11, 16)} 5분 매수 신호(사)가 나왔고 체크 5개가 모두 '예'입니다. ${fmt(e.buyPx)} 근처가 검토 자리입니다.`;
+  if (key === 'wait') return `큰 흐름과 ${base}는 괜찮습니다. 5분봉 막내가 바닥에서 반등하면 '사' 신호가 나옵니다.`;
+  const f = e.checks.findIndex(c => c.st !== 'yes');
+  return [
+    '30분·1시간 큰 흐름이 꺾여 있습니다. 상위 추세가 회복될 때까지 기다립니다.',
+    `${base}가 같은 방향이 아닙니다. 지수가 받쳐줄 때까지 매수 신호를 기다리지 않습니다.`,
+    '4시간·1시간이 3형제 하락정렬입니다. 이 상태에서는 매수 신호를 기다리지 않습니다.',
+    `이미 많이 올라 추격 자리입니다. 5분 20EMA(${fmt(e.buyPx)}) 근처까지 눌릴 때를 기다립니다.`
+  ][f] || '지켜보는 구간입니다.';
+}
+function nextPx(e) {
+  if (e.empty) return '–';
+  if (e.v === VERDICT.exit || e.v === VERDICT.partial) return `<span class="np">손절 ${fmt(e.stopPx)}<small>5분 최근 2시간 최저가</small></span>`;
+  return `<span class="np">${fmt(e.buyPx)} <span class="${pcls(-Math.abs(e.dist))}">${pct(e.dist)}</span><small>눌림 기준 (5분 20EMA)</small></span>`;
+}
 function renderList() {
   const q = state.q.trim().toLowerCase();
-  let list = syms().map(evaluate);
+  const all = syms().map(evaluate);
+  all.forEach(e => { e.cat = CAT[Object.keys(VERDICT).find(k => VERDICT[k] === e.v)] || 'none'; e.today = todayList(e.sym); });
+  // 칩
+  const cnt = k => k === 'all' ? all.length : k === 'today' ? all.filter(e => e.today.length).length : all.filter(e => e.cat === k).length;
+  $('#chips').innerHTML = CHIPS.map(([k, l]) => `<button class="chip${state.filter === k ? ' on' : ''}" data-f="${k}">${l}<b>${cnt(k)}</b></button>`).join('');
+  // 오늘 새 신호 요약
+  const day = all.map(e => lastDay(e.sym)).filter(Boolean).sort().pop();
+  const tl = all.flatMap(e => e.today.filter(x => x.t.slice(0, 10) === day));
+  const n = t => tl.filter(x => x.type === t).length;
+  $('#todayBar').innerHTML = `<span class="dt">${day || '–'}</span><span class="muted">새로 뜬 신호</span>
+    <span class="pill buy">사 ${n('BUY5')}</span><span class="pill warn">분할매도해 ${n('PS')}</span><span class="pill sell">다정리해 ${n('AX')}</span>
+    <span class="hint2">· 행을 누르면 아래에 그 종목 차트가 열립니다 · 시간은 미국 동부 기준</span>`;
+  let list = all;
+  if (state.filter === 'today') list = list.filter(e => e.today.length);
+  else if (state.filter !== 'all') list = list.filter(e => e.cat === state.filter);
   if (q) list = list.filter(e => e.sym.toLowerCase().includes(q) || (D.tickers[e.sym].name || '').toLowerCase().includes(q));
   const s = state.sort;
   list.sort((a, b) => {
@@ -766,22 +843,31 @@ function renderList() {
     return a.v.rank - b.v.rank || (Math.abs(a.dist || 9) - Math.abs(b.dist || 9));
   });
   if (!state.sel || !D.tickers[state.sel]) state.sel = list[0]?.sym || syms()[0] || null;
-  let html = list.map(e => {
-    const T = D.tickers[e.sym];
-    const dot = (lab, v) => v == null ? `<span>${lab}</span>` : `<span class="${v > 0 ? 'u' : v < 0 ? 'd' : ''}" title="${STN[v]}">${lab} ${v > 0 ? '↑' : v < 0 ? '↓' : '·'}</span>`;
-    return `<button class="tk${e.sym === state.sel ? ' sel' : ''}" data-sym="${esc(e.sym)}">
-      <div class="r1"><span class="sym">${esc(e.sym)}</span><span class="badge ${e.v.cls}">${e.v.label}</span></div>
-      <div class="nm">${esc(T.name || '')}${T.demo ? ' · 데모' : ''}</div>
-      <div class="r2"><span class="px">${ok(e.px) ? fmt(e.px) : e.last ? fmt(e.last.c) : '–'}</span><span class="${pcls(e.chg)} num">${pct(e.chg, 2)}</span></div>
-      ${e.empty ? '' : `<div class="r3"><span>${E('5분 20EMA', '5분 EMA20')} ${fmt(e.buyPx)}</span><span class="num">${pct(e.dist)}</span></div>
-      <div class="dots">${dot('4H', e.s240)}${dot('1H', e.s60)}${dot('30', e.s30)}</div>`}
-      ${todaySigs(e.sym)}
-    </button>`;
-  }).join('');
+  const pro = state.mode === 'pro';
+  const symCell = e => { const T = D.tickers[e.sym]; return `<td class="sticky"><div class="sym">${esc(e.sym)}</div><div class="nm">${esc(T.name || '')}${T.demo ? ' · 데모' : ''}</div></td>`; };
+  const pxCells = e => `<td class="r num">${ok(e.px) ? fmt(e.px) : e.last ? fmt(e.last.c) : '–'}</td><td class="r num ${pcls(e.chg)}">${pct(e.chg)}</td>`;
+  const vd = e => `<span class="vd"><i style="background:${VDOT[e.v.cls]}"></i>${esc(e.v.label)}</span>`;
+  let head, rows;
+  if (!pro) {
+    head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>레이더 판정</th><th>오늘 신호</th><th>다음 가격</th><th>한 줄 이유</th></tr>`;
+    rows = list.map(e => `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${vd(e)}</td><td>${e.today.length ? todayPills(e.today) : '<span class="muted">–</span>'}</td><td>${nextPx(e)}</td><td class="why">${esc(reason(e))}</td></tr>`).join('');
+  } else {
+    head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>상태</th><th class="c">4H</th><th class="c">1H</th><th class="c">30분</th><th class="c">5분</th><th class="c">조건</th><th class="r">진입·강도</th><th class="r">RSI 5분</th><th>최근 신호</th></tr>`;
+    rows = list.map(e => {
+      const T = D.tickers[e.sym]; const g = v => `<td class="c"><span class="g ${stCls(v)}" title="${v == null ? '' : STN[v]}">${v == null ? '–' : STS[v]}</span></td>`;
+      const s5 = T.m5?.length ? eng(T.m5).st[T.m5.length - 1] : null;
+      const ls = dailySignals(e.sym).filter(x => !x.type.startsWith('REC:')).pop();
+      const yes = e.checks.filter(c => c.st === 'yes').length;
+      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${vd(e)}${e.hold && !e.sell?.sev ? '' : ''}</td>${g(e.s240)}${g(e.s60)}${g(e.s30)}${g(s5)}
+        <td class="c num">${e.empty ? '–' : yes + '/5'}</td><td class="r num">${e.empty ? '–' : e.ctx.entry + ' · ' + e.ctx.strength}</td><td class="r num">${e.empty ? '–' : fmt(e.ctx.rsi, 1)}</td>
+        <td>${ls ? `${pillOf(ls.type)} <span class="muted num">${esc(ls.t.slice(5, 16).replace('-', '/'))}</span>` : '<span class="muted">–</span>'}</td></tr>`;
+    }).join('');
+  }
   const Q = state.q.trim().toUpperCase();
-  if (Q && /^[A-Z0-9.\-]{1,12}$/.test(Q) && !D.tickers[Q]) html += `<button class="btn addq" id="addFromSearch">＋ '${esc(Q)}' 종목 추가</button>`;
-  if (!list.length && !html) html = '<div class="empty">검색 결과가 없어요</div>';
-  $('#list').innerHTML = html;
+  const cols = pro ? 12 : 7;
+  if (Q && /^[A-Z0-9.\-]{1,12}$/.test(Q) && !D.tickers[Q]) rows += `<tr class="addrow"><td colspan="${cols}"><button class="btn sm" id="addFromSearch">＋ '${esc(Q)}' 종목 추가</button></td></tr>`;
+  else if (!list.length) rows = `<tr><td colspan="${cols}" class="empty">해당하는 종목이 없어요</td></tr>`;
+  $('#list').innerHTML = `<thead>${head}</thead><tbody>${rows}</tbody>`;
 }
 
 function todaySigs(sym) {
@@ -796,6 +882,7 @@ function renderDetail() {
   const el = $('#detail'); const sym = state.sel;
   if (!sym) { el.innerHTML = D.pending ? '<div class="card empty">최신 시세를 불러오는 중…</div>' : '<div class="card empty">종목이 없어요. [데이터 입력]에서 종목을 추가해 주세요.</div>'; return; }
   const T = D.tickers[sym], e = evaluate(sym), b = T.d || [];
+  state.plan = e.empty ? null : { buy: e.buyPx, stop: e.stopPx };
   const head = `<div class="card head">
     <div>
       <div><span class="sym">${esc(sym)}</span> <span class="nm">${esc(T.name || '')}</span></div>
@@ -835,7 +922,7 @@ function renderDetail() {
       <span>▲ 매수 쪽 · ▼ 매도 쪽 · ◆ 내 기록</span>
     </div>
     <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-    <p class="hint">드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨(모든 시간봉 공통): ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆기록 = 내 기록. 한 봉에 여러 번이면 마우스를 올려 횟수 확인</p>
+    <p class="hint">점선 = 다음 계획 가격 (주황 눌림 기준 · 파랑 손절 참고, 분봉 차트에서 표시) · 드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨(모든 시간봉 공통): ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆기록 = 내 기록. 한 봉에 여러 번이면 마우스를 올려 횟수 확인</p>
   </div>`;
   const indT = e.empty ? '' : `<div class="card pro-only"><h2>지표 현황</h2><p class="sub">각 시간프레임 마지막 봉 기준</p><div class="scroll">${indTable(T)}</div></div>`;
   const sigs = dailySignals(sym);
@@ -852,7 +939,15 @@ function renderDetail() {
     ${sigs.slice().reverse().map(s => { const r5 = fwd(b, s.i, 5), r10 = fwd(b, s.i, 10);
       return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(s.t)}</td><td>${tag(s)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(state.mode === 'easy' ? s.meta.easy : (s.memo || s.how || s.meta.rule))}</td></tr>`; }).join('')}
     </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
-  el.innerHTML = head + checks + chart + tvCard() + indT + recentT + logT + perfCard(sym) + rulesCard();
+  const tiles = e.empty ? '' : `<div class="tiles pro-only">
+    <div class="tile"><span>현재 상태</span><b>${esc(e.v.label)}</b><small>${esc(e.hold.t.split(' · ')[0])}</small></div>
+    <div class="tile"><span>4시간 · 1시간</span><b class="g ${stCls(e.s240)}">${STS[e.s240] ?? '–'} · ${STS[e.s60] ?? '–'}</b><small>${STN[e.s240] ?? ''} / ${STN[e.s60] ?? ''}</small></div>
+    <div class="tile"><span>30분 3형제</span><b class="g ${stCls(e.s30)}">${STS[e.s30] ?? '–'}</b><small>${STN[e.s30] ?? ''}</small></div>
+    <div class="tile"><span>조건 점검</span><b>${e.checks.filter(c => c.st === 'yes').length}/5</b><small>진입 ${e.ctx.entry} · 강도 ${e.ctx.strength}</small></div>
+    <div class="tile"><span>눌림 기준 (5분 20EMA)</span><b class="num">${fmt(e.buyPx)}</b><small>${pct(e.dist)}</small></div>
+    <div class="tile"><span>손절 참고</span><b class="num">${fmt(e.stopPx)}</b><small>5분 24봉 저가</small></div>
+  </div>`;
+  el.innerHTML = head + tiles + checks + chart + tvCard() + indT + recentT + logT + perfCard(sym) + rulesCard();
   setupChart();
   const tb = $('#tvBox'); if (tb) { tb.addEventListener('toggle', () => { state.tvOpen = tb.open; if (tb.open) loadTV(); }); if (state.tvOpen) loadTV(); }
 }
@@ -1048,6 +1143,11 @@ function drawChart() {
           ctx.fillStyle = col; ctx.fillRect(x - w / 2, y1, w, Math.max(1, y2 - y1));
         }
         path(I.ema20, Y, C.amber, 1.5);
+        if (state.plan && !isD) [[state.plan.buy, C.amber, '눌림 ', 0], [state.plan.stop, C.down, '손절 ', 1]].forEach(([pv, col, lb, dn]) => {
+          if (!ok(pv) || pv < bot || pv > top) return; const y = Math.round(Y(pv)) + .5;
+          ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke(); ctx.restore();
+          ctx.font = font(10.5, 700); ctx.fillStyle = col; ctx.textAlign = 'right'; ctx.textBaseline = dn ? 'top' : 'bottom'; ctx.fillText(lb + fmt(pv), R - 70, dn ? y + 2 : y - 2);
+        });
         // 신호 마커
         ctx.font = font(10, 700); ctx.textAlign = 'center';
         sigAt.forEach((list, i) => {
@@ -1187,11 +1287,12 @@ $('#sort').onchange = e => { state.sort = e.target.value; saveUI(); renderList()
 $('#q').oninput = e => { state.q = e.target.value; renderList(); };
 $('#list').onclick = e => {
   if (e.target.closest('#addFromSearch')) { const s = state.q.trim().toUpperCase(); addTicker(s, ''); state.q = ''; $('#q').value = ''; openModal(s); return; }
-  const t = e.target.closest('.tk'); if (!t) return;
+  const t = e.target.closest('tr[data-sym]'); if (!t) return;
   state.sel = t.dataset.sym; state.hl = null; state.tf = 'd'; state.per = 126; state.view = null;
   renderList(); renderDetail();
-  if (window.innerWidth <= 900) $('#detail').scrollIntoView({ behavior: 'smooth' });
+  $('#detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
+$('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.filter = c.dataset.f; renderList(); };
 $('#detail').onclick = e => {
   const tf = e.target.closest('#tfSeg button'); if (tf && !tf.disabled) { state.tf = tf.dataset.tf; state.per = tf.dataset.tf === 'd' ? 126 : 120; state.hl = null; setupChart(); return; }
   const per = e.target.closest('#perSeg button'); if (per) { state.per = +per.dataset.per; resetView(); setupChart(); return; }
