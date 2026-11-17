@@ -170,7 +170,7 @@ table.rt{font-size:13.5px;min-width:820px}
 .dot-s{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
 .gck{list-style:none;margin:0;padding:8px 16px 14px}.gck li{display:flex;gap:12px;padding:5px 0;font-size:13.5px}.ck{font-weight:900;width:14px}.ck.ok{color:#1f9d6a}.ck.no{color:#d6455d}
 .gbar{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:4px -16px 10px;padding:8px 16px;display:flex;flex-direction:column;gap:6px}
-.gbrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.gbl{font-size:12px;color:var(--muted);width:30px}
+.gbrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.gbl{font-size:12px;color:var(--muted);min-width:38px;white-space:nowrap}
 .gchip{border:1px solid var(--line);background:var(--panel);color:var(--faint);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;font-weight:600;font-family:inherit}
 .gchip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;opacity:.45}
 .gchip.on{border-color:var(--ink);color:var(--ink)}.gchip.on i{opacity:1}.gchip.all.on{background:var(--ink);color:var(--bg)}
@@ -672,6 +672,7 @@ const GN = {
 };
 const GCOL = { up: '#1f9d6a', dn: '#d6455d', acc: '#2f6fde', warn: '#d98a1c', vio: '#8a4fd8', faint: '#7b8794' };
 // [카테고리, 색, 모양] — 쭈야 화면과 같은 분류
+const LBPR = { entry: 0, exit: 0, pattern: 1, setup: 1, peg: 2, warn: 2, momo: 3 };
 const GOBM = {
   BO: ['entry', 'up', 'arrow'], R21: ['entry', 'up', 'arrow'], SRF: ['entry', 'up', 'arrow'], PY1: ['entry', 'up', 'arrow'], PY2: ['entry', 'up', 'arrow'], PB: ['entry', 'up', 'arrow'],
   BOX: ['exit', 'dn', 'arrow'], TP1: ['exit', 'acc', 'circle'], TP2: ['exit', 'acc', 'circle'], X14: ['exit', 'dn', 'arrow'], X21: ['exit', 'dn', 'arrow'], FIN: ['exit', 'dn', 'arrow'],
@@ -1753,7 +1754,7 @@ function drawChart() {
       let lo = Infinity, hiP = -Infinity;
       for (let i = i0; i <= i1; i++) { lo = Math.min(lo, b[i].l); hiP = Math.max(hiP, b[i].h); if (!GG && I.ema20[i] != null) { lo = Math.min(lo, I.ema20[i]); hiP = Math.max(hiP, I.ema20[i]); } }
       if (EZS) { const pl = EZS.plan; [pl.entry, pl.stop, pl.target].forEach(x => { if (ok(x)) { lo = Math.min(lo, x); hiP = Math.max(hiP, x); } }); for (let i = i0; i <= i1; i++) { const q = EZS.G.s200[i]; if (q != null) { lo = Math.min(lo, q); hiP = Math.max(hiP, q); } } }
-      if (GG) { const sp0 = hiP - lo, o = state.ovl; const inc = x => { if (x != null && isFinite(x) && x > lo - sp0 * .6 && x < hiP + sp0 * .6) { lo = Math.min(lo, x); hiP = Math.max(hiP, x); } };
+      if (GG) { const sp0 = hiP - lo, o = state.ovl; const inc = x => { if (x != null && isFinite(x) && x > lo - sp0 * .25 && x < hiP + sp0 * .25) { lo = Math.min(lo, x); hiP = Math.max(hiP, x); } };
         for (let i = i0; i <= i1; i++) { if (o.ma) [GG.e8, GG.e14, GG.e21, GG.e55, GG.s100, GG.s200].forEach(a => inc(a[i])); if (o.band) { inc(GG.bbU[i]); inc(GG.bbL[i]); } }
         const inc2 = x => { lo = Math.min(lo, x); hiP = Math.max(hiP, x); };
         if (atEnd && scenOn) [LP.U, LP.D, LP.U2, LP.D2, LP.q10, LP.q90].forEach(inc2); else if (atEnd && o.lv) [LP.U, LP.D].forEach(inc2); }
@@ -1808,7 +1809,7 @@ function drawChart() {
           if (scenOn) {
             const cl = b[n - 1].c, X0 = X(n - 1), XF = k => X0 + k * bw;
             ctx.fillStyle = 'rgba(120,130,150,.08)'; ctx.fillRect(RC, p.y, R - RC, p.h);
-            ctx.font = font(11); ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('시나리오 구간', RC + 6, p.y + 24); ctx.font = font(10); ctx.fillStyle = C.faint; ctx.fillText('회색 점선 = 80% 범위', RC + 6, p.y + 40);
+            ctx.font = font(11); ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; if (R - RC >= 120) { ctx.fillText('시나리오 구간', RC + 6, p.y + 24); ctx.font = font(10); ctx.fillStyle = C.faint; ctx.fillText('회색 점선 = 80% 범위', RC + 6, p.y + 40); }
             ctx.save(); ctx.lineWidth = 2.2; ctx.setLineDash([6, 4]);
             ctx.strokeStyle = GCOL.up; ctx.beginPath(); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(6), Y(LP.U)); ctx.lineTo(XF(14), Y(LP.U2)); ctx.stroke();
             ctx.strokeStyle = GCOL.dn; ctx.beginPath(); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(6), Y(LP.D)); ctx.lineTo(XF(14), Y(LP.D2)); ctx.stroke();
@@ -1826,6 +1827,7 @@ function drawChart() {
         });
         // 신호 마커
         ctx.font = font(10, 700); ctx.textAlign = 'center';
+        const LBQ = [];
         sigAt.forEach((list, i) => {
           if (i < i0 || i > i1) return; const x = X(i); let below = 0, above = 0;
           list.forEach(s => {
@@ -1833,9 +1835,7 @@ function drawChart() {
               const y = dn ? Y(b[i].l) + 5 + below * stp : Y(b[i].h) - 5 - above * stp; ctx.fillStyle = col;
               if (g.shape === 'arrow') { ctx.beginPath(); if (dn) { ctx.moveTo(x, y); ctx.lineTo(x - sz, y + sz * 1.4); ctx.lineTo(x + sz, y + sz * 1.4); } else { ctx.moveTo(x, y); ctx.lineTo(x - sz, y - sz * 1.4); ctx.lineTo(x + sz, y - sz * 1.4); } ctx.fill(); }
               else { const yy2 = dn ? y + sz : y - sz; ctx.beginPath(); if (g.shape === 'circle') ctx.arc(x, yy2, sz * .8, 0, 7); else ctx.rect(x - sz * .8, yy2 - sz * .8, sz * 1.6, sz * 1.6); ctx.fill(); }
-              if (showT) { ctx.font = font(10.5, 600); const tw = ctx.measureText(g.sh).width + 8, th = 15, by = dn ? y + sz * 1.5 + 2 : y - sz * 1.5 - 2 - th;
-                ctx.fillStyle = C.panel; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x - tw / 2, by, tw, th, 3); else ctx.rect(x - tw / 2, by, tw, th); ctx.fill(); ctx.stroke();
-                ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.sh, x, by + th / 2 + .5); ctx.font = font(10, 700); }
+              if (showT) LBQ.push({ x, y0: dn ? y + sz * 1.5 + 2 : y - sz * 1.5 - 2, ym: y, dn, col, sh: g.sh, pr: LBPR[GOBM[s.type.slice(2)]?.[0]] ?? 4, i });
               if (dn) below++; else above++; return; }
             const side = s.meta.side; const col = side === 'buy' ? C.up : side === 'sell' ? C.down : C.rec; ctx.fillStyle = col;
             if (s.meta.pill) { const pm = s.meta.pill; ctx.font = font(11, 700); const tw = ctx.measureText(pm.n).width + 12, th = 18;
@@ -1855,14 +1855,31 @@ function drawChart() {
             }
           });
         });
+        if (LBQ.length) { // 중요한 라벨·최근 라벨부터 자리를 잡고, 겹치면 바깥으로 비켜서, 그래도 자리가 없으면 글자는 생략
+          const boxes = [], th = 15; ctx.font = font(10.5, 600);
+          LBQ.sort((a2, b2) => a2.pr - b2.pr || b2.i - a2.i).forEach(q => {
+            const tw = ctx.measureText(q.sh).width + 8; let by = q.dn ? q.y0 : q.y0 - th, okp = false;
+            for (let k = 0; k < 5; k++) {
+              const r2 = [q.x - tw / 2 - 1, by - 1, q.x + tw / 2 + 1, by + th + 1];
+              if (by > p.y + 2 && by + th < p.y + p.h * .82 && !boxes.some(o2 => r2[0] < o2[2] && r2[2] > o2[0] && r2[1] < o2[3] && r2[3] > o2[1])) { boxes.push(r2); okp = true; break; }
+              by += q.dn ? th + 2 : -(th + 2);
+            }
+            if (!okp) return;
+            if (Math.abs((q.dn ? by : by + th) - q.y0) > 1) { ctx.strokeStyle = q.col; ctx.globalAlpha = .5; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(q.x + .5, q.ym); ctx.lineTo(q.x + .5, q.dn ? by : by + th); ctx.stroke(); ctx.globalAlpha = 1; }
+            ctx.fillStyle = C.panel; ctx.strokeStyle = q.col; ctx.lineWidth = 1; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(q.x - tw / 2, by, tw, th, 3); else ctx.rect(q.x - tw / 2, by, tw, th); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = q.col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(q.sh, q.x, by + th / 2 + .5);
+          });
+          ctx.font = font(10, 700);
+        }
       });
       frame(p);
-      for (let k = 0; k <= 4; k++) { const val = bot + (top - bot) * k / 4; axisLabel(Y(val), fmt(val, val < 10 ? 2 : val < 1000 ? 2 : 0)); }
+      { const tys = (typeof TAGS !== 'undefined' ? TAGS : []).map(t => Y(t[0])).concat([Y(b[b.length - 1].c)]);
+        for (let k = 0; k <= 4; k++) { const val = bot + (top - bot) * k / 4, yy = Y(val); if (tys.some(t => Math.abs(t - yy) < 13)) continue; axisLabel(yy, fmt(val, val < 10 ? 2 : val < 1000 ? 2 : 0)); } }
       const lc = b[b.length - 1]; const ly = Y(lc.c);
       const tagBox = (y, col, txt) => { ctx.font = font(10.5, 700); const w = Math.max(56, ctx.measureText(txt).width + 9); ctx.fillStyle = col; ctx.fillRect(R + 1, y - 8, w, 16); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, R + 5, y); };
       const placed = [];
       if (ly > p.y && ly < p.y + p.h) { placed.push(ly); }
-      if (TAGS.length) { TAGS.sort((x, y) => Math.abs(Y(x[0]) - ly) - Math.abs(Y(y[0]) - ly)).forEach(([v2, col, lb]) => { const y0 = Y(v2); if (y0 < p.y + 8 || y0 > p.y + p.h - 8) return;
+      if (TAGS.length) { { const seen = []; for (let k = TAGS.length - 1; k >= 0; k--) { const v0 = TAGS[k][0]; if (seen.some(w => Math.abs(w - v0) <= Math.abs(v0) * .0005)) TAGS.splice(k, 1); else seen.push(v0); } } TAGS.sort((x, y) => Math.abs(Y(x[0]) - ly) - Math.abs(Y(y[0]) - ly)).forEach(([v2, col, lb]) => { const y0 = Y(v2); if (y0 < p.y + 8 || y0 > p.y + p.h - 8) return;
           let y = y0; for (let k = 0; k < 40; k++) { const cand = y0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 4; if (cand < p.y + 8 || cand > p.y + p.h - 8) continue; if (placed.every(py => Math.abs(py - cand) >= 17)) { y = cand; break; } }
           placed.push(y); tagBox(y, col, fmt(v2)); }); }
       if (ly > p.y && ly < p.y + p.h) { const col = lc.c >= (b[b.length - 2]?.c ?? lc.o) ? C.up : C.down; tagBox(ly, col, fmt(lc.c)); }
