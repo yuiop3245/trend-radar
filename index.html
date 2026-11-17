@@ -456,7 +456,7 @@ function sellAt(T, tc) {
 function stAt(b, tf, tc) { const i = asOf(b, tf, tc); return i >= 0 ? eng(b).st[i] : null; }
 function baseOf(sym) {
   const T = D.tickers[sym]; const bs = T?.base; if (!bs) return null;
-  const B = D.bases?.[bs]; return B ? { sym: bs, dir: T.dir || 1, B } : { sym: bs, dir: T.dir || 1, B: null };
+  const B = D.bases?.[bs] || (D.tickers[bs] && D.tickers[bs].m5?.length ? D.tickers[bs] : null); return B ? { sym: bs, dir: T.dir || 1, B } : { sym: bs, dir: T.dir || 1, B: null };
 }
 const stateFrac = s => s === 2 ? 1 : s === 1 ? 0.72 : s === 3 ? 0.55 : s === 0 ? 0.35 : s === -1 ? 0.15 : 0;
 const kdFrac = c => c === 2 ? 1 : c === 1 ? 0.6 : c === 3 ? 0.4 : c === 4 ? 0.5 : c === -1 ? 0.2 : c === -3 ? 0.3 : c === -4 ? 0.1 : c === 0 ? 0.3 : 0;
@@ -616,7 +616,7 @@ function chartSigs(sym, tf, b) {
   let vals = [...map.values()].filter(x => !(x.type === 'PS' && map.has(x.i + '|AX')));
   const gx = [];
   if (tf === 'd' && state.mode === 'pro' && state.gobOn !== false) { vals = vals.filter(x => x.type.startsWith('REC:')); const G = gobCalc(sym); if (G) G.ev.forEach(e => { const m = GN[e.k]; gx.push({ i: e.i, t: e.t, type: 'G:' + e.k, meta: { s: m[0], n: e.nm || m[1], side: m[2] === 'info' ? 'rec' : m[2], easy: e.d, rule: e.d }, memo: e.t + ' · ' + (e.nm || m[1]) + ' — ' + e.d, how: e.d, n: 1 }); }); }
-  return gx.concat(vals.map(x => x.n > 1 ? { ...x, memo: `${x.n}번 · 마지막 ${x.hows[x.hows.length - 1]}` } : { ...x, memo: x.t + ' · ' + (x.how || x.meta.easy) }));
+  return gx.concat(vals.map(x => x.n > 1 ? { ...x, memo: `${x.n}번 · 마지막 ${dispT(sym, x.hows[x.hows.length - 1].slice(0, 16))}${x.hows[x.hows.length - 1].slice(16)}` } : { ...x, memo: dispT(sym, x.t) + ' · ' + (x.how || x.meta.easy) }));
 }
 
 /* ============ 고버니식 일봉 규칙 (전문가 모드 · 참고용 레이어) ============ */
@@ -769,7 +769,7 @@ function gobCalc(sym) {
   const i = n - 1, a = atr[i], pts = trendPts(i), P = pts.filter(Boolean).length, G = grade(P);
   const hi52 = Math.max(...h.slice(-252)), lo52 = Math.min(...l.slice(-252));
   // RS: 6개월 수익률 − SPY 6개월 수익률
-  const spy = D.bases?.SPY?.d || [];
+  const benchSym = T.kr ? '^KS11' : 'SPY'; const spy = (D.tickers[benchSym]?.d?.length ? D.tickers[benchSym].d : D.bases?.[benchSym]?.d) || [];
   const ret = (arr, t, back) => { const k = arr.findIndex(x => x.t.slice(0, 10) >= t.slice(0, 10)); const kk = k < 0 ? arr.length - 1 : k; return kk - back >= 0 ? arr[kk].c / arr[kk - back].c - 1 : null; };
   const myR = n > 126 ? c[i] / c[i - 126] - 1 : null, spR = spy.length > 130 ? ret(spy, b[i].t, 126) : null;
   const rs = myR != null && spR != null ? myR - spR : null;
@@ -782,7 +782,7 @@ function gobCalc(sym) {
     ['종가 > 50일선', c[i] > s50[i]],
     ['52주 저점 대비 +30% 이상', c[i] >= lo52 * 1.3],
     ['52주 고점 대비 -25% 이내', c[i] >= hi52 * .75],
-    [`RS 점수 플러스${spy.length ? '' : ' (SPY 데이터 대기)'}`, rs != null && rs > 0],
+    [`RS 점수 플러스${spy.length ? '' : ' (' + (T.kr ? '코스피' : 'SPY') + ' 데이터 대기)'}`, rs != null && rs > 0],
     ['50일 상승일 거래량 > 하락일', upV > dnV]
   ];
   const ok9 = checks.filter(x => x[1]).length;
@@ -790,7 +790,7 @@ function gobCalc(sym) {
   const status = pos ? (pos.tp1 ? '관리' : '보유') : i - lastExit <= 5 ? '청산 직후 · 관찰' : '관찰';
   let sqN = 0; for (let j = n - 20; j < n; j++) if (sq[j]) sqN++;
   const out = {
-    ev, pos, status, P, G, pts, conv, checks, ok9, rs, hi52, lo52, sq, e8, e21, e55, s200,
+    bench: T.kr ? '코스피' : 'SPY', ev, pos, status, P, G, pts, conv, checks, ok9, rs, hi52, lo52, sq, e8, e21, e55, s200,
     dash: {
       align: e8[i] > e21[i] && e21[i] > e55[i] ? '정배열' : e8[i] < e21[i] && e21[i] < e55[i] ? '역배열' : '혼조',
       upper: `주봉 ${wUp(i) ? '강세' : '약세'} · 200일선 ${s200[i] == null ? '–' : f2(s200[i])}`,
@@ -1017,11 +1017,11 @@ function renderList() {
   $('#chips').innerHTML = CHIPS.map(([k, l]) => `<button class="chip${state.filter === k ? ' on' : ''}" data-f="${k}">${l}<b>${cnt(k)}</b></button>`).join('');
   // 오늘 새 신호 요약
   const day = all.map(e => lastDay(e.sym)).filter(Boolean).sort().pop();
-  const tl = all.flatMap(e => e.today.filter(x => x.t.slice(0, 10) === day));
+  const tl = all.flatMap(e => e.today);
   const n = t => tl.filter(x => x.type === t).length;
-  $('#todayBar').innerHTML = `<span class="dt">${day || '–'}</span><span class="muted">새로 뜬 신호</span>
+  $('#todayBar').innerHTML = `<span class="dt">최근 거래일</span><span class="muted">새로 뜬 신호 (${day || '–'}까지)</span>
     <span class="pill buy">사 ${n('BUY5')}</span><span class="pill warn">분할매도해 ${n('PS')}</span><span class="pill sell">다정리해 ${n('AX')}</span>
-    <span class="hint2">· 행을 누르면 아래에 그 종목 차트가 열립니다 · 시간은 미국 동부 기준</span>`;
+    <span class="hint2">· 행을 누르면 아래에 그 종목 차트가 열립니다 · 시간은 미국 종목은 미국 동부, 한국 종목은 한국 시간 · 날짜는 종목마다 가장 최근 거래일</span>`;
   let list = all;
   if (state.filter === 'today') list = list.filter(e => e.today.length);
   else if (state.filter !== 'all') list = list.filter(e => e.cat === state.filter);
@@ -1035,7 +1035,7 @@ function renderList() {
   });
   if (!state.sel || !D.tickers[state.sel]) state.sel = list[0]?.sym || syms()[0] || null;
   const pro = state.mode === 'pro';
-  const symCell = e => { const T = D.tickers[e.sym]; return `<td class="sticky"><div class="sym">${esc(e.sym)}</div><div class="nm">${esc(T.name || '')}${T.demo ? ' · 데모' : ''}</div></td>`; };
+  const symCell = e => { const T = D.tickers[e.sym]; return `<td class="sticky"><div class="sym">${esc(symLabel(e.sym))}</div><div class="nm">${esc(T.label ? e.sym.replace(/\.K[SQ]$/, '') : (T.name || ''))}${T.demo ? ' · 데모' : ''}</div></td>`; };
   const pxCells = e => `<td class="r num">${ok(e.px) ? fmt(e.px) : e.last ? fmt(e.last.c) : '–'}</td><td class="r num ${pcls(e.chg)}">${pct(e.chg)}</td>`;
   const vd = e => `<span class="vd"><i style="background:${VDOT[e.v.cls]}"></i>${esc(e.v.label)}</span>`;
   let head, rows;
@@ -1076,9 +1076,9 @@ function renderDetail() {
   state.plan = e.empty ? null : { buy: e.buyPx, stop: e.stopPx };
   const head = `<div class="card head">
     <div>
-      <div><span class="sym">${esc(sym)}</span> <span class="nm">${esc(T.name || '')}</span></div>
+      <div><span class="sym">${esc(symLabel(sym))}</span> <span class="nm">${esc(T.label ? sym + ' · ' + (T.name || '') : (T.name || ''))}</span></div>
       <div><span class="px">${ok(e.px) ? fmt(e.px) : e.last ? fmt(e.last.c) : '–'}</span> <span class="${pcls(e.chg)}" style="font-weight:700">${pct(e.chg, 2)}</span>
-        <span class="muted" style="font-size:12px">${T.m5?.length ? '5분봉 ' + esc(T.m5[T.m5.length - 1].t) + ' (미국 동부)' : e.last ? esc(e.last.t) + ' 종가' : ''}</span></div>
+        <span class="muted" style="font-size:12px">${T.m5?.length ? '5분봉 ' + esc(dispT(sym, T.m5[T.m5.length - 1].t)) + (T.kr ? ' (한국 시간)' : ' (미국 동부)') : e.last ? esc(e.last.t) + ' 종가' : ''}</span></div>
       ${e.empty ? '' : `<div class="kv">
         <div><span>${E('눌림 기준가 (5분 20EMA)', '눌림 기준 · ' + e.buyWhy)}</span><b class="num">${fmt(e.buyPx)}</b> <span style="display:inline" class="${pcls(-Math.abs(e.dist))}">${E('현재가와 ' + Math.abs(e.dist * 100).toFixed(1) + '% 차이', pct(e.dist))}</span></div>
         <div><span>${E('손절 참고 (5분 최근 2시간 최저가)', '손절 참고 · 5분 24봉 저가')}</span><b class="num">${fmt(e.stopPx)}</b></div>
@@ -1128,7 +1128,7 @@ function renderDetail() {
   const logT = `<div class="card"><h2>신호 로그</h2><p class="sub">5분 매수(사) + 30분 매도 행동(분할·정리) + 내 기록 · 성과는 신호가 난 날의 일봉 종가 기준 · 행을 누르면 그 신호가 난 시간봉으로 이동</p>
     ${sigs.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">5일 후</th><th class="r">10일 후</th><th>설명</th></tr></thead><tbody>
     ${sigs.slice().reverse().map(s => { const r5 = fwd(b, s.i, 5), r10 = fwd(b, s.i, 10);
-      return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(s.t)}</td><td>${tag(s)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(state.mode === 'easy' ? s.meta.easy : (s.memo || s.how || s.meta.rule))}</td></tr>`; }).join('')}
+      return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(dispT(sym, s.t))}</td><td>${tag(s)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(state.mode === 'easy' ? s.meta.easy : (s.memo || s.how || s.meta.rule))}</td></tr>`; }).join('')}
     </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
   const tiles = e.empty ? '' : `<div class="tiles pro-only">
     <div class="tile"><span>현재 상태</span><b>${esc(e.v.label)}</b><small>${esc(e.hold.t.split(' · ')[0])}</small></div>
@@ -1173,7 +1173,7 @@ function gobCards(sym) {
     <div class="tile"><span>현재 상태</span><b>${esc(G.status)}</b><small>${G.pos ? `진입 ${fmt(G.pos.e)} · 손절 ${fmt(G.pos.stop)}` : '진행 중인 사이클 없음'}</small></div>
     <div class="tile"><span>추세 등급</span><b>${G.G}</b><small>${GRADE_N[G.G]} · ${G.P}/7점</small></div>
     <div class="tile"><span>확신 등급</span><b>${G.conv}</b><small>조건 ${G.ok9}/9 충족</small></div>
-    <div class="tile"><span>RS (6개월, SPY 대비)</span><b class="${pcls(G.rs)}">${G.rs == null ? '–' : pct(G.rs)}</b><small>${G.rs == null ? 'SPY 데이터가 다음 갱신부터 들어와요' : '플러스면 시장보다 강함'}</small></div>
+    <div class="tile"><span>RS (6개월, ${G.bench} 대비)</span><b class="${pcls(G.rs)}">${G.rs == null ? '–' : pct(G.rs)}</b><small>${G.rs == null ? G.bench + ' 데이터가 다음 갱신부터 들어와요' : '플러스면 시장보다 강함'}</small></div>
     <div class="tile"><span>52주 고점 대비</span><b>${esc(G.dash.off52.split(' ')[0])}</b><small>고점 ${fmt(G.hi52)}</small></div>
   </div>`;
   const dash = `<table class="dash"><tbody>
@@ -1276,7 +1276,7 @@ function loadTV() {
   const box = document.createElement('div'); box.className = 'tradingview-widget-container'; box.style.height = '100%';
   const inner = document.createElement('div'); inner.className = 'tradingview-widget-container__widget'; inner.style.height = '100%'; box.appendChild(inner);
   const sc = document.createElement('script'); sc.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'; sc.async = true;
-  sc.textContent = JSON.stringify({ autosize: true, symbol: TVSYM[state.sel] || state.sel, interval: state.tvInt || '5', timezone: 'Asia/Seoul',
+  sc.textContent = JSON.stringify({ autosize: true, symbol: D.tickers[state.sel]?.tv || TVSYM[state.sel] || state.sel, interval: state.tvInt || '5', timezone: 'Asia/Seoul',
     theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light', style: '1', locale: 'kr', allow_symbol_change: true,
     studies: ['STD;Stochastic', 'STD;RSI', 'STD;MACD'] });
   sc.onerror = () => { w.innerHTML = '<div class="empty">여기서는 트레이딩뷰를 불러올 수 없어요. GitHub 홈페이지 주소로 열어 주세요.</div>'; };
@@ -1508,6 +1508,12 @@ function renderStamp() {
     el.innerHTML = `<span class="live"></span>자동 업데이트 <b>${esc(t)}</b> (한국시간) · 야후 파이낸스 시세, 지연될 수 있음`;
   } else el.textContent = '수동 입력 모드 — data.json이 없어 붙여넣은 데이터로 보여주는 중';
 }
+const unpack = a => (a || []).map(x => Array.isArray(x) ? { t: x[0], o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] } : x);
+function dispT(sym, t) {
+  if (!t || t.length <= 10 || !(D.tickers[sym]?.kr)) return t;
+  const m = toMin(t) - 30, d = new Date(m * 60000); return d.toISOString().slice(0, 16).replace('T', ' ');
+}
+const symLabel = s => D.tickers[s]?.label || s;
 async function loadRemote() {
   try {
     const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
@@ -1518,13 +1524,13 @@ async function loadRemote() {
       const old = D.tickers[s];
       const recs = new Map();
       [...(T.rec || []).map(x => ({ ...x, src: 'repo' })), ...((old && !old.demo ? old.rec : []) || []).filter(x => !x.src)].forEach(x => recs.set(x.t + '|' + x.sig, x));
-      D.tickers[s] = { name: T.name || old?.name || '', base: T.base || null, dir: T.dir || 1, demo: false, auto: true, d: T.d || [], h1: T.h1 || [], h30: T.h30 || [], m5: T.m5 || [], rec: [...recs.values()].sort((a, b) => a.t < b.t ? -1 : 1) };
+      D.tickers[s] = { name: T.name || old?.name || '', label: T.label || '', kr: !!T.kr, tv: T.tv || '', base: T.base || null, dir: T.dir || 1, demo: false, auto: true, d: unpack(T.d), h1: unpack(T.h1), h30: unpack(T.h30), m5: unpack(T.m5), rec: [...recs.values()].sort((a, b) => a.t < b.t ? -1 : 1) };
     });
     Object.keys(D.tickers).forEach(s => { if (D.tickers[s].demo) delete D.tickers[s]; });
     const order = [...(j.order || Object.keys(j.tickers))];
     Object.keys(D.tickers).forEach(s => { if (!order.includes(s)) order.push(s); });
     D.order = order.filter(s => D.tickers[s]);
-    D.bases = j.bases || {}; D.pending = false;
+    D.bases = {}; Object.entries(j.bases || {}).forEach(([k, B]) => { D.bases[k] = { kr: !!B.kr, d: unpack(B.d), h1: unpack(B.h1), h30: unpack(B.h30), m5: unpack(B.m5) }; }); D.pending = false;
     D.remoteAt = j.updatedAt; D.remoteLoaded = true;
     state.view = null; save(); renderAll();
   } catch (e) {
