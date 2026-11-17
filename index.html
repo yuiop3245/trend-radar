@@ -686,7 +686,7 @@ const GOBM = {
 const GBELOW = new Set(['BO', 'R21', 'SRF', 'PY1', 'PY2', 'PB', 'VCP', 'SETUP', 'MB', 'MSE', 'PEG', 'PEGR', 'PEGB', 'PATU', 'W', 'SQZU', 'PBB', 'MRL', 'R8']);
 // 라벨 = 원래 철학의 행동 5개 + 참고
 const ACT = { BO: 'buy', R21: 'buy', PY1: 'add', PY2: 'add', SRF: 'add', PEGB: 'add', R8: 'hold', PBB: 'hold', PEGR: 'hold', PB: 'hold',
-  TP1: 'part', TP2: 'part', TRIM: 'part', E8: 'part', X14: 'part', X21: 'part', HOT: 'part', FIN: 'exit', BOX: 'exit' };
+  TP1: 'part', TP2: 'part', TRIM: 'part', X14: 'part', X21: 'part', HOT: 'part', FIN: 'exit', BOX: 'exit' };
 Object.keys(GOBM).forEach(k => { GOBM[k][0] = ACT[k] || 'ref'; });
 const GCATS = [['buy', '사', 1, 'up'], ['add', '불태워 (추가매수)', 1, 'up'], ['hold', '가지고있어', 1, 'acc'], ['part', '분할매도해', 1, 'warn'], ['exit', '다정리해', 1, 'dn'], ['ref', '참고 (셋업·모멘텀·패턴·응축 등)', 0, 'faint']];
 const GOVL = [['dots', '응축 점', 1], ['ma', '이평선', 1], ['band', '시그마 밴드', 1], ['pat', '추세선·채널', 1], ['zz', '지그재그', 0], ['lv', '지지·저항 레벨', 1], ['scen', '시나리오 경로', 1], ['vol', '거래량', 1]];
