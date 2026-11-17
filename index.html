@@ -656,7 +656,7 @@ function chartSigs(sym, tf, b) {
   return gx.concat(vals.map(x => x.n > 1 ? { ...x, memo: `${x.n}번 · 마지막 ${dispT(sym, x.hows[x.hows.length - 1].slice(0, 16))}${x.hows[x.hows.length - 1].slice(16)}` } : { ...x, memo: dispT(sym, x.t) + ' · ' + (x.how || x.meta.easy) }));
 }
 
-/* ============ 고버니식 일봉 규칙 (전문가 모드 · 참고용 레이어) ============ */
+/* ============ 쭈야식 일봉 규칙 (전문가 모드 · 참고용 레이어) ============ */
 const GN = {
   SQZU: ['응축↑', '응축 해제 ↑', 'buy'], SQZD: ['응축↓', '응축 해제 ↓', 'sell'], VCP: ['VCP', 'VCP 형성', 'info'], SETUP: ['셋업', '셋업 형성 중', 'info'],
   BO: ['돌파', '돌파 진입', 'buy'], R21: ['회복', '21일선 회복 매수', 'buy'], SRF: ['SR', 'SR flip', 'buy'], BOX: ['돌파청산', '돌파 청산', 'sell'],
@@ -669,7 +669,7 @@ const GN = {
   PATU: ['패턴↑', '패턴 상방 돌파', 'buy'], PATD: ['패턴↓', '패턴 하방 이탈', 'sell'], W: ['W', 'W 돌파', 'buy'], M: ['M', 'M 이탈', 'sell'], NH: ['NH', 'NH (52주 신고가)', 'info']
 };
 const GCOL = { up: '#1f9d6a', dn: '#d6455d', acc: '#2f6fde', warn: '#d98a1c', vio: '#8a4fd8', faint: '#7b8794' };
-// [카테고리, 색, 모양] — 고버니 화면과 같은 분류
+// [카테고리, 색, 모양] — 쭈야 화면과 같은 분류
 const GOBM = {
   BO: ['entry', 'up', 'arrow'], R21: ['entry', 'up', 'arrow'], SRF: ['entry', 'up', 'arrow'], PY1: ['entry', 'up', 'arrow'], PY2: ['entry', 'up', 'arrow'], PB: ['entry', 'up', 'arrow'],
   BOX: ['exit', 'dn', 'arrow'], TP1: ['exit', 'acc', 'circle'], TP2: ['exit', 'acc', 'circle'], X14: ['exit', 'dn', 'arrow'], X21: ['exit', 'dn', 'arrow'], FIN: ['exit', 'dn', 'arrow'],
@@ -880,7 +880,7 @@ function gobCalc(sym) {
   gobCache.set(b, out); return out;
 }
 const GRADE_N = { S: '강한 상승', H: '상승', N: '중립', W: '약세', D: '하락' };
-// 위·아래 레벨 + 10일 몬테카를로 (고버니 방식: 실현 변동성 20·60일 평균, 추세 가정 없음, 2만 경로)
+// 위·아래 레벨 + 10일 몬테카를로 (쭈야 방식: 실현 변동성 20·60일 평균, 추세 가정 없음, 2만 경로)
 function gobLP(G) {
   if (!G) return null; if (G._lp) return G._lp;
   const n = G.n, i = n - 1, c = G.c, a = G.atr, C = G.C;
@@ -931,7 +931,7 @@ function gobTiles(sym) {
   </div>`;
 }
 function gobDash(sym) {
-  const G = gobCalc(sym); if (!G) return '<aside class="card pro-only empty">고버니식 분석에는 일봉 80개 이상이 필요해요.</aside>';
+  const G = gobCalc(sym); if (!G) return '<aside class="card pro-only empty">쭈야식 분석에는 일봉 80개 이상이 필요해요.</aside>';
   const d = G.g, dot = c => `<span class="dot-s" style="background:${c}"></span>`;
   const rows = [
     ['추세 등급', `${dot(gcol(G.G))}${G.G} · ${d.gname} (${G.P}/7)`],
@@ -963,7 +963,7 @@ function gobScen(sym) {
     ${card('하방 · 아래쪽 레벨 먼저', L.dn, GCOL.dn, `<span class="num">${fmt(L.D)}</span> (${pct(L.D / c - 1)}) 먼저 터치<br>다음 지지 <span class="num">${fmt(L.D2)}</span>`)}
     ${card('횡보 · 둘 다 안 닿음', L.none, GCOL.faint, `10일 뒤 가격 범위(80%)<br><span class="num">${fmt(L.q10)} ~ ${fmt(L.q90)}</span> · 중앙값 <span class="num">${fmt(L.q50)}</span>`)}</div>
     <ul class="story">${gobStory(sym).map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-    <p class="note">확률은 최근 20일·60일 실현 변동성 평균(일 ${fmt(L.sigD)}%)으로 추세를 가정하지 않은 2만 개 경로를 돌린 값입니다. 위·아래 레벨은 확정 피벗 고점·저점과 8·21·55·100·200일선 중 현재가에서 0.6ATR 이상 떨어진 가장 가까운 값(없으면 ±2ATR)이고, 다음 레벨은 거기서 1ATR 이상 떨어진 값입니다. 고버니가 레벨 계산식을 공개하지 않아 화면 숫자로 역산한 근사치라 고버니와 조금 다를 수 있어요. 방향 판단은 아래 신호별 과거 성과와 함께 보세요.</p></div>`;
+    <p class="note">확률은 최근 20일·60일 실현 변동성 평균(일 ${fmt(L.sigD)}%)으로 추세를 가정하지 않은 2만 개 경로를 돌린 값입니다. 위·아래 레벨은 확정 피벗 고점·저점과 8·21·55·100·200일선 중 현재가에서 0.6ATR 이상 떨어진 가장 가까운 값(없으면 ±2ATR)이고, 다음 레벨은 거기서 1ATR 이상 떨어진 값입니다. 레벨은 최근 피벗과 이동평균선으로 잡은 근사치예요. 방향 판단은 아래 신호별 과거 성과와 함께 보세요.</p></div>`;
 }
 function gobBar() {
   return `<div class="gbar pro-only" id="gobBar">
@@ -1145,7 +1145,7 @@ state.ovl = Object.assign(Object.fromEntries(GOVL.map(x => [x[0], !!x[2]])), ui.
 function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl })); } catch (e) {} }
 function syms() { return (D.order || Object.keys(D.tickers)).filter(s => D.tickers[s]); }
 
-/* ============ 목록 (고버니식 표) ============ */
+/* ============ 목록 (쭈야식 표) ============ */
 const CAT = { buy: 'buy', wait: 'wait', neutral: 'neutral', partial: 'sell', exit: 'sell', none: 'none' };
 const CHIPS = [['all', '전체'], ['today', '오늘 새 신호'], ['hold', '보유'], ['wait', '매수 대기'], ['watch', '관망'], ['risk', '위험']];
 const LKEY = { '보유': 'hold', '매수 대기': 'wait', '관망': 'watch', '위험': 'risk' }, LRANK = { hold: 0, wait: 1, watch: 2, risk: 3, none: 9 };
@@ -1193,8 +1193,8 @@ function renderList() {
   const ez = all.flatMap(e => e.ezToday), nz = z => ez.filter(x => x.z === z).length, ng = all.reduce((t, e) => t + e.today.length, 0);
   $('#todayBar').innerHTML = `<span class="dt">최근 거래일</span><span class="muted">새로 뜬 신호 (${day || '–'}까지)</span>
     ${['buy', 'add', 'tp', 'sell'].map(z => `<span class="pill" style="background:${EZ[z].bg};color:${EZ[z].col}">${EZ[z].n} ${nz(z)}</span>`).join('')}
-    <span class="pill rec pro-only">고버니 라벨 전체 ${ng}</span>
-    <span class="hint2">· 고버니 규칙(일봉) 기준 · 행을 누르면 아래에 그 종목 차트가 열립니다 · 날짜는 종목마다 가장 최근 거래일</span>`;
+    <span class="pill rec pro-only">쭈야 라벨 전체 ${ng}</span>
+    <span class="hint2">· 쭈야 규칙(일봉) 기준 · 행을 누르면 아래에 그 종목 차트가 열립니다 · 날짜는 종목마다 가장 최근 거래일</span>`;
   let list = all;
   if (state.filter === 'today') list = list.filter(e => e.today.length);
   else if (state.filter !== 'all') list = list.filter(e => e.cat === state.filter);
@@ -1255,7 +1255,7 @@ function renderDetail() {
   state.plan = e.empty ? null : { buy: e.buyPx, stop: e.stopPx };
   const chart = `<div class="card" id="chartCard">
     <div class="charthead"><h2>${E(esc(symLabel(sym)) + ' 일봉 · 신호 4가지만 표시', esc(symLabel(sym)) + ' 차트')}</h2>
-      <div class="seg small pro-only" id="tfSeg">${['d', 'h4', 'h1', 'h30', 'm5'].map(k => `<button data-tf="${k}" ${seriesOf(T, k).length ? '' : 'disabled'}>${k === 'd' ? '일봉 (고버니)' : TFN[k]}</button>`).join('')}</div>
+      <div class="seg small pro-only" id="tfSeg">${['d', 'h4', 'h1', 'h30', 'm5'].map(k => `<button data-tf="${k}" ${seriesOf(T, k).length ? '' : 'disabled'}>${k === 'd' ? '일봉 (쭈야)' : TFN[k]}</button>`).join('')}</div>
       <div class="seg small" id="perSeg"></div>
       <div class="seg small" id="zoomSeg"><button data-z="out" title="축소">－</button><button data-z="in" title="확대">＋</button><button data-z="end">최신</button></div>
     </div>
@@ -1268,7 +1268,7 @@ function renderDetail() {
       <span>▲사 · ▼분할 · ▼정리 · ◆ 내 기록 (내 트레이딩뷰 규칙)</span>
     </div>
     <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-    <p class="hint easy-only">오른쪽 칸은 다음 계획의 가격대입니다 (파란 점선 매수 검토, 초록 목표, 빨강 손절) · 신호는 고버니 규칙(일봉) 기준이에요.</p>
+    <p class="hint easy-only">오른쪽 칸은 다음 계획의 가격대입니다 (파란 점선 매수 검토, 초록 목표, 빨강 손절) · 신호는 쭈야 규칙(일봉) 기준이에요.</p>
     <p class="hint pro-only" id="gobHint">차트 라벨은 짧게 줄여 표시합니다 (M↑ 모멘텀 BUY, 14선 분할청산 · 14선, 피라1 피라미딩 1차 등). 전체 이름과 설명은 봉 위에 마우스를 올리거나 아래 신호 로그에서 볼 수 있어요. 라벨 칩을 누르면 그 종류만 보이고, 다른 칩을 더 누르면 추가돼요. '전체'를 누르면 처음 상태로 돌아갑니다. 오른쪽 축 색: 초록 = 저항(위쪽 레벨), 빨강 = 지지(아래쪽 레벨), 보라 = 패턴 상·하단선. 드래그로 좌우 이동 · Ctrl(⌘)+휠로 확대·축소.</p>
     <p class="hint pro-only" id="oldHint">분봉 차트는 내 트레이딩뷰 규칙(스토캐스틱 3형제) 화면이에요. 점선 = 눌림 기준(주황)·손절 참고(파랑) · ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆ = 내 기록.</p>
   </div>`;
@@ -1303,7 +1303,7 @@ function mineBox(sym, e) {
     ${sigs.slice().reverse().map(s => { const r5 = fwd(b, s.i, 5), r10 = fwd(b, s.i, 10); return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(dispT(sym, s.t))}</td><td>${tag(s)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(s.memo || s.how || s.meta.rule)}</td></tr>`; }).join('')}
     </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
   return `<div class="card minecard"><details id="mineBox"${state.mineOpen ? ' open' : ''}><summary>내 트레이딩뷰 규칙 신호 (사 · 분할매도해 · 다정리해) — 참고용으로 접어 둠</summary>
-    <p class="sub" style="margin-top:8px">홈페이지 판정과 신호는 고버니 규칙(일봉)으로 바꿨어요. 직접 만든 5분·30분 스토캐스틱 규칙은 여기와 분봉 차트(전문가 모드)에서 볼 수 있어요.</p>
+    <p class="sub" style="margin-top:8px">홈페이지 판정과 신호는 쭈야 규칙(일봉)으로 바꿨어요. 직접 만든 5분·30분 스토캐스틱 규칙은 여기와 분봉 차트(전문가 모드)에서 볼 수 있어요.</p>
     <div class="minebody">${verdict}${checks}${indT}${recentT}${logT}${perfCard(sym)}${rulesCard()}</div></details></div>`;
 }
 
@@ -1333,13 +1333,13 @@ const GRULES = [
   ['시그마 밴드 · 이평선', '시그마 밴드 = 볼린저밴드(20, 2σ). 이평선 = EMA 8·14·21·55, SMA 100·200.'],
   ['지그재그', '확정 피벗(좌우 5봉) 고점·저점을 교대로 이은 선. 같은 종류가 연속이면 더 극단적인 쪽만 남김.'],
   ['추세선·채널', '90봉 안 확정 피벗 고점·저점 최근 3개씩의 회귀선을 현재까지 이어서 14봉 앞까지 연장해 그림.'],
-  ['지지·저항 레벨', '위쪽 레벨 = 확정 피벗 고점과 8·21·55·100·200일선 중 현재가 +0.6ATR 이상에서 가장 가까운 값(3ATR 안에 없으면 +2ATR). 저항2 = 거기서 1ATR 이상 위. 아래쪽은 피벗 저점으로 반대 방향. (고버니 비공개 계산을 화면 숫자로 역산한 근사)'],
+  ['지지·저항 레벨', '위쪽 레벨 = 확정 피벗 고점과 8·21·55·100·200일선 중 현재가 +0.6ATR 이상에서 가장 가까운 값(3ATR 안에 없으면 +2ATR). 저항2 = 거기서 1ATR 이상 위. 아래쪽은 피벗 저점으로 반대 방향. (근사치)'],
   ['10일 시나리오 확률', '최근 20일·60일 일간 로그수익률 표준편차 평균으로 추세 없는(드리프트 0) 2만 개 경로를 10일 돌려, 위쪽 레벨에 먼저 닿은 비율 = 상방, 아래쪽 먼저 = 하방, 둘 다 안 닿음 = 횡보. 10일 뒤 가격 10·50·90% 분위 = 80% 범위·중앙값.'],
   ['차트 시나리오 경로', '현재가 → 6봉 뒤 위쪽 레벨 → 14봉 뒤 저항2 (초록), 현재가 → 아래쪽 레벨 → 지지2 (빨강), 회색 점선은 10봉 뒤 80% 범위.']
 ];
 function gobLogCards(sym) {
   const G = gobCalc(sym); const b = D.tickers[sym]?.d || [];
-  if (!G) return '<div class="card pro-only empty">고버니식 일봉 분석에는 일봉 80개 이상이 필요해요.</div>';
+  if (!G) return '<div class="card pro-only empty">쭈야식 일봉 분석에는 일봉 80개 이상이 필요해요.</div>';
   const log = G.ev.slice(-60).reverse();
   const logT = log.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">5일 후</th><th class="r">10일 후</th><th>설명</th></tr></thead><tbody>
     ${log.map(e => { const r5 = fwd(b, e.i, 5), r10 = fwd(b, e.i, 10); return `<tr class="click" data-jump="${esc(e.t)}" data-type="G:${e.k}"><td class="num">${esc(e.t.slice(2, 10))}</td><td>${gpill(e)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(e.d)}</td></tr>`; }).join('')}
@@ -1347,14 +1347,14 @@ function gobLogCards(sym) {
   const grp = {}; G.ev.forEach(e => { const r = fwd(b, e.i, 10); if (r == null) return; (grp[e.k] = grp[e.k] || []).push(r); });
   const perf = Object.keys(grp).sort((x, y) => grp[y].length - grp[x].length).map(k => { const a = grp[k]; const up = a.filter(r => r > 0).length / a.length, avg = a.reduce((x, y) => x + y, 0) / a.length;
     return `<tr><td>${gpill({ k, d: '' })}</td><td class="r num">${a.length}</td><td class="r num">${(up * 100).toFixed(0)}%</td><td class="r num ${pcls(avg)}">${pct(avg)}</td></tr>`; }).join('');
-  return `<div class="card pro-only"><h2>고버니식 신호 로그</h2><p class="sub">일봉 종가 기준 · 행을 누르면 일봉 차트가 그 날짜로 이동해요 (최근 60개)</p>${logT}</div>
-  <div class="card pro-only"><h2>고버니식 신호별 이후 10일 성과 (이 종목)</h2><div class="scroll"><table><thead><tr><th>신호</th><th class="r">횟수</th><th class="r">10일 뒤 상승 비율</th><th class="r">평균 수익률</th></tr></thead><tbody>${perf || '<tr><td colspan="4" class="empty">데이터 부족</td></tr>'}</tbody></table></div></div>
-  <div class="card pro-only"><details><summary>규칙 사전 (고버니식) — 각 라벨이 어떤 규칙으로 계산되는지</summary>
+  return `<div class="card pro-only"><h2>쭈야식 신호 로그</h2><p class="sub">일봉 종가 기준 · 행을 누르면 일봉 차트가 그 날짜로 이동해요 (최근 60개)</p>${logT}</div>
+  <div class="card pro-only"><h2>쭈야식 신호별 이후 10일 성과 (이 종목)</h2><div class="scroll"><table><thead><tr><th>신호</th><th class="r">횟수</th><th class="r">10일 뒤 상승 비율</th><th class="r">평균 수익률</th></tr></thead><tbody>${perf || '<tr><td colspan="4" class="empty">데이터 부족</td></tr>'}</tbody></table></div></div>
+  <div class="card pro-only"><details><summary>규칙 사전 (쭈야식) — 각 라벨이 어떤 규칙으로 계산되는지</summary>
     <table style="margin-top:10px"><thead><tr><th>라벨</th><th>계산 규칙 (일봉)</th></tr></thead><tbody>${GRULES.map(([a, r]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(r)}</td></tr>`).join('')}</tbody></table>
-    <p class="note">고버니 페이지에 공개된 규칙 사전 그대로 계산했어요. 고버니 신호 자체는 서버에서 미리 계산돼 공개되지 않아서, 세부(피벗 확정 시점, 레벨 선택 등)는 조금 다를 수 있어요. 고버니는 일부 종목만 다루기 때문에 내 28개 종목에 똑같이 적용하려면 이렇게 직접 계산하는 방법뿐이에요.</p></details></div>`;
+    <p class="note">위 규칙 사전 그대로 일봉에서 직접 계산해요. 피벗 확정 시점이나 레벨 선택 같은 세부는 근사치예요.</p></details></div>`;
 }
 
-/* ============ 주린이: 고버니식 4가지 신호 ============ */
+/* ============ 주린이: 쭈야식 4가지 신호 ============ */
 const EZK = { BO: 'buy', R21: 'buy', SRF: 'buy', PY1: 'add', PY2: 'add', TP1: 'tp', TP2: 'tp', TRIM: 'tp', FIN: 'sell', BOX: 'sell' };
 const EZ = {
   buy: { n: '매수', col: '#1e8e5a', bg: '#e3f4ea', easy: '막혀 있던 고점을 거래량과 함께 넘었거나, 21일선을 다시 회복했습니다. 손절가를 먼저 정하고 들어가는 자리입니다.' },
