@@ -105,15 +105,17 @@ def main():
         data["tickers"][sym] = entry
         print(f"{sym}: 일봉 {len(entry['d'])} · 1시간 {len(entry['h1'])} · 30분 {len(entry['h30'])} · 5분 {len(entry['m5'])}")
 
-    # 기준지수 (EWY / SOXX / QQQ 등): 5분·30분·1시간봉만
+    # 기준지수 (EWY / SOXX / QQQ 등): 일봉·1시간·30분·5분 + SPY 일봉(RS 계산용)
     prev_bases = load_json(OUT, {}).get("bases", {})
     data["bases"] = {}
-    for bsym in sorted({(t.get("base") or "").upper() for t in tickers} - {""}):
+    for bsym in sorted(({(t.get("base") or "").upper() for t in tickers} | {"SPY"}) - {""}):
         tk = yf.Ticker(bsym)
         entry = {}
         for key, period, interval, intraday in FRAMES:
             if key == "d":
-                continue
+                period = "2y"
+            elif bsym == "SPY":
+                continue  # SPY는 RS 계산용 일봉만
             try:
                 bars = to_bars(tk.history(period=period, interval=interval, auto_adjust=False, prepost=False), intraday, interval)
             except Exception as e:
@@ -124,7 +126,7 @@ def main():
                 failed.append(f"{bsym}:{interval}")
             entry[key] = bars
         data["bases"][bsym] = entry
-        print(f"기준지수 {bsym}: 1시간 {len(entry['h1'])} · 30분 {len(entry['h30'])} · 5분 {len(entry['m5'])}")
+        print(f"기준지수 {bsym}: " + " · ".join(f"{k} {len(v)}" for k, v in entry.items()))
 
     now = dt.datetime.now(dt.timezone.utc)
     data["updatedAt"] = now.isoformat(timespec="seconds").replace("+00:00", "Z")
