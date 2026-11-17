@@ -1234,14 +1234,14 @@ function renderList() {
     rows = list.map(e => {
       const P = e.S?.plan;
       const np = P ? `<span class="np">${fmt(P.entry)} <span class="muted">${P.kind === 'hold' ? '진입' : pct(e.dist)}</span><small>${P.kind === 'hold' ? '보유 중 · 손절 ' + fmt(P.stop) : '매수 검토 가격'}</small></span>` : '–';
-      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${light(e)}</td><td>${e.ezToday.length ? e.ezToday.map(x => ezPill(x.z)).join(' ') : e.today.length ? `<span class="muted">참고 라벨 ${e.today.length}개</span>` : '<span class="muted">–</span>'}</td><td>${np}</td><td class="why">${e.S ? esc(e.S.why) : '일봉 80개 이상 필요'}</td></tr>`;
+      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${light(e)}</td><td>${e.ezToday.length ? e.ezToday.map(x => ezPill(x.z)).join(' ') : e.today.length ? `<span class="muted">참고 라벨 ${e.today.length}개</span>` : '<span class="muted">–</span>'}</td><td>${np}</td><td class="why">${e.S ? esc(e.S.why) : `상장(데이터) 기간이 짧아 일봉 ${(e.T.d || []).length}개뿐이에요. 80개가 쌓이면 신호를 계산합니다.`}</td></tr>`;
     }).join('');
   } else {
     head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>상태</th><th class="c">추세</th><th class="c">확신</th><th class="c">조건</th><th class="r">RS</th><th class="c">10일 ↑ / ↓</th><th>오늘 신호</th><th>최근 신호</th></tr>`;
     rows = list.map(e => {
       const G = e.G, L = G ? gobLP(G) : null, le = G?.ev[G.ev.length - 1];
       return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}
-        <td>${G ? statePill(G.status) : '–'}</td><td class="c">${G ? `<span class="gb sm" style="background:${gcol(G.G)}" title="${GRADE_N[G.G]} ${G.P}/7">${G.G}</span>` : '–'}</td><td class="c"><b>${G ? G.conv : '–'}</b></td>
+        <td>${G ? statePill(G.status) : `<span class="muted">일봉 ${(e.T.d || []).length}개 · 80개부터 분석</span>`}</td><td class="c">${G ? `<span class="gb sm" style="background:${gcol(G.G)}" title="${GRADE_N[G.G]} ${G.P}/7">${G.G}</span>` : '–'}</td><td class="c"><b>${G ? G.conv : '–'}</b></td>
         <td class="c num">${G ? G.ok9 + '/9' : '–'}</td><td class="r num ${G ? pcls(G.rs) : ''}">${G && G.rs != null ? pct(G.rs) : '–'}</td>
         <td class="c num">${L ? `<span style="color:${GCOL.up};font-weight:700">${L.up}%</span> / <span style="color:${GCOL.dn};font-weight:700">${L.dn}%</span>` : '–'}</td>
         <td>${e.today.length ? e.today.map(gpill).join(' ') : '<span class="muted">–</span>'}</td>
