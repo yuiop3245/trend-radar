@@ -1117,6 +1117,7 @@ function renderDetail() {
   const chart = `<div class="card" id="chartCard">
     <div class="charthead"><h2>${E(esc(symLabel(sym)) + ' 일봉 · 신호 4가지만 표시', '차트')}</h2>
       <div class="seg small pro-only" id="tfSeg">${['d', 'h4', 'h1', 'h30', 'm5'].map(k => `<button data-tf="${k}" ${seriesOf(T, k).length ? '' : 'disabled'}>${TFN[k]}</button>`).join('')}</div>
+      <div class="seg small pro-only" id="scSeg"><button data-sc="1" class="${state.scenOn !== false ? 'on' : ''}" title="일봉에서만 표시">시나리오 경로</button></div>
       <div class="seg small" id="perSeg"></div>
       <div class="seg small" id="zoomSeg"><button data-z="out" title="축소">－</button><button data-z="in" title="확대">＋</button><button data-z="end">최신</button></div>
     </div>
@@ -1130,6 +1131,7 @@ function renderDetail() {
     </div>
     <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
     <p class="hint easy-only">오른쪽 칸은 다음 계획의 가격대입니다 (파란 점선 매수 검토, 초록 목표, 빨강 손절) · 내 트레이딩뷰 규칙 신호(사·분할·정리)는 위 표의 '레이더 판정'과 전문가 모드에서 봐요.</p>
+    ${(() => { const Sx = state.mode === 'pro' && state.scenOn !== false && (T.d || []).length ? scenCalc(T.d, gobCalc(sym)) : null; return Sx ? `<p class="hint pro-only">시나리오 경로(일봉): 지난 일봉 중 지금과 ${Sx.lvl} ${Sx.n}번의 10일 뒤 결과입니다. 오른 비율 ${Sx.up}% (중간값 ${pct(Sx.ru)}), 내린 비율 ${Sx.dn}% (중간값 ${pct(Sx.rd)}), 회색 점선은 결과의 80%가 들어간 범위 (${pct(Sx.p10)} ~ ${pct(Sx.p90)}). 과거 통계일 뿐 예측이 아니에요.</p>` : ''; })()}
     <p class="hint pro-only">점선 = 다음 계획 가격 (주황 눌림 기준 · 파랑 손절 참고, 분봉 차트에서 표시) · 드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨(모든 시간봉 공통): ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆기록 = 내 기록. 한 봉에 여러 번이면 마우스를 올려 횟수 확인</p>
   </div>`;
   const indT = e.empty ? '' : `<div class="card pro-only"><h2>지표 현황</h2><p class="sub">각 시간프레임 마지막 봉 기준</p><div class="scroll">${indTable(T)}</div></div>`;
@@ -1417,6 +1419,26 @@ function zoom(f, mx) {
 }
 function sched() { if (chart.raf) return; chart.raf = requestAnimationFrame(() => { chart.raf = 0; drawChart(); }); }
 function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+const SCN = new WeakMap();
+function scenCalc(b, G) {
+  if (SCN.has(b)) return SCN.get(b);
+  const H = 10, n = b.length, c = b.map(q => q.c); let out = null;
+  if (G && n > 80) {
+    const key = i => [G.s200[i] == null ? 2 : c[i] > G.s200[i] ? 1 : 0, c[i] > G.e21[i] ? 1 : 0, i >= 5 && G.e21[i] > G.e21[i - 5] ? 1 : 0];
+    const kn = key(n - 1), rows = [];
+    for (let i = 60; i < n - H; i++) if (G.e21[i] != null) rows.push([key(i), c[i + H] / c[i] - 1]);
+    const pick = m => rows.filter(([k]) => k.slice(0, m).every((x, j) => x === kn[j])).map(r => r[1]);
+    let rs = pick(3), lvl = '추세 위치·21일선·21일선 기울기가 같았던 날';
+    if (rs.length < 30) { rs = pick(2); lvl = '200일선·21일선 위치가 같았던 날'; }
+    if (rs.length < 30) { rs = rows.map(r => r[1]); lvl = '전체 날'; }
+    if (rs.length >= 20) {
+      const srt = [...rs].sort((a, b2) => a - b2), q = f => srt[Math.min(srt.length - 1, Math.floor(f * (srt.length - 1)))];
+      const ups = srt.filter(x => x > 0), dns = srt.filter(x => x < 0), med = a => a.length ? a[Math.floor((a.length - 1) / 2)] : 0;
+      out = { H, n: rs.length, lvl, up: Math.round(ups.length / rs.length * 100), dn: Math.round(dns.length / rs.length * 100), ru: med(ups), rd: med(dns), p10: q(.1), p90: q(.9) };
+    }
+  }
+  SCN.set(b, out); return out;
+}
 function drawChart() {
   const cw = $('#cw'), cv = $('#cv'), tip = $('#tip'); if (!cw || !cv) return;
   const C = { up: css('--up'), down: css('--down'), upS: css('--upS'), downS: css('--downS'), ink: css('--ink'), muted: css('--muted'), faint: css('--faint'), line: css('--line'), grid: css('--grid'), amber: css('--amber'), rec: css('--rec'), hl: css('--hl'), panel: css('--panel') };
@@ -1429,12 +1451,13 @@ function drawChart() {
   }
   const I = ind(b); const v = state.view; const pro = state.mode === 'pro';
   const ezD = !pro && state.tf === 'd'; const EZS = ezD ? ezState(state.sel) : null;
+  const SC = pro && state.tf === 'd' && state.scenOn !== false ? scenCalc(b, gobCalc(state.sel)) : null;
   const P = ezD ? [{ k: 'price', h: W < 600 ? 320 : 420 }] : [{ k: 'price', h: W < 600 ? 260 : 320 }, { k: 's5', h: 72 }, { k: 's10', h: 72 }, { k: 's20', h: 72 }];
   if (pro) P.push({ k: 'rsi', h: 62 }, { k: 'macd', h: 72 }, { k: 'dmi', h: 72 });
   const GAP = 8, AXB = 22; let yy = 2; P.forEach(p => { p.y = yy; yy += p.h + GAP; }); const H = yy - GAP + AXB;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-  const L = 4, R = W - 58, PWall = R - L, ZW = EZS ? Math.round(PWall * .26) : 0, PW = PWall - ZW, RC = L + PW, bw = PW / v.count;
+  const L = 4, R = W - 58, PWall = R - L, ZW = EZS ? Math.round(PWall * .26) : SC ? Math.round(PWall * .2) : 0, PW = PWall - ZW, RC = L + PW, bw = PW / v.count;
   Object.assign(chart, { L, PW, bw });
   const X = i => L + (i - v.start + 0.5) * bw;
   const i0 = Math.max(0, Math.floor(v.start)), i1 = Math.min(b.length - 1, Math.ceil(v.start + v.count));
@@ -1475,6 +1498,7 @@ function drawChart() {
       let lo = Infinity, hiP = -Infinity;
       for (let i = i0; i <= i1; i++) { lo = Math.min(lo, b[i].l); hiP = Math.max(hiP, b[i].h); if (I.ema20[i] != null) { lo = Math.min(lo, I.ema20[i]); hiP = Math.max(hiP, I.ema20[i]); } }
       if (EZS) { const pl = EZS.plan; [pl.entry, pl.stop, pl.target].forEach(x => { if (ok(x)) { lo = Math.min(lo, x); hiP = Math.max(hiP, x); } }); for (let i = i0; i <= i1; i++) { const q = EZS.G.s200[i]; if (q != null) { lo = Math.min(lo, q); hiP = Math.max(hiP, q); } } }
+      if (SC) { const c0 = b[b.length - 1].c; [SC.p10, SC.p90, SC.ru, SC.rd].forEach(r => { const x = c0 * (1 + r); lo = Math.min(lo, x); hiP = Math.max(hiP, x); }); }
       const span = (hiP - lo) || hiP * .02 || 1; const top = hiP + span * .12, bot = lo - span * .10;
       const ph = p.h * .82;
       const Y = val => p.y + 4 + (top - val) / (top - bot) * (ph - 4);
@@ -1507,6 +1531,17 @@ function drawChart() {
           path(G.e8, Y, '#7a8ca8', 1); path(G.e55, Y, '#8e5bd6', 1.2); path(G.s200, Y, C.ink, 1.4);
           ctx.fillStyle = '#f08a00'; for (let i = i0; i <= i1; i++) if (G.sq[i]) { ctx.beginPath(); ctx.arc(X(i), p.y + p.h - 4, Math.max(1.5, Math.min(3, bw * .25)), 0, 7); ctx.fill(); }
         } }
+        if (SC) {
+          const zx = RC + 4, zw = R - zx, c0 = b[b.length - 1].c, x0 = X(b.length - 1), y0 = Y(c0);
+          ctx.fillStyle = 'rgba(120,130,150,.08)'; ctx.fillRect(zx, p.y, zw, p.h);
+          ctx.font = font(11); ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('시나리오 구간 · ' + SC.H + '일', zx + 6, p.y + 22);
+          const xe = R - 6, at = (r, t) => Y(c0 * (1 + r * Math.pow(t, .85)));
+          ctx.save(); ctx.setLineDash([2, 4]); ctx.strokeStyle = C.faint; ctx.lineWidth = 1;
+          [SC.p90, SC.p10].forEach(r => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(xe, Y(c0 * (1 + r))); ctx.stroke(); });
+          ctx.restore(); ctx.font = font(10.5); ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('80% 범위', xe - 2, Y(c0 * (1 + SC.p90)) - 3);
+          [[SC.ru, '#1e8e5a'], [SC.rd, '#d6455d']].forEach(([r, col]) => { ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x0, y0);
+            for (let k = 1; k <= 8; k++) { const t = k / 8; ctx.lineTo(x0 + (xe - x0) * t, at(r, t)); } ctx.stroke(); ctx.restore(); });
+        }
         if (state.plan && !isD) [[state.plan.buy, C.amber, '눌림 ', 0], [state.plan.stop, C.down, '손절 ', 1]].forEach(([pv, col, lb, dn]) => {
           if (!ok(pv) || pv < bot || pv > top) return; const y = Math.round(Y(pv)) + .5;
           ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke(); ctx.restore();
@@ -1540,6 +1575,10 @@ function drawChart() {
       for (let k = 0; k <= 4; k++) { const val = bot + (top - bot) * k / 4; axisLabel(Y(val), fmt(val, val < 10 ? 2 : val < 1000 ? 2 : 0)); }
       const lc = b[b.length - 1]; const ly = Y(lc.c);
       if (ly > p.y && ly < p.y + p.h) { const col = lc.c >= (b[b.length - 2]?.c ?? lc.o) ? C.up : C.down; ctx.fillStyle = col; ctx.fillRect(R + 1, ly - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillText(fmt(lc.c), R + 5, ly); }
+      if (SC) { const c0 = lc.c, items = [[c0 * (1 + SC.ru), '#1e8e5a', `상방 ${SC.up}%`], [c0 * (1 + SC.rd), '#d6455d', `하방 ${SC.dn}%`]];
+        const yu0 = Y(items[0][0]), yd0 = Y(items[1][0]), gap = yd0 - yu0, sh = gap < 22 ? (22 - gap) / 2 : 0; items.forEach(([pv, col, lb], k) => { const y = Y(pv) + (k ? sh : -sh); ctx.font = font(11, 700); const tw = ctx.measureText(lb).width + 10; const bx = R - tw - 2;
+          ctx.fillStyle = col; ctx.fillRect(bx, y - 9, tw, 18); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(lb, bx + 5, y + .5);
+          ctx.fillStyle = col; ctx.fillRect(R + 1, y - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.fillText(fmt(pv), R + 5, y); }); }
       const q = b[vi];
       title(p, EZS ? [[`${symLabel(state.sel)} · 일봉`, C.ink], [`21일선 ${fmt(EZS.G.e21[vi])}`, '#e07b16'], [`200일선 ${EZS.G.s200[vi] == null ? '–' : fmt(EZS.G.s200[vi])}`, '#d6455d'], [`종가 ${fmt(q.c)}`, C.muted]] : [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
     } else if (p.k === 's5' || p.k === 's10' || p.k === 's20') {
@@ -1674,6 +1713,7 @@ $('#detail').onclick = e => {
   const per = e.target.closest('#perSeg button'); if (per) { state.per = +per.dataset.per; resetView(); setupChart(); return; }
   const z = e.target.closest('#zoomSeg button');
   if (z) { if (z.dataset.z === 'in') zoom(1 / 1.3); else if (z.dataset.z === 'out') zoom(1.3); else { const v = state.view; v.start = curBars().length - v.count; clampView(); sched(); } return; }
+  const sc = e.target.closest('#scSeg button'); if (sc) { state.scenOn = state.scenOn === false; renderDetail(); return; }
   const gb = e.target.closest('#gobSeg button'); if (gb) { state.gobOn = gb.dataset.g === 'on'; document.querySelectorAll('#gobSeg button').forEach(x => x.classList.toggle('on', x === gb)); drawChart(); return; }
   const tvb = e.target.closest('#tvInt button'); if (tvb) { state.tvInt = tvb.dataset.tv; document.querySelectorAll('#tvInt button').forEach(x => x.classList.toggle('on', x === tvb)); loadTV(); return; }
   const j = e.target.closest('tr[data-jump]'); if (j) jumpTo(j.dataset.jump, j.dataset.type);
