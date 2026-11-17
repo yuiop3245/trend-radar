@@ -155,7 +155,32 @@ table.rt{font-size:13.5px;min-width:820px}
 .rt td.sticky,.rt th.sticky{position:sticky;left:0;background:var(--panel);z-index:1}
 .rt tbody tr:hover td.sticky{background:var(--panel2)}.rt tr.sel td.sticky{background:var(--hl)}
 .detailwrap{margin-top:14px}
-.ezgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}.pro .ezgrid{grid-template-columns:1fr}
+.ezgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}.pro .ezgrid{grid-template-columns:minmax(0,1fr) 380px}
+.ghead{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px;padding:6px 2px 12px}.ghead .sym{font-size:24px;font-weight:900}.ghead .nm{color:var(--muted)}.ghead .px{font-size:18px;font-weight:800}
+.spill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.gtiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:14px;overflow:hidden}
+.gt{padding:14px 16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px;min-width:0}.gt:last-child{border-right:0}
+.gt .lbl{color:var(--muted);font-size:12.5px;font-weight:600}.gt .big{font-size:26px;font-weight:800;line-height:1.1}.gt .sub{color:var(--muted);font-size:12.5px}
+.gradebox{display:flex;gap:10px;align-items:center}.gb{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:9px;color:#fff;font-weight:900;font-size:20px}.gb.sm{width:24px;height:24px;font-size:13px;border-radius:6px}
+@media (max-width:1100px){.gtiles{grid-template-columns:repeat(3,minmax(0,1fr))}.gt:nth-child(3){border-right:0}.gt:nth-child(-n+3){border-bottom:1px solid var(--line)}}
+@media (max-width:600px){.gtiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.gside{padding:0;overflow:hidden}.gsh{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}.gsh h2{margin:0;font-size:16px}.gsh2{border-top:1px solid var(--line)}
+.card>.gsh{padding:0 0 12px;border-bottom:0}.gside>.gsh{padding:14px 16px;border-bottom:1px solid var(--line)}.gside>.gsh2{border-top:1px solid var(--line)}
+.gdash{width:100%;border-collapse:collapse;font-size:13.5px}.gdash td{padding:9px 16px;border-bottom:1px solid var(--line);vertical-align:top}.gdash td:first-child{color:var(--muted);width:42%}
+.dot-s{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.gck{list-style:none;margin:0;padding:8px 16px 14px}.gck li{display:flex;gap:12px;padding:5px 0;font-size:13.5px}.ck{font-weight:900;width:14px}.ck.ok{color:#1f9d6a}.ck.no{color:#d6455d}
+.gbar{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:4px -16px 10px;padding:8px 16px;display:flex;flex-direction:column;gap:6px}
+.gbrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.gbl{font-size:12px;color:var(--muted);width:30px}
+.gchip{border:1px solid var(--line);background:var(--panel);color:var(--faint);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;font-weight:600;font-family:inherit}
+.gchip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;opacity:.45}
+.gchip.on{border-color:var(--ink);color:var(--ink)}.gchip.on i{opacity:1}.gchip.all.on{background:var(--ink);color:var(--bg)}
+.vpill{background:#e6eefc;color:#2f6fde;border-radius:999px;padding:3px 11px;font-size:12.5px;font-weight:700}
+.scgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media (max-width:800px){.scgrid{grid-template-columns:1fr}}
+.sc{border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}.sc .lbl{color:var(--muted);font-size:12.5px;font-weight:600}
+.scp{font-size:32px;font-weight:800;line-height:1.1}.sc .bar{height:7px;background:var(--line);border-radius:9px;overflow:hidden}.sc .bar span{display:block;height:100%}.sc .sub{color:var(--muted);font-size:13px;line-height:1.7}
+.story{margin:14px 0 4px;padding-left:20px;line-height:1.75;font-size:14px}
+.minecard summary{cursor:pointer;font-weight:800;font-size:15px}.minebody .card{box-shadow:none;border:1px solid var(--line);margin:12px 0}
+.minehead{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}@media (max-width:700px){.minehead{grid-template-columns:1fr}}
 .ezside h3{font-size:15px;margin:0 0 10px}.ezside hr{border:0;border-top:1px solid var(--line);margin:16px -16px}
 .ezside .light{display:inline-flex;align-items:center;gap:8px;font-size:22px;font-weight:900;padding:8px 18px;border-radius:999px;margin:8px 0}.ezside .light i{width:12px;height:12px;border-radius:50%}
 .ezside .why{font-size:14.5px;line-height:1.6;margin:6px 0 0}
@@ -165,7 +190,7 @@ table.rt{font-size:13.5px;min-width:820px}
 .ezsum{background:var(--panel2);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:13.5px}
 .ezrow{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:14px}.ezrow b{font-size:18px}.ezrow.sm{padding:0 0 4px;font-size:12px}
 .ezst{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center;font-size:13.5px;margin:8px 0}.ezst .pill{text-align:center}
-@media (max-width:900px){.ezgrid{grid-template-columns:1fr}}
+@media (max-width:900px){.ezgrid,.pro .ezgrid{grid-template-columns:1fr}}
 .gobgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:4px}.gobgrid h3{font-size:14px;margin:0 0 8px}.checks li .q{align-self:center}
 @media (max-width:800px){.gobgrid{grid-template-columns:1fr}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -190,8 +215,8 @@ table.rt{font-size:13.5px;min-width:820px}
   </header>
   <div id="demoBanner" class="banner" hidden></div>
   <section class="onboard easy-only">
-    <div><b>1</b><strong>레이더 판정</strong>을 먼저 봅니다.</div>
-    <div><b>2</b><strong>체크 5개</strong>가 모두 '예'일 때만 매수를 생각합니다.</div>
+    <div><b>1</b><strong>지금 신호</strong>(보유·매수 대기·관망·위험)를 먼저 봅니다.</div>
+    <div><b>2</b><strong>지금 사도 될까?</strong> 3가지가 모두 '예'일 때만 매수를 생각합니다.</div>
     <div><b>3</b><strong>다음 가격</strong>에 알림을 걸어 두고 기다립니다.</div>
   </section>
   <section class="radar">
@@ -199,7 +224,7 @@ table.rt{font-size:13.5px;min-width:820px}
     <div class="toolbar">
       <input id="q" type="search" placeholder="종목 찾기 (예: SOXL, 반도체)" autocomplete="off">
       <select id="sort" aria-label="정렬">
-        <option value="verdict">레이더 판정 순</option>
+        <option value="verdict">신호 상태 순</option>
         <option value="near">매수 검토가에 가까운 순</option>
         <option value="chg">오늘 등락 순</option>
         <option value="name">종목명 순</option>
@@ -627,29 +652,47 @@ function chartSigs(sym, tf, b) {
   let vals = [...map.values()].filter(x => !(x.type === 'PS' && map.has(x.i + '|AX')));
   const gx = [];
   if (tf === 'd' && state.mode !== 'pro') return ezEvents(sym).map(e => ({ i: e.i, t: e.t, type: 'Z:' + e.k, meta: { s: EZ[e.z].n, n: EZ[e.z].n, side: e.z === 'sell' || e.z === 'tp' ? 'sell' : 'buy', pill: EZ[e.z], easy: EZ[e.z].easy }, memo: e.t + ' · ' + EZ[e.z].n + ' — ' + e.d, how: e.d, n: 1 }));
-  if (tf === 'd' && state.mode === 'pro' && state.gobOn !== false) { vals = vals.filter(x => x.type.startsWith('REC:')); const G = gobCalc(sym); if (G) G.ev.forEach(e => { const m = GN[e.k]; gx.push({ i: e.i, t: e.t, type: 'G:' + e.k, meta: { s: m[0], n: e.nm || m[1], side: m[2] === 'info' ? 'rec' : m[2], easy: e.d, rule: e.d }, memo: e.t + ' · ' + (e.nm || m[1]) + ' — ' + e.d, how: e.d, n: 1 }); }); }
+  if (tf === 'd' && state.mode === 'pro') { vals = vals.filter(x => x.type.startsWith('REC:')); const G = gobCalc(sym); if (G) G.ev.forEach(e => { const gm = GOBM[e.k]; if (!gm || !state.cats[gm[0]]) return; const m = GN[e.k], sh = gshort(e); gx.push({ i: e.i, t: e.t, type: 'G:' + e.k, meta: { s: sh, n: e.nm || m[1], side: m[2] === 'info' ? 'rec' : m[2], easy: e.d, rule: e.d, g: { col: GCOL[gm[1]], shape: gm[2], below: GBELOW.has(e.k), sh } }, memo: e.t + ' · ' + (e.nm || m[1]) + ' — ' + e.d, how: e.d, n: 1 }); }); }
   return gx.concat(vals.map(x => x.n > 1 ? { ...x, memo: `${x.n}번 · 마지막 ${dispT(sym, x.hows[x.hows.length - 1].slice(0, 16))}${x.hows[x.hows.length - 1].slice(16)}` } : { ...x, memo: dispT(sym, x.t) + ' · ' + (x.how || x.meta.easy) }));
 }
 
 /* ============ 고버니식 일봉 규칙 (전문가 모드 · 참고용 레이어) ============ */
 const GN = {
-  SQZU: ['응축↑', '응축 해제 · 상방', 'buy'], SQZD: ['응축↓', '응축 해제 · 하방', 'sell'], VCP: ['VCP', 'VCP 형성', 'info'], SETUP: ['셋업', '셋업 형성 중', 'info'],
-  BO: ['돌파', '돌파 진입', 'buy'], R21: ['21회복', '21일선 회복 매수', 'buy'], SRF: ['SR', 'SR flip', 'buy'], BOX: ['돌파X', '돌파 청산', 'sell'],
+  SQZU: ['응축↑', '응축 해제 ↑', 'buy'], SQZD: ['응축↓', '응축 해제 ↓', 'sell'], VCP: ['VCP', 'VCP 형성', 'info'], SETUP: ['셋업', '셋업 형성 중', 'info'],
+  BO: ['돌파', '돌파 진입', 'buy'], R21: ['회복', '21일선 회복 매수', 'buy'], SRF: ['SR', 'SR flip', 'buy'], BOX: ['돌파청산', '돌파 청산', 'sell'],
   PY1: ['피라1', '피라미딩 1차', 'buy'], PY2: ['피라2', '피라미딩 2차', 'buy'], PB: ['풀백', '급등 후 풀백', 'buy'],
   TP1: ['TP1', 'TP1 · 1차 분할청산', 'sell'], TP2: ['TP2', 'TP2 · 2차 분할청산', 'sell'], TRIM: ['Trim', '부분익절 고려', 'sell'], HOT: ['과열', '과열 경고', 'sell'],
-  E8: ['8선', '8선 이탈', 'sell'], X14: ['14선', '분할청산 · 14선', 'sell'], X21: ['21선', '분할청산 · 21선', 'sell'], FIN: ['청산', '최종 청산', 'sell'],
-  PEG: ['PEG', 'PEG (갭 상승)', 'buy'], PEGR: ['되돌림', '되돌림 매수', 'buy'], PEGB: ['재돌파', '재돌파', 'buy'], PEGX: ['PEG✗', 'PEG 무효', 'sell'],
-  MB: ['M↑', '모멘텀 BUY', 'buy'], MS: ['M↓', '모멘텀 SELL', 'sell'], MSE: ['M끝', '하락 모멘텀 종료', 'info'],
+  E8: ['8선↓', '8선 이탈', 'sell'], R8: ['8선↑', '8선 회복', 'info'], X14: ['14선', '분할청산 · 14선', 'sell'], X21: ['21선', '분할청산 · 21선', 'sell'], FIN: ['청산', '최종 청산', 'sell'],
+  PEG: ['PEG', 'PEG (갭 상승)', 'buy'], PEGR: ['PEG되돌림', 'PEG 되돌림 매수', 'buy'], PEGB: ['PEG재돌파', 'PEG 재돌파', 'buy'], PEGX: ['PEG×', 'PEG 무효', 'sell'],
+  MB: ['M↑', '모멘텀 BUY', 'buy'], MS: ['M↓', '모멘텀 SELL', 'sell'], MSE: ['M↓끝', '하락 모멘텀 종료', 'info'],
   PBB: ['PBB', 'PBB · 눌림 지지', 'buy'], PBS: ['PBS', 'PBS · 반등 저항', 'sell'], MRL: ['MR↑', 'MR Long', 'buy'], MRS: ['MR↓', 'MR Short', 'sell'],
-  PATU: ['패턴↑', '패턴 상방 돌파', 'buy'], PATD: ['패턴↓', '패턴 하방 이탈', 'sell'], W: ['W', 'W 돌파', 'buy'], M: ['M', 'M 이탈', 'sell']
+  PATU: ['패턴↑', '패턴 상방 돌파', 'buy'], PATD: ['패턴↓', '패턴 하방 이탈', 'sell'], W: ['W', 'W 돌파', 'buy'], M: ['M', 'M 이탈', 'sell'], NH: ['NH', 'NH (52주 신고가)', 'info']
 };
+const GCOL = { up: '#1f9d6a', dn: '#d6455d', acc: '#2f6fde', warn: '#d98a1c', vio: '#8a4fd8', faint: '#7b8794' };
+// [카테고리, 색, 모양] — 고버니 화면과 같은 분류
+const GOBM = {
+  BO: ['entry', 'up', 'arrow'], R21: ['entry', 'up', 'arrow'], SRF: ['entry', 'up', 'arrow'], PY1: ['entry', 'up', 'arrow'], PY2: ['entry', 'up', 'arrow'], PB: ['entry', 'up', 'arrow'],
+  BOX: ['exit', 'dn', 'arrow'], TP1: ['exit', 'acc', 'circle'], TP2: ['exit', 'acc', 'circle'], X14: ['exit', 'dn', 'arrow'], X21: ['exit', 'dn', 'arrow'], FIN: ['exit', 'dn', 'arrow'],
+  VCP: ['setup', 'warn', 'circle'], SETUP: ['setup', 'warn', 'square'], MB: ['momo', 'up', 'arrow'], MS: ['momo', 'dn', 'arrow'], MSE: ['momo', 'faint', 'circle'],
+  PEG: ['peg', 'up', 'arrow'], PEGR: ['peg', 'up', 'arrow'], PEGB: ['peg', 'up', 'arrow'], PEGX: ['peg', 'dn', 'circle'],
+  PATU: ['pattern', 'up', 'arrow'], PATD: ['pattern', 'dn', 'arrow'], W: ['pattern', 'vio', 'square'], M: ['pattern', 'vio', 'square'],
+  HOT: ['warn', 'vio', 'square'], TRIM: ['warn', 'vio', 'circle'], SQZU: ['squeeze', 'warn', 'arrow'], SQZD: ['squeeze', 'warn', 'arrow'],
+  PBB: ['pb', 'up', 'circle'], PBS: ['pb', 'dn', 'circle'], MRL: ['mr', 'acc', 'circle'], MRS: ['mr', 'vio', 'circle'], NH: ['nh', 'faint', 'circle'], E8: ['minor', 'faint', 'circle'], R8: ['minor', 'faint', 'circle']
+};
+const GBELOW = new Set(['BO', 'R21', 'SRF', 'PY1', 'PY2', 'PB', 'VCP', 'SETUP', 'MB', 'MSE', 'PEG', 'PEGR', 'PEGB', 'PATU', 'W', 'SQZU', 'PBB', 'MRL', 'R8']);
+const GCATS = [['entry', '진입·피라미딩', 1, 'up'], ['exit', '청산·익절', 1, 'dn'], ['setup', '셋업·VCP', 1, 'warn'], ['momo', '모멘텀', 1, 'acc'], ['peg', 'PEG', 1, 'up'], ['pattern', '패턴 돌파·이탈', 1, 'vio'],
+  ['warn', '과열·Trim', 1, 'vio'], ['squeeze', '응축 해제', 0, 'warn'], ['pb', 'PBB / PBS', 0, 'acc'], ['mr', 'MR Long / Short', 0, 'acc'], ['nh', '52주 신고가', 0, 'faint'], ['minor', '8선 이탈·회복', 0, 'faint']];
+const GOVL = [['dots', '응축 점', 1], ['ma', '이평선', 1], ['band', '시그마 밴드', 1], ['pat', '추세선·채널', 1], ['zz', '지그재그', 0], ['lv', '지지·저항 레벨', 1], ['scen', '시나리오 경로', 1], ['vol', '거래량', 1]];
+const PSH = nm => ({ '상승 채널': '채널', '하락 채널': '채널', '대칭 삼각형': '대칭', '상승 삼각형': '상승삼각', '하강 삼각형': '하강삼각', '박스권': '박스' })[nm] || nm;
+const gshort = e => e.sh || GN[e.k][0];
+const gcol = g => g === 'S' || g === 'H' ? GCOL.up : g === 'N' ? GCOL.faint : GCOL.dn;
 const gobCache = new WeakMap();
 function gobCalc(sym) {
   const T = D.tickers[sym]; const b = T?.d; if (!b || b.length < 80) return null;
   if (gobCache.has(b)) return gobCache.get(b);
   const n = b.length, c = b.map(x => x.c), h = b.map(x => x.h), l = b.map(x => x.l), o = b.map(x => x.o), v = b.map(x => x.v || 0);
   const e8 = emaN(c, 8), e14 = emaN(c, 14), e21 = emaN(c, 21), e55 = emaN(c, 55), e20 = emaN(c, 20);
-  const s20 = smaN(c, 20), s50 = smaN(c, 50), s150 = smaN(c, 150), s200 = smaN(c, 200);
+  const s20 = smaN(c, 20), s50 = smaN(c, 50), s100 = smaN(c, 100), s150 = smaN(c, 150), s200 = smaN(c, 200);
   const tr = b.map((x, i) => i ? Math.max(x.h - x.l, Math.abs(x.h - b[i - 1].c), Math.abs(x.l - b[i - 1].c)) : x.h - x.l);
   const atr = rma(tr, 14), atr20 = rma(tr, 20), atr50 = smaN(atr, 50);
   const R = rsi(c), MH = macd(c).h, DM = dmi(b);
@@ -674,7 +717,7 @@ function gobCalc(sym) {
   const grade = p => p >= 6 ? 'S' : p === 5 ? 'H' : p >= 3 ? 'N' : p === 2 ? 'W' : 'D';
   const f2 = x => fmt(x);
   const ev = []; const add = (i, k, d, extra) => ev.push({ i, t: b[i].t, k, d, ...(extra || {}) });
-  let pos = null, lastExit = -99, msOn = false, peg = null, surge = -99, lastSetup = -99, lastVcp = -1, lastPat = '', wmUsed = new Set();
+  let pos = null, lastExit = -99, msOn = false, peg = null, surge = -99, lastSetup = -99, lastVcp = -1, lastPat = '', wmUsed = new Set(), lastNH = -99;
   for (let i = 60; i < n; i++) {
     const a = atr[i]; if (a == null) continue;
     // ── 응축 해제
@@ -721,8 +764,8 @@ function gobCalc(sym) {
         if (name) {
           const key = name + H3[2].i + L3[2].i;
           if (key !== lastPat) {
-            if (c[i] > U.at(i) + .2 * a && c[i - 1] <= U.at(i - 1) + .2 * atr[i - 1]) { lastPat = key; add(i, 'PATU', `${name} 상단선(${f2(U.at(i))})을 종가로 넘었습니다.`, { nm: name + ' · 상방 돌파' }); }
-            else if (c[i] < Lo.at(i) - .2 * a && c[i - 1] >= Lo.at(i - 1) - .2 * atr[i - 1]) { lastPat = key; add(i, 'PATD', `${name} 하단선(${f2(Lo.at(i))})을 종가로 깼습니다.`, { nm: name + ' · 하방 이탈' }); }
+            if (c[i] > U.at(i) + .2 * a && c[i - 1] <= U.at(i - 1) + .2 * atr[i - 1]) { lastPat = key; add(i, 'PATU', `${name} 상단선(${f2(U.at(i))})을 종가로 넘었습니다.`, { nm: name + ' · 상방 돌파', sh: PSH(name) + '↑' }); }
+            else if (c[i] < Lo.at(i) - .2 * a && c[i - 1] >= Lo.at(i - 1) - .2 * atr[i - 1]) { lastPat = key; add(i, 'PATD', `${name} 하단선(${f2(Lo.at(i))})을 종가로 깼습니다.`, { nm: name + ' · 하방 이탈', sh: PSH(name) + '↓' }); }
           }
         }
       }
@@ -737,6 +780,8 @@ function gobCalc(sym) {
     // ── 급등 후 풀백
     { let lo10 = Infinity; for (let j = i - 10; j < i; j++) lo10 = Math.min(lo10, l[j]); if (c[i] - lo10 >= 6 * a) surge = i; }
     if (surge > 0 && i > surge && i - surge <= 20 && l[i] <= e8[i] && c[i] > e21[i]) { add(i, 'PB', `최근 급등(10봉 ${'≥'} 6ATR) 뒤 처음 8일선(${f2(e8[i])})까지 눌리고 21일선 위에서 마감했습니다.`); surge = -99; }
+    // ── 52주 신고가
+    if (i >= 120) { let mx = -Infinity; for (let j = Math.max(0, i - 252); j < i; j++) mx = Math.max(mx, h[j]); if (h[i] > mx && i - lastNH >= 5) { lastNH = i; add(i, 'NH', `52주(가능한 기간) 최고가 ${f2(mx)}를 넘었습니다. 위에 매물이 적은 신고가 구간입니다.`); } }
     // ── 포지션
     if (pos) {
       const k = i - pos.i0; let closed = false;
@@ -748,7 +793,8 @@ function gobCalc(sym) {
         if (!pos.trim && c[i] - pos.e >= 1.5 * pos.R && c[i] > bbU[i]) { pos.trim = true; add(i, 'TRIM', `진입 대비 ${fmt((c[i] - pos.e) / pos.R, 1)}R 수익에 시그마 밴드 상단 ${f2(bbU[i])}를 넘었습니다. 일부 Trim하고 눌림에서 다시 싣는 구간입니다.`); }
         if (pos.type === 'BO' && !pos.srf && k >= 2 && k <= 10 && l[i] <= pos.res + .3 * a && c[i] > pos.res) { pos.srf = true; add(i, 'SRF', `돌파했던 저항 ${f2(pos.res)}까지 되밀린 뒤 그 위에서 마감했습니다. 저항이 지지로 바뀐 걸 확인한 2차 진입 자리입니다.`); }
         if (pos.py < 2 && k >= 2 && c[i] > pos.e && l[i - 1] <= e14[i - 1] && c[i] > h[i - 1] && e8[i] > e21[i]) { pos.py++; add(i, pos.py === 1 ? 'PY1' : 'PY2', '보유 중 14일선까지 눌렸다가 전일 고가를 넘기며 재상승했습니다. 수익 포지션에만 물량을 더 싣는 자리입니다.'); }
-        if (c[i] < e8[i] && c[i - 1] >= e8[i - 1]) add(i, 'E8', `8일선(${f2(e8[i])}) 아래 마감. 단기 탄력이 꺾였다는 첫 경고입니다.`);
+        if (c[i] < e8[i] && c[i - 1] >= e8[i - 1]) { pos.e8x = true; add(i, 'E8', `8일선(${f2(e8[i])}) 아래 마감. 단기 탄력이 꺾였다는 첫 경고입니다.`); }
+        else if (pos.e8x && c[i] > e8[i] && c[i - 1] <= e8[i - 1]) { pos.e8x = false; add(i, 'R8', `8일선(${f2(e8[i])}) 위로 다시 마감했습니다. 단기 탄력이 돌아왔습니다.`); }
         if (c[i] < e14[i] && !pos.x14) { pos.x14 = true; add(i, 'X14', '14일선 이탈 마감. 보유 물량 일부를 정리하는 트레일링 규칙입니다.'); }
         if (c[i] < e21[i] && !pos.x21) { pos.x21 = true; add(i, 'X21', '21일선 이탈 마감. 중기 추세 기준선이 깨져 비중을 크게 줄이는 자리입니다.'); }
         if (c[i] > e8[i]) { pos.x14 = false; }
@@ -801,9 +847,25 @@ function gobCalc(sym) {
   const conv = ok9 >= 8 && 'SH'.includes(G) ? 'A' : ok9 >= 6 && 'SHN'.includes(G) ? 'B' : 'SHN'.includes(G) ? 'C' : 'D';
   const status = pos ? (pos.tp1 ? '관리' : '보유') : i - lastExit <= 5 ? '청산 직후 · 관찰' : '관찰';
   let sqN = 0; for (let j = n - 20; j < n; j++) if (sq[j]) sqN++;
+  // 현재 패턴(채널·삼각형) 선
+  let pattern = null;
+  { const H3 = PH.filter(x => x.k <= i && x.i >= i - 90).slice(-3), L3 = PL.filter(x => x.k <= i && x.i >= i - 90).slice(-3);
+    if (H3.length === 3 && L3.length === 3) {
+      const rg = P3 => { const mx = P3.reduce((t, q) => t + q.i, 0) / 3, my = P3.reduce((t, q) => t + q.p, 0) / 3; let nu = 0, de = 0; P3.forEach(q => { nu += (q.i - mx) * (q.p - my); de += (q.i - mx) ** 2; }); const sl = de ? nu / de : 0; return { s: sl, b: my - sl * mx }; };
+      const U = rg(H3), Lo = rg(L3), kU = U.s / a, kL = Lo.s / a, th = .03;
+      const name = kU > th && kL > th ? '상승 채널' : kU < -th && kL < -th ? '하락 채널' : kU < -th && kL > th ? '대칭 삼각형' : Math.abs(kU) <= th && kL > th ? '상승 삼각형' : kU < -th && Math.abs(kL) <= th ? '하강 삼각형' : Math.abs(kU) <= th && Math.abs(kL) <= th ? '박스권' : '불규칙';
+      pattern = { name, us: U.s, ub: U.b, ls: Lo.s, lb: Lo.b, x0i: Math.min(H3[0].i, L3[0].i), upNow: U.s * i + U.b, loNow: Lo.s * i + Lo.b };
+    } }
+  // 지그재그 (확정 피벗을 고점·저점 교대로)
+  const zz = []; [...PH.map(x => ({ i: x.i, p: x.p, t: 'H' })), ...PL.map(x => ({ i: x.i, p: x.p, t: 'L' }))].sort((x, y) => x.i - y.i).forEach(q => { const lp = zz[zz.length - 1]; if (lp && lp.t === q.t) { if ((q.t === 'H' && q.p > lp.p) || (q.t === 'L' && q.p < lp.p)) zz[zz.length - 1] = q; } else zz.push(q); });
+  let bpU = 0, bpT = 0; for (let j = n - 20; j < n; j++) { bpT += v[j]; if (c[j] > c[j - 1]) bpU += v[j]; }
+  const v50 = smaN(v, 50)[i - 1];
   const resP = (() => { const ph = PH.filter(x => x.k <= n - 1 && x.i >= n - 61 && x.p > c[n - 1] && x.p < c[n - 1] * 1.2); return ph.length ? ph[ph.length - 1].p : null; })();
   const out = {
-    res: resP, atr: atr[n - 1], c: c[n - 1],
+    res: resP, atr: atr[n - 1], c: c[n - 1], n, C: c, e14, s100, bbU, bbL, PH, PL, pattern, zz,
+    g: { gname: GRADE_N[G], pull: e8[i], align: e8[i] > e21[i] && e21[i] > e55[i] ? '정배열' : e8[i] < e21[i] && e21[i] < e55[i] ? '역배열' : '혼조', weekly: wUp(i) ? '주봉 상승' : '주봉 약세',
+      s200: s200[i], adx: DM.adx[i], di: DM.p[i] > DM.m[i] ? '+DI 우위' : '-DI 우위', bp: bpT ? Math.round(bpU / bpT * 100) : null, sqNow: sq[i], sqCount: sqN,
+      vr: v50 ? v[i] / v50 : null, fromHi: c[i] / hi52 - 1, hi52, rsi: R[i], atr: a, atrPct: a / c[i] * 100, e8: e8[i], e21: e21[i], e55: e55[i] },
     bench: T.kr ? '코스피' : 'SPY', ev, pos, status, P, G, pts, conv, checks, ok9, rs, hi52, lo52, sq, e8, e21, e55, s200,
     dash: {
       align: e8[i] > e21[i] && e21[i] > e55[i] ? '정배열' : e8[i] < e21[i] && e21[i] < e55[i] ? '역배열' : '혼조',
@@ -818,6 +880,96 @@ function gobCalc(sym) {
   gobCache.set(b, out); return out;
 }
 const GRADE_N = { S: '강한 상승', H: '상승', N: '중립', W: '약세', D: '하락' };
+// 위·아래 레벨 + 10일 몬테카를로 (고버니 방식: 실현 변동성 20·60일 평균, 추세 가정 없음, 2만 경로)
+function gobLP(G) {
+  if (!G) return null; if (G._lp) return G._lp;
+  const n = G.n, i = n - 1, c = G.c, a = G.atr, C = G.C;
+  const mas = [G.e8[i], G.e21[i], G.e55[i], G.s100[i], G.s200[i]].filter(x => x != null);
+  const ups = G.PH.filter(x => x.i >= n - 260).map(x => x.p).concat(mas), dns = G.PL.filter(x => x.i >= n - 260).map(x => x.p).concat(mas);
+  const pu = (base, gap) => { const k = ups.filter(x => x >= base + gap * a && x <= base + 3 * a).sort((x, y) => x - y); return k.length ? k[0] : base + 2 * a; };
+  const pd = (base, gap) => { const k = dns.filter(x => x <= base - gap * a && x >= base - 3 * a).sort((x, y) => y - x); return k.length ? k[0] : Math.max(base - 2 * a, base * .3); };
+  const U = pu(c, .6), U2 = pu(U, 1), Dn = pd(c, .6), D2 = pd(Dn, 1);
+  const lr = []; for (let j = Math.max(1, n - 60); j < n; j++) lr.push(Math.log(C[j] / C[j - 1]));
+  const sdv = arr => { const m = arr.reduce((x, y) => x + y, 0) / arr.length; return Math.sqrt(arr.reduce((x, y) => x + (y - m) ** 2, 0) / Math.max(1, arr.length - 1)); };
+  const sig = (sdv(lr.slice(-20)) + sdv(lr)) / 2;
+  const rnd = mulberry((Math.round(c * 1000) ^ (n * 7919)) | 0); let spare = null; const gs = () => { if (spare != null) { const z = spare; spare = null; return z; } let u = 0; while (!u) u = rnd(); const rr = Math.sqrt(-2 * Math.log(u)), th = 2 * Math.PI * rnd(); spare = rr * Math.sin(th); return rr * Math.cos(th); };
+  const NP = 20000, fin = new Float64Array(NP), lu = Math.log(U / c), ld = Math.log(Dn / c); let up = 0, dn = 0;
+  for (let p = 0; p < NP; p++) { let x = 0, hit = 0; for (let d = 0; d < 10; d++) { x += sig * gs(); if (!hit) { if (x >= lu) hit = 1; else if (x <= ld) hit = -1; } } if (hit > 0) up++; else if (hit < 0) dn++; fin[p] = c * Math.exp(x); }
+  fin.sort(); const q = f => fin[Math.floor(f * (NP - 1))], r = x => Math.round(x / NP * 100);
+  G._lp = { U, U2, D: Dn, D2, up: r(up), dn: r(dn), none: Math.max(0, 100 - r(up) - r(dn)), q10: q(.1), q50: q(.5), q90: q(.9), sigD: sig * 100, sig10: sig * Math.sqrt(10) * 100 };
+  return G._lp;
+}
+function gobStory(sym) {
+  const G = gobCalc(sym), L = gobLP(G), d = G.g, n = G.n;
+  const rec = G.ev.filter(e => e.i >= n - 10).map(e => e.nm || GN[e.k][1]);
+  return [
+    `${symLabel(sym)}는 추세 등급 ${G.G}(${d.gname}), 이평선 ${d.align}, ${d.weekly} 상태이고 트렌드 템플릿 9개 중 ${G.ok9}개를 충족합니다.`,
+    `최근 10봉 신호 흐름: ${rec.length ? rec.join(' → ') : '없음'}.`,
+    `다음 10거래일 기준 위쪽 레벨은 ${fmt(L.U)} (그다음 ${fmt(L.U2)}), 아래쪽 레벨은 ${fmt(L.D)} (그다음 ${fmt(L.D2)})입니다. 최근 변동성(일 ${fmt(L.sigD)}%)으로 돌린 몬테카를로에서 ${fmt(L.U)}에 먼저 닿을 확률 ${L.up}%, ${fmt(L.D)}에 먼저 닿을 확률 ${L.dn}%, 둘 다 안 닿을 확률 ${L.none}%입니다.`,
+    `상방 시나리오의 확인 조건은 종가 ${fmt(Math.max(L.U, d.e21))} 돌파(위쪽 레벨과 21일선 중 높은 쪽)와 거래량 1.15배 이상입니다. 하방은 종가가 ${fmt(L.D)} 아래로 마감하면 다음 지지 ${fmt(L.D2)}까지 열어둡니다.`
+  ];
+}
+const SPILL = { '관찰': ['#eef0f3', '#6b7280'], '청산 직후 · 관찰': ['#fbe4e8', '#d6455d'], '보유': ['#e3f4ea', '#1f9d6a'], '관리': ['#e6eefc', '#2f6fde'] };
+function statePill(st) { const c = SPILL[st] || SPILL['관찰']; return `<span class="spill" style="background:${c[0]};color:${c[1]}">${esc(st)}</span>`; }
+function headCard(sym) {
+  const T = D.tickers[sym], b = T.d || [], last = b[b.length - 1], chg = b.length > 1 ? last.c / b[b.length - 2].c - 1 : null;
+  const S = ezState(sym), G = S?.G;
+  return `<div class="ghead"><span class="sym">${esc(symLabel(sym))}</span><span class="nm">${esc(T.label ? sym + ' · ' + (T.name || '') : (T.name || ''))}</span>
+    <span class="px num">${last ? fmt(last.c) : '–'}</span><span class="num ${pcls(chg)}" style="font-weight:700">${pct(chg)}</span>
+    ${G ? `<span class="pro-only">${statePill(G.status)}</span>` : ''}${S ? `<span class="spill easy-only" style="background:${S.light.bg};color:${S.light.col}">${S.light.t}</span>` : ''}
+    <span class="muted" style="font-size:12px">${last ? esc(last.t.slice(0, 10)) + ' 일봉 기준 · 장중엔 30분마다 갱신' : ''}</span></div>`;
+}
+function gobTiles(sym) {
+  const G = gobCalc(sym); if (!G) return ''; const L = gobLP(G), b = D.tickers[sym].d, last = b[b.length - 1], chg = last.c / b[b.length - 2].c - 1;
+  return `<div class="gtiles pro-only">
+    <div class="gt"><span class="lbl">현재가</span><span class="big num">${fmt(last.c)}</span><span class="sub num ${pcls(chg)}">${pct(chg)} 전일 대비</span></div>
+    <div class="gt"><span class="lbl">현재 상태</span>${statePill(G.status)}<span class="sub">${G.pattern ? esc(G.pattern.name) + ' · 진행 중' : '패턴 없음'}</span></div>
+    <div class="gt"><span class="lbl">추세 등급</span><div class="gradebox"><span class="gb" style="background:${gcol(G.G)}">${G.G}</span><div><b>${G.g.gname}</b><div class="sub">${G.P}/7점</div></div></div></div>
+    <div class="gt"><span class="lbl">확신 등급</span><span class="big">${G.conv}</span><span class="sub">조건 ${G.ok9}/9 충족</span></div>
+    <div class="gt"><span class="lbl">10일 내 위쪽 레벨 먼저</span><span class="big num" style="color:${GCOL.up}">${L.up}%</span><span class="sub num">${fmt(L.U)} 터치</span></div>
+    <div class="gt"><span class="lbl">10일 내 아래쪽 레벨 먼저</span><span class="big num" style="color:${GCOL.dn}">${L.dn}%</span><span class="sub num">${fmt(L.D)} 터치</span></div>
+  </div>`;
+}
+function gobDash(sym) {
+  const G = gobCalc(sym); if (!G) return '<aside class="card pro-only empty">고버니식 분석에는 일봉 80개 이상이 필요해요.</aside>';
+  const d = G.g, dot = c => `<span class="dot-s" style="background:${c}"></span>`;
+  const rows = [
+    ['추세 등급', `${dot(gcol(G.G))}${G.G} · ${d.gname} (${G.P}/7)`],
+    ['확신 등급', G.conv],
+    ['눌림 목표', `<span class="num">${fmt(d.pull)}</span> (8 EMA)`],
+    ['EMA 정렬', `${dot(d.align === '정배열' ? GCOL.up : d.align === '역배열' ? GCOL.dn : GCOL.warn)}${d.align}`],
+    ['상위 추세', `${dot(d.weekly === '주봉 상승' ? GCOL.up : GCOL.dn)}${d.weekly} · 200일선 <span class="num">${d.s200 == null ? '–' : fmt(d.s200)}</span>`],
+    ['추세 에너지', `ADX <span class="num">${fmt(d.adx, 1)}</span> · ${d.di}`],
+    ['매수·매도 압력', `상승일 거래량 비중 <span class="num">${d.bp ?? '–'}%</span> (20일)`],
+    ['응축', d.sqNow ? `${dot(GCOL.warn)}응축 중 (최근 20봉 중 ${d.sqCount}봉)` : `최근 20봉 중 ${d.sqCount}봉 응축`],
+    ['상대 강도', `RS 점수 <span class="num">${G.rs == null ? '–' : pct(G.rs)}</span> (6개월, ${G.bench} 대비)`],
+    ['거래량 강도', `<span class="num">${d.vr == null ? '–' : fmt(d.vr)}배</span> (50일 평균 대비, 장중)`],
+    ['52주 고점 대비', `<span class="num" style="color:${d.fromHi < 0 ? GCOL.dn : GCOL.up}">${pct(d.fromHi)}</span> (고점 <span class="num">${fmt(d.hi52)}</span>)`],
+    ['RSI(14)', `<span class="num">${fmt(d.rsi, 1)}</span>`],
+    ['ATR(14)', `<span class="num">${fmt(d.atr)}</span> (${fmt(d.atrPct)}%)`]
+  ];
+  if (G.pos) rows.push(['진입가', `<span class="num">${fmt(G.pos.e)}</span>`], ['손절(SL)', `<span class="num" style="color:${GCOL.dn}">${fmt(G.pos.stop)}</span>`], ['목표 TP1 / TP2', `<span class="num" style="color:${GCOL.up}">${fmt(G.pos.t1)} / ${fmt(G.pos.t2)}</span>`]);
+  rows.push(['이평선 위치', `<span class="num">8 ${fmt(d.e8)} · 21 ${fmt(d.e21)} · 55 ${fmt(d.e55)}</span>`]);
+  return `<aside class="card pro-only gside"><div class="gsh"><h2>대시보드</h2>${statePill(G.status)}</div>
+    <table class="gdash"><tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table>
+    <div class="gsh gsh2"><h2>조건 점검</h2><span class="muted num">${G.ok9}/9</span></div>
+    <ul class="gck">${G.checks.map(([q, y]) => `<li><span class="ck ${y ? 'ok' : 'no'}">${y ? '✓' : '✗'}</span><span>${esc(q)}</span></li>`).join('')}</ul></aside>`;
+}
+function gobScen(sym) {
+  const G = gobCalc(sym); if (!G) return ''; const L = gobLP(G), c = G.c;
+  const card = (t, p, col, lines) => `<div class="sc"><span class="lbl">${t}</span><span class="scp" style="color:${col}">${p}%</span><div class="bar"><span style="width:${p}%;background:${col}"></span></div><div class="sub">${lines}</div></div>`;
+  return `<div class="card pro-only"><div class="gsh"><h2>다음 10거래일 시나리오</h2><span class="vpill">10일 변동성 ±${fmt(L.sig10, 0)}%</span></div>
+    <div class="scgrid">${card('상방 · 위쪽 레벨 먼저', L.up, GCOL.up, `<span class="num">${fmt(L.U)}</span> (${pct(L.U / c - 1)}) 먼저 터치<br>다음 목표 <span class="num">${fmt(L.U2)}</span>`)}
+    ${card('하방 · 아래쪽 레벨 먼저', L.dn, GCOL.dn, `<span class="num">${fmt(L.D)}</span> (${pct(L.D / c - 1)}) 먼저 터치<br>다음 지지 <span class="num">${fmt(L.D2)}</span>`)}
+    ${card('횡보 · 둘 다 안 닿음', L.none, GCOL.faint, `10일 뒤 가격 범위(80%)<br><span class="num">${fmt(L.q10)} ~ ${fmt(L.q90)}</span> · 중앙값 <span class="num">${fmt(L.q50)}</span>`)}</div>
+    <ul class="story">${gobStory(sym).map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    <p class="note">확률은 최근 20일·60일 실현 변동성 평균(일 ${fmt(L.sigD)}%)으로 추세를 가정하지 않은 2만 개 경로를 돌린 값입니다. 위·아래 레벨은 확정 피벗 고점·저점과 8·21·55·100·200일선 중 현재가에서 0.6ATR 이상 떨어진 가장 가까운 값(없으면 ±2ATR)이고, 다음 레벨은 거기서 1ATR 이상 떨어진 값입니다. 고버니가 레벨 계산식을 공개하지 않아 화면 숫자로 역산한 근사치라 고버니와 조금 다를 수 있어요. 방향 판단은 아래 신호별 과거 성과와 함께 보세요.</p></div>`;
+}
+function gobBar() {
+  return `<div class="gbar pro-only" id="gobBar">
+    <div class="gbrow"><span class="gbl">라벨</span><button class="gchip all${state.catAll ? ' on' : ''}" data-cat="__all">전체</button>${GCATS.map(([k, l, , col]) => `<button class="gchip${state.cats[k] ? ' on' : ''}" data-cat="${k}"><i style="background:${GCOL[col]}"></i>${l}</button>`).join('')}</div>
+    <div class="gbrow"><span class="gbl">표시</span>${GOVL.map(([k, l]) => `<button class="gchip o${state.ovl[k] ? ' on' : ''}" data-ovl="${k}">${l}</button>`).join('')}</div></div>`;
+}
 
 /* ============ 판정 ============ */
 function evaluate(sym) {
@@ -987,12 +1139,16 @@ function parseRec(text) {
 let D = load();
 const ui = (() => { try { return JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) { return {}; } })();
 const state = { mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd' };
-function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort })); } catch (e) {} }
+const CAT_DEF = () => Object.fromEntries(GCATS.map(x => [x[0], !!x[2]]));
+state.cats = Object.assign(CAT_DEF(), ui.cats || {}); state.catAll = ui.catAll !== false;
+state.ovl = Object.assign(Object.fromEntries(GOVL.map(x => [x[0], !!x[2]])), ui.ovl || {});
+function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl })); } catch (e) {} }
 function syms() { return (D.order || Object.keys(D.tickers)).filter(s => D.tickers[s]); }
 
 /* ============ 목록 (고버니식 표) ============ */
 const CAT = { buy: 'buy', wait: 'wait', neutral: 'neutral', partial: 'sell', exit: 'sell', none: 'none' };
-const CHIPS = [['all', '전체'], ['today', '오늘 새 신호'], ['buy', '매수 검토'], ['wait', '매수 대기'], ['neutral', '관망'], ['sell', '매도 신호']];
+const CHIPS = [['all', '전체'], ['today', '오늘 새 신호'], ['hold', '보유'], ['wait', '매수 대기'], ['watch', '관망'], ['risk', '위험']];
+const LKEY = { '보유': 'hold', '매수 대기': 'wait', '관망': 'watch', '위험': 'risk' }, LRANK = { hold: 0, wait: 1, watch: 2, risk: 3, none: 9 };
 const VDOT = { 'v-buy': 'var(--up)', 'v-wait': 'var(--amber)', 'v-neutral': 'var(--faint)', 'v-warn': 'var(--down)', 'v-sell': 'var(--down)', 'v-none': 'var(--line)' };
 const STS = { 3: '반등', 2: '정렬↑', 1: '↑', 0: '중립', '-1': '↓', '-2': '정렬↓', '-3': '꺾임' };
 const stCls = v => v == null ? 's0' : v >= 2 ? 's2' : v > 0 ? 's1' : v === 0 ? 's0' : 'sm1';
@@ -1022,54 +1178,61 @@ function nextPx(e) {
   if (e.v === VERDICT.exit || e.v === VERDICT.partial) return `<span class="np">손절 ${fmt(e.stopPx)}<small>5분 최근 2시간 최저가</small></span>`;
   return `<span class="np">${fmt(e.buyPx)} <span class="${pcls(-Math.abs(e.dist))}">${pct(e.dist)}</span><small>눌림 기준 (5분 20EMA)</small></span>`;
 }
+function rowInfo(sym) {
+  const T = D.tickers[sym], b = T.d || [], last = b[b.length - 1], chg = b.length > 1 ? last.c / b[b.length - 2].c - 1 : null;
+  const S = ezState(sym), G = S?.G, day = last?.t.slice(0, 10);
+  const today = G ? G.ev.filter(e => e.t.slice(0, 10) === day) : [];
+  return { sym, T, last, chg, S, G, today, ezToday: today.filter(e => EZK[e.k]).map(e => ({ ...e, z: EZK[e.k] })), cat: S ? LKEY[S.light.t] : 'none', dist: S ? S.plan.entry / S.c - 1 : null };
+}
 function renderList() {
   const q = state.q.trim().toLowerCase();
-  const all = syms().map(evaluate);
-  all.forEach(e => { e.cat = CAT[Object.keys(VERDICT).find(k => VERDICT[k] === e.v)] || 'none'; e.today = todayList(e.sym); });
-  // 칩
+  const all = syms().map(rowInfo);
   const cnt = k => k === 'all' ? all.length : k === 'today' ? all.filter(e => e.today.length).length : all.filter(e => e.cat === k).length;
   $('#chips').innerHTML = CHIPS.map(([k, l]) => `<button class="chip${state.filter === k ? ' on' : ''}" data-f="${k}">${l}<b>${cnt(k)}</b></button>`).join('');
-  // 오늘 새 신호 요약
-  const day = all.map(e => lastDay(e.sym)).filter(Boolean).sort().pop();
-  const tl = all.flatMap(e => e.today);
-  const n = t => tl.filter(x => x.type === t).length;
+  const day = all.map(e => e.last?.t.slice(0, 10)).filter(Boolean).sort().pop();
+  const ez = all.flatMap(e => e.ezToday), nz = z => ez.filter(x => x.z === z).length, ng = all.reduce((t, e) => t + e.today.length, 0);
   $('#todayBar').innerHTML = `<span class="dt">최근 거래일</span><span class="muted">새로 뜬 신호 (${day || '–'}까지)</span>
-    <span class="pill buy">사 ${n('BUY5')}</span><span class="pill warn">분할매도해 ${n('PS')}</span><span class="pill sell">다정리해 ${n('AX')}</span>
-    <span class="hint2">· 행을 누르면 아래에 그 종목 차트가 열립니다 · 시간은 미국 종목은 미국 동부, 한국 종목은 한국 시간 · 날짜는 종목마다 가장 최근 거래일</span>`;
+    ${['buy', 'add', 'tp', 'sell'].map(z => `<span class="pill" style="background:${EZ[z].bg};color:${EZ[z].col}">${EZ[z].n} ${nz(z)}</span>`).join('')}
+    <span class="pill rec pro-only">고버니 라벨 전체 ${ng}</span>
+    <span class="hint2">· 고버니 규칙(일봉) 기준 · 행을 누르면 아래에 그 종목 차트가 열립니다 · 날짜는 종목마다 가장 최근 거래일</span>`;
   let list = all;
   if (state.filter === 'today') list = list.filter(e => e.today.length);
   else if (state.filter !== 'all') list = list.filter(e => e.cat === state.filter);
-  if (q) list = list.filter(e => e.sym.toLowerCase().includes(q) || (D.tickers[e.sym].name || '').toLowerCase().includes(q));
+  if (q) list = list.filter(e => e.sym.toLowerCase().includes(q) || (e.T.name || '').toLowerCase().includes(q) || (e.T.label || '').toLowerCase().includes(q));
   const s = state.sort;
   list.sort((a, b) => {
     if (s === 'name') return a.sym.localeCompare(b.sym);
     if (s === 'chg') return (ok(b.chg) ? b.chg : -9) - (ok(a.chg) ? a.chg : -9);
     if (s === 'near') return (ok(a.dist) ? Math.abs(a.dist) : 9) - (ok(b.dist) ? Math.abs(b.dist) : 9);
-    return a.v.rank - b.v.rank || (Math.abs(a.dist || 9) - Math.abs(b.dist || 9));
+    return (LRANK[a.cat] - LRANK[b.cat]) || (b.today.length - a.today.length) || (Math.abs(a.dist ?? 9) - Math.abs(b.dist ?? 9));
   });
   if (!state.sel || !D.tickers[state.sel]) state.sel = list[0]?.sym || syms()[0] || null;
   const pro = state.mode === 'pro';
-  const symCell = e => { const T = D.tickers[e.sym]; return `<td class="sticky"><div class="sym">${esc(symLabel(e.sym))}</div><div class="nm">${esc(T.label ? e.sym.replace(/\.K[SQ]$/, '') : (T.name || ''))}${T.demo ? ' · 데모' : ''}</div></td>`; };
-  const pxCells = e => `<td class="r num">${ok(e.px) ? fmt(e.px) : e.last ? fmt(e.last.c) : '–'}</td><td class="r num ${pcls(e.chg)}">${pct(e.chg)}</td>`;
-  const vd = e => `<span class="vd"><i style="background:${VDOT[e.v.cls]}"></i>${esc(e.v.label)}</span>`;
+  const symCell = e => `<td class="sticky"><div class="sym">${esc(symLabel(e.sym))}</div><div class="nm">${esc(e.T.label ? e.sym.replace(/\.K[SQ]$/, '') : (e.T.name || ''))}${e.T.demo ? ' · 데모' : ''}</div></td>`;
+  const pxCells = e => `<td class="r num">${e.last ? fmt(e.last.c) : '–'}</td><td class="r num ${pcls(e.chg)}">${pct(e.chg)}</td>`;
+  const light = e => e.S ? `<span class="spill" style="background:${e.S.light.bg};color:${e.S.light.col}">${e.S.light.t}</span>` : '<span class="muted">–</span>';
   let head, rows;
   if (!pro) {
-    head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>레이더 판정</th><th>오늘 신호</th><th>다음 가격</th><th>한 줄 이유</th></tr>`;
-    rows = list.map(e => `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${vd(e)}</td><td>${e.today.length ? todayPills(e.today) : '<span class="muted">–</span>'}</td><td>${nextPx(e)}</td><td class="why">${esc(reason(e))}</td></tr>`).join('');
-  } else {
-    head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>내 판정</th><th>상태</th><th class="c">추세</th><th class="c">확신</th><th class="c">조건</th><th class="r">RS</th><th class="c">4H</th><th class="c">1H</th><th class="c">30분</th><th>최근 신호 (고버니식)</th></tr>`;
+    head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>지금 신호</th><th>오늘 신호</th><th>다음 가격</th><th>한 줄 이유</th></tr>`;
     rows = list.map(e => {
-      const g = v => `<td class="c"><span class="g ${stCls(v)}" title="${v == null ? '' : STN[v]}">${v == null ? '–' : STS[v]}</span></td>`;
-      const G = gobCalc(e.sym); const le = G?.ev[G.ev.length - 1];
-      const gc = { S: 's2', H: 's2', N: 's0', W: 'sm1', D: 'sm1' };
-      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${vd(e)}</td>
-        <td>${G ? esc(G.status) : '–'}</td><td class="c"><span class="g ${G ? gc[G.G] : ''}" title="${G ? GRADE_N[G.G] + ' ' + G.P + '/7' : ''}">${G ? G.G : '–'}</span></td><td class="c"><b>${G ? G.conv : '–'}</b></td>
-        <td class="c num">${G ? G.ok9 + '/9' : '–'}</td><td class="r num ${G ? pcls(G.rs) : ''}">${G && G.rs != null ? pct(G.rs) : '–'}</td>${g(e.s240)}${g(e.s60)}${g(e.s30)}
+      const P = e.S?.plan;
+      const np = P ? `<span class="np">${fmt(P.entry)} <span class="muted">${P.kind === 'hold' ? '진입' : pct(e.dist)}</span><small>${P.kind === 'hold' ? '보유 중 · 손절 ' + fmt(P.stop) : '매수 검토 가격'}</small></span>` : '–';
+      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${light(e)}</td><td>${e.ezToday.length ? e.ezToday.map(x => ezPill(x.z)).join(' ') : e.today.length ? `<span class="muted">참고 라벨 ${e.today.length}개</span>` : '<span class="muted">–</span>'}</td><td>${np}</td><td class="why">${e.S ? esc(e.S.why) : '일봉 80개 이상 필요'}</td></tr>`;
+    }).join('');
+  } else {
+    head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>상태</th><th class="c">추세</th><th class="c">확신</th><th class="c">조건</th><th class="r">RS</th><th class="c">10일 ↑ / ↓</th><th>오늘 신호</th><th>최근 신호</th></tr>`;
+    rows = list.map(e => {
+      const G = e.G, L = G ? gobLP(G) : null, le = G?.ev[G.ev.length - 1];
+      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}
+        <td>${G ? statePill(G.status) : '–'}</td><td class="c">${G ? `<span class="gb sm" style="background:${gcol(G.G)}" title="${GRADE_N[G.G]} ${G.P}/7">${G.G}</span>` : '–'}</td><td class="c"><b>${G ? G.conv : '–'}</b></td>
+        <td class="c num">${G ? G.ok9 + '/9' : '–'}</td><td class="r num ${G ? pcls(G.rs) : ''}">${G && G.rs != null ? pct(G.rs) : '–'}</td>
+        <td class="c num">${L ? `<span style="color:${GCOL.up};font-weight:700">${L.up}%</span> / <span style="color:${GCOL.dn};font-weight:700">${L.dn}%</span>` : '–'}</td>
+        <td>${e.today.length ? e.today.map(gpill).join(' ') : '<span class="muted">–</span>'}</td>
         <td>${le ? `${gpill(le)} <span class="muted num">${esc(le.t.slice(5, 10).replace('-', '/'))}</span>` : '<span class="muted">–</span>'}</td></tr>`;
     }).join('');
   }
   const Q = state.q.trim().toUpperCase();
-  const cols = pro ? 13 : 7;
+  const cols = pro ? 11 : 7;
   if (Q && /^[A-Z0-9.\-]{1,12}$/.test(Q) && !D.tickers[Q]) rows += `<tr class="addrow"><td colspan="${cols}"><button class="btn sm" id="addFromSearch">＋ '${esc(Q)}' 종목 추가</button></td></tr>`;
   else if (!list.length) rows = `<tr><td colspan="${cols}" class="empty">해당하는 종목이 없어요</td></tr>`;
   $('#list').innerHTML = `<thead>${head}</thead><tbody>${rows}</tbody>`;
@@ -1086,83 +1249,62 @@ function todaySigs(sym) {
 function renderDetail() {
   const el = $('#detail'); const sym = state.sel;
   if (!sym) { el.innerHTML = D.pending ? '<div class="card empty">최신 시세를 불러오는 중…</div>' : '<div class="card empty">종목이 없어요. [데이터 입력]에서 종목을 추가해 주세요.</div>'; return; }
-  const T = D.tickers[sym], e = evaluate(sym), b = T.d || [];
+  const T = D.tickers[sym], b = T.d || [];
   if (state.mode !== 'pro' && state.tf !== 'd') { state.tf = 'd'; state.view = null; }
+  const e = evaluate(sym);
   state.plan = e.empty ? null : { buy: e.buyPx, stop: e.stopPx };
-  const head = `<div class="card head">
-    <div>
-      <div><span class="sym">${esc(symLabel(sym))}</span> <span class="nm">${esc(T.label ? sym + ' · ' + (T.name || '') : (T.name || ''))}</span></div>
-      <div><span class="px">${ok(e.px) ? fmt(e.px) : e.last ? fmt(e.last.c) : '–'}</span> <span class="${pcls(e.chg)}" style="font-weight:700">${pct(e.chg, 2)}</span>
-        <span class="muted" style="font-size:12px">${T.m5?.length ? '5분봉 ' + esc(dispT(sym, T.m5[T.m5.length - 1].t)) + (T.kr ? ' (한국 시간)' : ' (미국 동부)') : e.last ? esc(e.last.t) + ' 종가' : ''}</span></div>
-      ${e.empty ? '' : `<div class="kv">
-        <div><span>${E('눌림 기준가 (5분 20EMA)', '눌림 기준 · ' + e.buyWhy)}</span><b class="num">${fmt(e.buyPx)}</b> <span style="display:inline" class="${pcls(-Math.abs(e.dist))}">${E('현재가와 ' + Math.abs(e.dist * 100).toFixed(1) + '% 차이', pct(e.dist))}</span></div>
-        <div><span>${E('손절 참고 (5분 최근 2시간 최저가)', '손절 참고 · 5분 24봉 저가')}</span><b class="num">${fmt(e.stopPx)}</b></div>
-        <div><span>${E('진입 점수 / 강도', 'entry / strength')}</span><b class="num">${e.ctx.entry} / ${e.ctx.strength}</b></div>
-        <div class="pro-only"><span>5분 RSI · MACD 히스토</span><b class="num">${fmt(e.ctx.rsi, 1)} · ${fmt(e.ctx.hist, 3)}</b></div>
-      </div>`}
-    </div>
-    <div class="verdictbox">
-      <div class="muted" style="font-size:12px">레이더 판정</div>
-      <span class="badge ${e.v.cls}">${e.v.label}</span>
-      <p>${e.v.easy}</p>
-      ${e.hold ? `<div class="hold">보유 중이라면 → <b class="${e.hold.c}">${e.hold.t}</b></div>` : ''}
-    </div>
-  </div>`;
-  const checks = e.empty ? '' : `<div class="card">
-    <h2>조건 점검</h2><p class="sub">${E("5개 모두 '예'일 때만 '사'예요. 매도 판정(분할매도해·다정리해)이 나오면 그게 먼저예요.", "원본 REPLAY5 진입 게이트 → 5분 기술매수. STOCH C60 매도 판정이 우선.")}</p>
-    <ol class="checks">${e.checks.map(c => `<li><span class="st ${c.st}">${c.st === 'yes' ? '예' : c.st === 'no' ? '아니오' : '미입력'}</span><div><div class="q">${c.q}</div><div class="dt">${esc(c.dt)}</div></div></li>`).join('')}</ol>
-    <div class="allyes ${e.allYes ? 'up' : 'muted'}">${e.allYes ? '✔ 모두 예 — 매수 검토 가능' : `예 ${e.checks.filter(c => c.st === 'yes').length} / 5 — 아직 매수 검토 단계 아님`}</div>
-  </div>`;
-  const hasTF = k => (T[k] || []).length > 0;
   const chart = `<div class="card" id="chartCard">
-    <div class="charthead"><h2>${E(esc(symLabel(sym)) + ' 일봉 · 신호 4가지만 표시', '차트')}</h2>
-      <div class="seg small pro-only" id="tfSeg">${['d', 'h4', 'h1', 'h30', 'm5'].map(k => `<button data-tf="${k}" ${seriesOf(T, k).length ? '' : 'disabled'}>${TFN[k]}</button>`).join('')}</div>
-      <div class="seg small pro-only" id="scSeg"><button data-sc="1" class="${state.scenOn !== false ? 'on' : ''}" title="일봉에서만 표시">시나리오 경로</button></div>
+    <div class="charthead"><h2>${E(esc(symLabel(sym)) + ' 일봉 · 신호 4가지만 표시', esc(symLabel(sym)) + ' 차트')}</h2>
+      <div class="seg small pro-only" id="tfSeg">${['d', 'h4', 'h1', 'h30', 'm5'].map(k => `<button data-tf="${k}" ${seriesOf(T, k).length ? '' : 'disabled'}>${k === 'd' ? '일봉 (고버니)' : TFN[k]}</button>`).join('')}</div>
       <div class="seg small" id="perSeg"></div>
       <div class="seg small" id="zoomSeg"><button data-z="out" title="축소">－</button><button data-z="in" title="확대">＋</button><button data-z="end">최신</button></div>
     </div>
+    ${gobBar()}
     <div class="legend easy-only"><span><i style="background:#e07b16"></i>21일선 · 단기 추세</span><span><i style="background:#d6455d"></i>200일선 · 장기 추세</span>${['buy', 'add', 'tp', 'sell'].map(ezPill).join(' ')}</div>
-    <div class="legend pro-only">
-      <span><i style="background:var(--up)"></i>양봉 · %K</span><span><i style="background:var(--down)"></i>음봉 · %D</span>
-      <span><i style="background:var(--amber)"></i>20EMA</span>
-      <span><i style="background:var(--upS);height:10px;border:1px solid var(--up)"></i>${E('오르는 힘 우세 (DMI)', '+DI>−DI & ADX≥20')}</span>
-      <span><i style="background:var(--downS);height:10px;border:1px solid var(--down)"></i>${E('내리는 힘 우세 (DMI)', '−DI>+DI & ADX≥20')}</span>
-      <span>▲ 매수 쪽 · ▼ 매도 쪽 · ◆ 내 기록</span>
+    <div class="legend pro-only" id="gobLeg"><span><i style="background:#8b95a5"></i>EMA 8</span><span><i style="background:#2f6fde"></i>EMA 14</span><span><i style="background:#e07b16"></i>EMA 21</span><span><i style="background:#d4a017"></i>EMA 55</span><span><i style="background:#8a4fd8"></i>SMA 100</span><span><i style="background:#d6455d"></i>SMA 200</span><span><i style="background:#9aa3af"></i>시그마 밴드(20, 2σ)</span><span><i style="background:#c43bb4"></i>지그재그</span><span><i style="background:#5b4fd8"></i>패턴 상·하단선</span><span><i style="background:#d98a1c;width:7px;height:7px;border-radius:50%"></i>응축(스퀴즈) 봉</span></div>
+    <div class="legend pro-only" id="oldLeg">
+      <span><i style="background:var(--up)"></i>양봉 · %K</span><span><i style="background:var(--down)"></i>음봉 · %D</span><span><i style="background:var(--amber)"></i>20EMA</span>
+      <span><i style="background:var(--upS);height:10px;border:1px solid var(--up)"></i>+DI>−DI & ADX≥20</span><span><i style="background:var(--downS);height:10px;border:1px solid var(--down)"></i>−DI>+DI & ADX≥20</span>
+      <span>▲사 · ▼분할 · ▼정리 · ◆ 내 기록 (내 트레이딩뷰 규칙)</span>
     </div>
     <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-    <p class="hint easy-only">오른쪽 칸은 다음 계획의 가격대입니다 (파란 점선 매수 검토, 초록 목표, 빨강 손절) · 내 트레이딩뷰 규칙 신호(사·분할·정리)는 위 표의 '레이더 판정'과 전문가 모드에서 봐요.</p>
-    ${(() => { const Sx = state.mode === 'pro' && state.scenOn !== false && (T.d || []).length ? scenCalc(T.d, gobCalc(sym)) : null; return Sx ? `<p class="hint pro-only">시나리오 경로(일봉): 지난 일봉 중 지금과 ${Sx.lvl} ${Sx.n}번의 10일 뒤 결과입니다. 오른 비율 ${Sx.up}% (중간값 ${pct(Sx.ru)}), 내린 비율 ${Sx.dn}% (중간값 ${pct(Sx.rd)}), 회색 점선은 결과의 80%가 들어간 범위 (${pct(Sx.p10)} ~ ${pct(Sx.p90)}). 과거 통계일 뿐 예측이 아니에요.</p>` : ''; })()}
-    <p class="hint pro-only">점선 = 다음 계획 가격 (주황 눌림 기준 · 파랑 손절 참고, 분봉 차트에서 표시) · 드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨(모든 시간봉 공통): ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆기록 = 내 기록. 한 봉에 여러 번이면 마우스를 올려 횟수 확인</p>
+    <p class="hint easy-only">오른쪽 칸은 다음 계획의 가격대입니다 (파란 점선 매수 검토, 초록 목표, 빨강 손절) · 신호는 고버니 규칙(일봉) 기준이에요.</p>
+    <p class="hint pro-only" id="gobHint">차트 라벨은 짧게 줄여 표시합니다 (M↑ 모멘텀 BUY, 14선 분할청산 · 14선, 피라1 피라미딩 1차 등). 전체 이름과 설명은 봉 위에 마우스를 올리거나 아래 신호 로그에서 볼 수 있어요. 라벨 칩을 누르면 그 종류만 보이고, 다른 칩을 더 누르면 추가돼요. '전체'를 누르면 처음 상태로 돌아갑니다. 오른쪽 축 색: 초록 = 저항(위쪽 레벨), 빨강 = 지지(아래쪽 레벨), 보라 = 패턴 상·하단선. 드래그로 좌우 이동 · Ctrl(⌘)+휠로 확대·축소.</p>
+    <p class="hint pro-only" id="oldHint">분봉 차트는 내 트레이딩뷰 규칙(스토캐스틱 3형제) 화면이에요. 점선 = 눌림 기준(주황)·손절 참고(파랑) · ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆ = 내 기록.</p>
   </div>`;
-  const indT = e.empty ? '' : `<div class="card pro-only"><h2>지표 현황</h2><p class="sub">각 시간프레임 마지막 봉 기준</p><div class="scroll">${indTable(T)}</div></div>`;
-  const sigs = dailySignals(sym);
-  const recent = sigs.slice(-8).reverse();
   const ezR = ezEvents(sym).slice(-10).reverse();
   const ezRecent = `<div class="card easy-only"><div class="perfhead"><h2>최근 신호, 그리고 그 뒤에 어떻게 됐나</h2><span class="muted" style="font-size:12.5px">행을 누르면 차트가 그 날짜로 이동합니다</span></div>
     ${ezR.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">10일 뒤</th><th>무슨 뜻이었나</th></tr></thead><tbody>${ezR.map(x => { const r = fwd(b, x.i, 10); return `<tr class="click" data-jump="${esc(x.t)}" data-type="Z:${x.k}"><td class="num">${esc(x.t.slice(2, 10).replace(/-/g, '.'))}</td><td>${ezPill(x.z)}</td><td class="r num ${pcls(r)}">${r == null ? '아직' : pct(r)}</td><td class="muted">${EZ[x.z].easy}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty">이 기간엔 신호가 없어요</div>'}</div>`;
-  const recentT = `<div class="card pro-only"><h2>최근 신호, 그리고 그 뒤에 어떻게 됐나</h2><p class="sub">행을 누르면 차트가 그 날짜로 이동해요.</p>
-    ${recent.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">10일 뒤</th><th>무슨 뜻이었나</th></tr></thead><tbody>
-    ${recent.map(s => { const r = fwd(b, s.i, 10); const left = b.length - 1 - s.i;
-      const res = r == null ? `<span class="muted">진행 중 (${left}일째)</span>` : `<span class="${pcls(r)}">${pct(r)}</span>`;
-      const after = r == null ? '' : (r > 0 ? ' → 이후 올랐어요' : ' → 이후 내렸어요');
-      return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(s.t.slice(0, 10))}</td><td>${tag(s)}</td><td class="r num">${res}</td><td>${esc(s.meta.easy)}<span class="muted">${after}</span></td></tr>`; }).join('')}
-    </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
-  const logT = `<div class="card"><h2>신호 로그</h2><p class="sub">5분 매수(사) + 30분 매도 행동(분할·정리) + 내 기록 · 성과는 신호가 난 날의 일봉 종가 기준 · 행을 누르면 그 신호가 난 시간봉으로 이동</p>
-    ${sigs.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">5일 후</th><th class="r">10일 후</th><th>설명</th></tr></thead><tbody>
-    ${sigs.slice().reverse().map(s => { const r5 = fwd(b, s.i, 5), r10 = fwd(b, s.i, 10);
-      return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(dispT(sym, s.t))}</td><td>${tag(s)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(state.mode === 'easy' ? s.meta.easy : (s.memo || s.how || s.meta.rule))}</td></tr>`; }).join('')}
-    </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
-  const tiles = e.empty ? '' : `<div class="tiles pro-only">
-    <div class="tile"><span>현재 상태</span><b>${esc(e.v.label)}</b><small>${esc(e.hold.t.split(' · ')[0])}</small></div>
-    <div class="tile"><span>4시간 · 1시간</span><b class="g ${stCls(e.s240)}">${STS[e.s240] ?? '–'} · ${STS[e.s60] ?? '–'}</b><small>${STN[e.s240] ?? ''} / ${STN[e.s60] ?? ''}</small></div>
-    <div class="tile"><span>30분 3형제</span><b class="g ${stCls(e.s30)}">${STS[e.s30] ?? '–'}</b><small>${STN[e.s30] ?? ''}</small></div>
-    <div class="tile"><span>조건 점검</span><b>${e.checks.filter(c => c.st === 'yes').length}/5</b><small>진입 ${e.ctx.entry} · 강도 ${e.ctx.strength}</small></div>
-    <div class="tile"><span>눌림 기준 (5분 20EMA)</span><b class="num">${fmt(e.buyPx)}</b><small>${pct(e.dist)}</small></div>
-    <div class="tile"><span>손절 참고</span><b class="num">${fmt(e.stopPx)}</b><small>5분 24봉 저가</small></div>
-  </div>`;
-  el.innerHTML = head + tiles + `<div class="ezgrid">${chart}${ezSide(sym)}</div>` + ezRecent + checks + gobCards(sym) + tvCard() + indT + recentT + logT + perfCard(sym) + rulesCard();
+  el.innerHTML = headCard(sym) + gobTiles(sym) + `<div class="ezgrid">${chart}${ezSide(sym)}${gobDash(sym)}</div>` + gobScen(sym) + ezRecent + gobLogCards(sym) + tvCard() + mineBox(sym, e);
   setupChart();
   const tb = $('#tvBox'); if (tb) { tb.addEventListener('toggle', () => { state.tvOpen = tb.open; if (tb.open) loadTV(); }); if (state.tvOpen) loadTV(); }
+  const mb = $('#mineBox'); if (mb) mb.addEventListener('toggle', () => { state.mineOpen = mb.open; });
+}
+// 내 트레이딩뷰 규칙(사·분할매도해·다정리해) — 참고용으로 접어 둠
+function mineBox(sym, e) {
+  const T = D.tickers[sym], b = T.d || [];
+  const verdict = e.empty ? '<div class="empty">5분·30분·1시간 데이터가 아직 없어요.</div>' : `<div class="minehead">
+      <div class="verdictbox" style="text-align:left"><div class="muted" style="font-size:12px">내 규칙 판정</div><span class="badge ${e.v.cls}">${e.v.label}</span><p style="margin-left:0">${e.v.easy}</p>
+      ${e.hold ? `<div class="hold">보유 중이라면 → <b class="${e.hold.c}">${e.hold.t}</b></div>` : ''}</div>
+      <div class="kv"><div><span>눌림 기준가 (5분 20EMA)</span><b class="num">${fmt(e.buyPx)}</b> <span class="${pcls(-Math.abs(e.dist))}">${pct(e.dist)}</span></div>
+      <div><span>손절 참고 (5분 최근 2시간 최저가)</span><b class="num">${fmt(e.stopPx)}</b></div><div><span>진입 점수 / 강도</span><b class="num">${e.ctx.entry} / ${e.ctx.strength}</b></div>
+      <div><span>4시간 · 1시간 · 30분</span><b>${STS[e.s240] ?? '–'} · ${STS[e.s60] ?? '–'} · ${STS[e.s30] ?? '–'}</b></div></div></div>`;
+  const checks = e.empty ? '' : `<div class="card"><h2>조건 점검 (내 규칙)</h2><p class="sub">5개 모두 '예'일 때만 '사'예요. 매도 판정(분할매도해·다정리해)이 나오면 그게 먼저예요.</p>
+    <ol class="checks">${e.checks.map(c => `<li><span class="st ${c.st}">${c.st === 'yes' ? '예' : c.st === 'no' ? '아니오' : '미입력'}</span><div><div class="q">${c.q}</div><div class="dt">${esc(c.dt)}</div></div></li>`).join('')}</ol>
+    <div class="allyes ${e.allYes ? 'up' : 'muted'}">${e.allYes ? '✔ 모두 예 — 매수 검토 가능' : `예 ${e.checks.filter(c => c.st === 'yes').length} / 5 — 아직 매수 검토 단계 아님`}</div></div>`;
+  const indT = e.empty ? '' : `<div class="card"><h2>지표 현황</h2><p class="sub">각 시간프레임 마지막 봉 기준</p><div class="scroll">${indTable(T)}</div></div>`;
+  const sigs = dailySignals(sym), recent = sigs.slice(-8).reverse();
+  const recentT = `<div class="card"><h2>최근 신호, 그리고 그 뒤에 어떻게 됐나 (내 규칙)</h2>
+    ${recent.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">10일 뒤</th><th>무슨 뜻이었나</th></tr></thead><tbody>
+    ${recent.map(s => { const r = fwd(b, s.i, 10), left = b.length - 1 - s.i; return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(s.t.slice(0, 10))}</td><td>${tag(s)}</td><td class="r num">${r == null ? `<span class="muted">진행 중 (${left}일째)</span>` : `<span class="${pcls(r)}">${pct(r)}</span>`}</td><td>${esc(s.meta.easy)}</td></tr>`; }).join('')}
+    </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
+  const logT = `<div class="card"><h2>신호 로그 (내 규칙)</h2><p class="sub">5분 매수(사) + 30분 매도 행동(분할·정리) + 내 기록 · 행을 누르면 그 신호가 난 시간봉으로 이동</p>
+    ${sigs.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">5일 후</th><th class="r">10일 후</th><th>설명</th></tr></thead><tbody>
+    ${sigs.slice().reverse().map(s => { const r5 = fwd(b, s.i, 5), r10 = fwd(b, s.i, 10); return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(dispT(sym, s.t))}</td><td>${tag(s)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(s.memo || s.how || s.meta.rule)}</td></tr>`; }).join('')}
+    </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
+  return `<div class="card minecard"><details id="mineBox"${state.mineOpen ? ' open' : ''}><summary>내 트레이딩뷰 규칙 신호 (사 · 분할매도해 · 다정리해) — 참고용으로 접어 둠</summary>
+    <p class="sub" style="margin-top:8px">홈페이지 판정과 신호는 고버니 규칙(일봉)으로 바꿨어요. 직접 만든 5분·30분 스토캐스틱 규칙은 여기와 분봉 차트(전문가 모드)에서 볼 수 있어요.</p>
+    <div class="minebody">${verdict}${checks}${indT}${recentT}${logT}${perfCard(sym)}${rulesCard()}</div></details></div>`;
 }
 
 const GRULES = [
@@ -1185,46 +1327,31 @@ const GRULES = [
   ['채널·삼각형 돌파/이탈', '90봉 안의 확정 피벗 고점·저점 최근 3개씩에 회귀선을 긋고 기울기(ATR 대비)로 상승·하락 채널, 대칭·상승·하강 삼각형, 박스권을 구분. 선 밖으로 0.2ATR 이상 종가가 나가면 돌파·이탈.'],
   ['W 돌파 / M 이탈', '저점-고점-저점(또는 반대) 피벗에서 두 저점 차가 0.8ATR 또는 3% 이내이고 넥라인을 종가로 넘을 때.'],
   ['추세 등급 S·H·N·W·D', '7점 만점: 종가>21일선, 8>21, 21>55, 종가>200일선, 200일선 상승, 주봉 상승(주봉 10>30 EMA), ADX>20이고 +DI 우위. 6점 이상 S, 5점 H, 3~4점 N, 2점 W, 이하 D.'],
-  ['확신 등급', '조건 점검 8개 이상이고 등급 S/H면 A, 6개 이상이고 S/H/N이면 B, 그 외 S/H/N은 C, W/D는 D.']
+  ['확신 등급', '조건 점검 8개 이상이고 등급 S/H면 A, 6개 이상이고 S/H/N이면 B, 그 외 S/H/N은 C, W/D는 D.'],
+  ['NH (52주 신고가)', '고가가 직전 52주(데이터가 짧으면 가능한 기간, 최소 120봉) 최고가를 넘은 봉. 5봉 안에 다시 나오면 생략.'],
+  ['8선 회복', '보유 중 8일선 이탈(8선↓)이 나온 뒤 종가가 다시 8일선 위로 마감한 봉.'],
+  ['시그마 밴드 · 이평선', '시그마 밴드 = 볼린저밴드(20, 2σ). 이평선 = EMA 8·14·21·55, SMA 100·200.'],
+  ['지그재그', '확정 피벗(좌우 5봉) 고점·저점을 교대로 이은 선. 같은 종류가 연속이면 더 극단적인 쪽만 남김.'],
+  ['추세선·채널', '90봉 안 확정 피벗 고점·저점 최근 3개씩의 회귀선을 현재까지 이어서 14봉 앞까지 연장해 그림.'],
+  ['지지·저항 레벨', '위쪽 레벨 = 확정 피벗 고점과 8·21·55·100·200일선 중 현재가 +0.6ATR 이상에서 가장 가까운 값(3ATR 안에 없으면 +2ATR). 저항2 = 거기서 1ATR 이상 위. 아래쪽은 피벗 저점으로 반대 방향. (고버니 비공개 계산을 화면 숫자로 역산한 근사)'],
+  ['10일 시나리오 확률', '최근 20일·60일 일간 로그수익률 표준편차 평균으로 추세 없는(드리프트 0) 2만 개 경로를 10일 돌려, 위쪽 레벨에 먼저 닿은 비율 = 상방, 아래쪽 먼저 = 하방, 둘 다 안 닿음 = 횡보. 10일 뒤 가격 10·50·90% 분위 = 80% 범위·중앙값.'],
+  ['차트 시나리오 경로', '현재가 → 6봉 뒤 위쪽 레벨 → 14봉 뒤 저항2 (초록), 현재가 → 아래쪽 레벨 → 지지2 (빨강), 회색 점선은 10봉 뒤 80% 범위.']
 ];
-function gobCards(sym) {
+function gobLogCards(sym) {
   const G = gobCalc(sym); const b = D.tickers[sym]?.d || [];
   if (!G) return '<div class="card pro-only empty">고버니식 일봉 분석에는 일봉 80개 이상이 필요해요.</div>';
-  const ptsN = ['종가>21일선', '8>21', '21>55', '종가>200일선', '200일선 상승', '주봉 상승', 'ADX>20 · +DI 우위'];
-  const tiles = `<div class="tiles">
-    <div class="tile"><span>현재 상태</span><b>${esc(G.status)}</b><small>${G.pos ? `진입 ${fmt(G.pos.e)} · 손절 ${fmt(G.pos.stop)}` : '진행 중인 사이클 없음'}</small></div>
-    <div class="tile"><span>추세 등급</span><b>${G.G}</b><small>${GRADE_N[G.G]} · ${G.P}/7점</small></div>
-    <div class="tile"><span>확신 등급</span><b>${G.conv}</b><small>조건 ${G.ok9}/9 충족</small></div>
-    <div class="tile"><span>RS (6개월, ${G.bench} 대비)</span><b class="${pcls(G.rs)}">${G.rs == null ? '–' : pct(G.rs)}</b><small>${G.rs == null ? G.bench + ' 데이터가 다음 갱신부터 들어와요' : '플러스면 시장보다 강함'}</small></div>
-    <div class="tile"><span>52주 고점 대비</span><b>${esc(G.dash.off52.split(' ')[0])}</b><small>고점 ${fmt(G.hi52)}</small></div>
-  </div>`;
-  const dash = `<table class="dash"><tbody>
-    <tr><td>추세 등급</td><td>${G.G} · ${GRADE_N[G.G]} (${G.P}/7) <span class="muted">${G.pts.map((x, j) => (x ? '✓' : '✗') + ptsN[j]).join(' · ')}</span></td></tr>
-    <tr><td>EMA 정렬</td><td>${G.dash.align}</td></tr><tr><td>상위 추세</td><td>${esc(G.dash.upper)}</td></tr>
-    <tr><td>추세 에너지</td><td>${esc(G.dash.adx)}</td></tr><tr><td>매수·매도 압력</td><td>상승일 거래량 비중 ${esc(G.dash.upvol)}</td></tr>
-    <tr><td>응축</td><td>${esc(G.dash.sq)}</td></tr><tr><td>거래량 강도</td><td>${esc(G.dash.volx)}</td></tr>
-    <tr><td>52주 고점 대비</td><td>${esc(G.dash.off52)}</td></tr><tr><td>RSI(14)</td><td>${G.dash.rsi}</td></tr><tr><td>ATR(14)</td><td>${esc(G.dash.atr)}</td></tr>
-    <tr><td>이평선 위치</td><td>${esc(G.dash.ma)}</td></tr></tbody></table>`;
-  const chk = `<ol class="checks">${G.checks.map(([q, y]) => `<li><span class="st ${y ? 'yes' : 'no'}">${y ? '✓' : '✗'}</span><div class="q">${esc(q)}</div></li>`).join('')}</ol>`;
   const log = G.ev.slice(-60).reverse();
   const logT = log.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">5일 후</th><th class="r">10일 후</th><th>설명</th></tr></thead><tbody>
     ${log.map(e => { const r5 = fwd(b, e.i, 5), r10 = fwd(b, e.i, 10); return `<tr class="click" data-jump="${esc(e.t)}" data-type="G:${e.k}"><td class="num">${esc(e.t.slice(2, 10))}</td><td>${gpill(e)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(e.d)}</td></tr>`; }).join('')}
     </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>';
-  // 신호별 10일 성과
   const grp = {}; G.ev.forEach(e => { const r = fwd(b, e.i, 10); if (r == null) return; (grp[e.k] = grp[e.k] || []).push(r); });
   const perf = Object.keys(grp).sort((x, y) => grp[y].length - grp[x].length).map(k => { const a = grp[k]; const up = a.filter(r => r > 0).length / a.length, avg = a.reduce((x, y) => x + y, 0) / a.length;
     return `<tr><td>${gpill({ k, d: '' })}</td><td class="r num">${a.length}</td><td class="r num">${(up * 100).toFixed(0)}%</td><td class="r num ${pcls(avg)}">${pct(avg)}</td></tr>`; }).join('');
-  return `<div class="card pro-only"><div class="perfhead"><h2>고버니식 일봉 분석</h2>
-      <div class="seg small" id="gobSeg"><button data-g="on" class="${state.gobOn !== false ? 'on' : ''}">차트 라벨 켜기</button><button data-g="off" class="${state.gobOn === false ? 'on' : ''}">끄기</button></div></div>
-    <p class="sub">고버니 규칙 사전대로 계산한 참고용 레이어예요. 위의 '내 판정'(트레이딩뷰 규칙)과는 따로 움직여요. 라벨을 켜면 일봉 차트에는 고버니식 라벨 · 주황 점(응축) · 8/55 EMA · 200일선만 표시되고, 내 신호(사·분할·정리)는 분봉 차트와 신호 로그에서 봐요.</p>
-    ${tiles}
-    <div class="gobgrid"><div><h3>대시보드</h3>${dash}</div><div><h3>조건 점검 <span class="muted">${G.ok9}/9</span></h3>${chk}</div></div>
-  </div>
-  <div class="card pro-only"><h2>고버니식 신호 로그</h2><p class="sub">일봉 종가 기준 · 행을 누르면 일봉 차트가 그 날짜로 이동해요 (최근 60개)</p>${logT}</div>
+  return `<div class="card pro-only"><h2>고버니식 신호 로그</h2><p class="sub">일봉 종가 기준 · 행을 누르면 일봉 차트가 그 날짜로 이동해요 (최근 60개)</p>${logT}</div>
   <div class="card pro-only"><h2>고버니식 신호별 이후 10일 성과 (이 종목)</h2><div class="scroll"><table><thead><tr><th>신호</th><th class="r">횟수</th><th class="r">10일 뒤 상승 비율</th><th class="r">평균 수익률</th></tr></thead><tbody>${perf || '<tr><td colspan="4" class="empty">데이터 부족</td></tr>'}</tbody></table></div></div>
   <div class="card pro-only"><details><summary>규칙 사전 (고버니식) — 각 라벨이 어떤 규칙으로 계산되는지</summary>
     <table style="margin-top:10px"><thead><tr><th>라벨</th><th>계산 규칙 (일봉)</th></tr></thead><tbody>${GRULES.map(([a, r]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(r)}</td></tr>`).join('')}</tbody></table>
-    <p class="note">고버니 원본 코드를 본 게 아니라 이 규칙 설명을 그대로 옮겨 만든 거라, 세부 계산(피벗 확정 방식, 시그마 밴드 기간 등)이 원본과 조금 다를 수 있어요. 10일 위/아래 확률(몬테카를로)과 시나리오 경로는 아직 넣지 않았어요.</p></details></div>`;
+    <p class="note">고버니 페이지에 공개된 규칙 사전 그대로 계산했어요. 고버니 신호 자체는 서버에서 미리 계산돼 공개되지 않아서, 세부(피벗 확정 시점, 레벨 선택 등)는 조금 다를 수 있어요. 고버니는 일부 종목만 다루기 때문에 내 28개 종목에 똑같이 적용하려면 이렇게 직접 계산하는 방법뿐이에요.</p></details></div>`;
 }
 
 /* ============ 주린이: 고버니식 4가지 신호 ============ */
@@ -1380,7 +1507,7 @@ function loadTV() {
 /* ============ 차트 ============ */
 const chart = { hover: null, drag: null, raf: 0 };
 function curBars() { return seriesOf(D.tickers[state.sel], state.tf); }
-function perOptions() { return state.tf === 'd' ? [[63, '3개월'], [126, '6개월'], [252, '1년']] : [[60, '60봉'], [120, '120봉'], [240, '240봉']]; }
+function perOptions() { return state.tf === 'd' ? [[63, '3M'], [126, '6M'], [252, '1Y'], [9999, '전체']] : [[60, '60봉'], [120, '120봉'], [240, '240봉']]; }
 function resetView() {
   const len = curBars().length; const c = Math.max(Math.min(state.per, len), Math.min(15, len));
   state.view = { start: len - c, count: c, len, tf: state.tf, sym: state.sel };
@@ -1395,6 +1522,8 @@ function setupChart() {
   const v = state.view; const len = curBars().length;
   if (!v || v.sym !== state.sel || v.tf !== state.tf || v.len !== len) resetView();
   document.querySelectorAll('#tfSeg button').forEach(b => b.classList.toggle('on', b.dataset.tf === state.tf));
+  const gd = state.mode === 'pro' && state.tf === 'd';
+  [['gobBar', gd], ['gobLeg', gd], ['gobHint', gd], ['oldLeg', state.mode === 'pro' && !gd], ['oldHint', state.mode === 'pro' && !gd]].forEach(([id, on]) => { const x = document.getElementById(id); if (x) x.style.display = on ? '' : 'none'; });
   $('#perSeg').innerHTML = perOptions().map(([n, l]) => `<button data-per="${n}" class="${state.per === n ? 'on' : ''}">${l}</button>`).join('');
   cv.onpointerdown = e => { chart.drag = { x: e.clientX, start: state.view.start }; cv.setPointerCapture(e.pointerId); cv.classList.add('dragging'); };
   cv.onpointermove = e => {
@@ -1451,13 +1580,14 @@ function drawChart() {
   }
   const I = ind(b); const v = state.view; const pro = state.mode === 'pro';
   const ezD = !pro && state.tf === 'd'; const EZS = ezD ? ezState(state.sel) : null;
-  const SC = pro && state.tf === 'd' && state.scenOn !== false ? scenCalc(b, gobCalc(state.sel)) : null;
-  const P = ezD ? [{ k: 'price', h: W < 600 ? 320 : 420 }] : [{ k: 'price', h: W < 600 ? 260 : 320 }, { k: 's5', h: 72 }, { k: 's10', h: 72 }, { k: 's20', h: 72 }];
-  if (pro) P.push({ k: 'rsi', h: 62 }, { k: 'macd', h: 72 }, { k: 'dmi', h: 72 });
+  const GG = pro && state.tf === 'd' ? gobCalc(state.sel) : null, LP = GG ? gobLP(GG) : null;
+  const atEnd = v.start + v.count >= b.length - .5, scenOn = !!(GG && state.ovl.scen && atEnd);
+  const P = ezD || GG ? [{ k: 'price', h: W < 600 ? 340 : (GG ? 520 : 420) }] : [{ k: 'price', h: W < 600 ? 260 : 320 }, { k: 's5', h: 72 }, { k: 's10', h: 72 }, { k: 's20', h: 72 }];
+  if (pro && !GG) P.push({ k: 'rsi', h: 62 }, { k: 'macd', h: 72 }, { k: 'dmi', h: 72 });
   const GAP = 8, AXB = 22; let yy = 2; P.forEach(p => { p.y = yy; yy += p.h + GAP; }); const H = yy - GAP + AXB;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-  const L = 4, R = W - 58, PWall = R - L, ZW = EZS ? Math.round(PWall * .26) : SC ? Math.round(PWall * .2) : 0, PW = PWall - ZW, RC = L + PW, bw = PW / v.count;
+  const L = 4, R = W - 58, PWall = R - L, ZW = EZS ? Math.round(PWall * .26) : scenOn ? Math.round((14 * PWall / v.count + 84) / (1 + 14 / v.count)) : 0, PW = PWall - ZW, RC = L + PW, bw = PW / v.count;
   Object.assign(chart, { L, PW, bw });
   const X = i => L + (i - v.start + 0.5) * bw;
   const i0 = Math.max(0, Math.floor(v.start)), i1 = Math.min(b.length - 1, Math.ceil(v.start + v.count));
@@ -1496,17 +1626,21 @@ function drawChart() {
   P.forEach(p => {
     if (p.k === 'price') {
       let lo = Infinity, hiP = -Infinity;
-      for (let i = i0; i <= i1; i++) { lo = Math.min(lo, b[i].l); hiP = Math.max(hiP, b[i].h); if (I.ema20[i] != null) { lo = Math.min(lo, I.ema20[i]); hiP = Math.max(hiP, I.ema20[i]); } }
+      for (let i = i0; i <= i1; i++) { lo = Math.min(lo, b[i].l); hiP = Math.max(hiP, b[i].h); if (!GG && I.ema20[i] != null) { lo = Math.min(lo, I.ema20[i]); hiP = Math.max(hiP, I.ema20[i]); } }
       if (EZS) { const pl = EZS.plan; [pl.entry, pl.stop, pl.target].forEach(x => { if (ok(x)) { lo = Math.min(lo, x); hiP = Math.max(hiP, x); } }); for (let i = i0; i <= i1; i++) { const q = EZS.G.s200[i]; if (q != null) { lo = Math.min(lo, q); hiP = Math.max(hiP, q); } } }
-      if (SC) { const c0 = b[b.length - 1].c; [SC.p10, SC.p90, SC.ru, SC.rd].forEach(r => { const x = c0 * (1 + r); lo = Math.min(lo, x); hiP = Math.max(hiP, x); }); }
+      if (GG) { const sp0 = hiP - lo, o = state.ovl; const inc = x => { if (x != null && isFinite(x) && x > lo - sp0 * .6 && x < hiP + sp0 * .6) { lo = Math.min(lo, x); hiP = Math.max(hiP, x); } };
+        for (let i = i0; i <= i1; i++) { if (o.ma) [GG.e8, GG.e14, GG.e21, GG.e55, GG.s100, GG.s200].forEach(a => inc(a[i])); if (o.band) { inc(GG.bbU[i]); inc(GG.bbL[i]); } }
+        const inc2 = x => { lo = Math.min(lo, x); hiP = Math.max(hiP, x); };
+        if (atEnd && scenOn) [LP.U, LP.D, LP.U2, LP.D2, LP.q10, LP.q90].forEach(inc2); else if (atEnd && o.lv) [LP.U, LP.D].forEach(inc2); }
+      const TAGS = [];
       const span = (hiP - lo) || hiP * .02 || 1; const top = hiP + span * .12, bot = lo - span * .10;
       const ph = p.h * .82;
       const Y = val => p.y + 4 + (top - val) / (top - bot) * (ph - 4);
       clip(p, () => {
-        if (!EZS) dmiBg(p); highlight(p);
+        if (!EZS && !GG) dmiBg(p); highlight(p);
         for (let k = 0; k <= 4; k++) { const val = bot + (top - bot) * k / 4; hline(p, Y(val), C.grid); }
         let mv = 0; for (let i = i0; i <= i1; i++) mv = Math.max(mv, b[i].v || 0);
-        if (mv > 0) { ctx.globalAlpha = .28; for (let i = i0; i <= i1; i++) { const vh = (b[i].v || 0) / mv * p.h * .16; ctx.fillStyle = b[i].c >= b[i].o ? C.up : C.down; ctx.fillRect(X(i) - bw * .35, p.y + p.h - vh, Math.max(1, bw * .7), vh); } ctx.globalAlpha = 1; }
+        if (mv > 0 && (!GG || state.ovl.vol)) { ctx.globalAlpha = .28; for (let i = i0; i <= i1; i++) { const vh = (b[i].v || 0) / mv * p.h * .16; ctx.fillStyle = b[i].c >= b[i].o ? C.up : C.down; ctx.fillRect(X(i) - bw * .35, p.y + p.h - vh, Math.max(1, bw * .7), vh); } ctx.globalAlpha = 1; }
         for (let i = i0; i <= i1; i++) {
           const x = X(i), q = b[i], col = q.c >= q.o ? C.up : C.down;
           ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(Math.round(x) + .5, Y(q.h)); ctx.lineTo(Math.round(x) + .5, Y(q.l)); ctx.stroke();
@@ -1526,21 +1660,33 @@ function drawChart() {
             ctx.fillRect(R + 2, ly[k] - 8, 54, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.fillText(fmt(pv), R + 5, ly[k]); });
           ctx.save(); ctx.setLineDash([2, 3]); ctx.strokeStyle = '#2f6fde'; ctx.beginPath(); ctx.moveTo(X(b.length - 1), Y(b[b.length - 1].c)); ctx.lineTo(zx + 4, yE); ctx.stroke(); ctx.restore();
           ctx.font = font(10.5); ctx.fillStyle = C.muted; ctx.textBaseline = 'bottom'; ctx.fillText('앞으로', zx + 8, p.y + p.h - 4);
-        } else path(I.ema20, Y, C.amber, 1.5);
-        if (pro && isD && state.gobOn !== false) { const G = gobCalc(state.sel); if (G) {
-          path(G.e8, Y, '#7a8ca8', 1); path(G.e55, Y, '#8e5bd6', 1.2); path(G.s200, Y, C.ink, 1.4);
-          ctx.fillStyle = '#f08a00'; for (let i = i0; i <= i1; i++) if (G.sq[i]) { ctx.beginPath(); ctx.arc(X(i), p.y + p.h - 4, Math.max(1.5, Math.min(3, bw * .25)), 0, 7); ctx.fill(); }
-        } }
-        if (SC) {
-          const zx = RC + 4, zw = R - zx, c0 = b[b.length - 1].c, x0 = X(b.length - 1), y0 = Y(c0);
-          ctx.fillStyle = 'rgba(120,130,150,.08)'; ctx.fillRect(zx, p.y, zw, p.h);
-          ctx.font = font(11); ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('시나리오 구간 · ' + SC.H + '일', zx + 6, p.y + 22);
-          const xe = R - 6, at = (r, t) => Y(c0 * (1 + r * Math.pow(t, .85)));
-          ctx.save(); ctx.setLineDash([2, 4]); ctx.strokeStyle = C.faint; ctx.lineWidth = 1;
-          [SC.p90, SC.p10].forEach(r => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(xe, Y(c0 * (1 + r))); ctx.stroke(); });
-          ctx.restore(); ctx.font = font(10.5); ctx.fillStyle = C.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('80% 범위', xe - 2, Y(c0 * (1 + SC.p90)) - 3);
-          [[SC.ru, '#1e8e5a'], [SC.rd, '#d6455d']].forEach(([r, col]) => { ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x0, y0);
-            for (let k = 1; k <= 8; k++) { const t = k / 8; ctx.lineTo(x0 + (xe - x0) * t, at(r, t)); } ctx.stroke(); ctx.restore(); });
+        } else if (!GG) path(I.ema20, Y, C.amber, 1.5);
+        if (GG) {
+          const o = state.ovl, n = b.length, ph0 = p.y + p.h * .82;
+          if (o.band) { ctx.save(); ctx.setLineDash([4, 3]); path(GG.bbU, Y, '#9aa3af', 1); path(GG.bbL, Y, '#9aa3af', 1); ctx.restore(); }
+          if (o.ma) { path(GG.e8, Y, '#8b95a5', 1); path(GG.e14, Y, '#2f6fde', 1.2); path(GG.e21, Y, '#e07b16', 1.5); path(GG.e55, Y, '#d4a017', 1.5); path(GG.s100, Y, '#8a4fd8', 1.5); path(GG.s200, Y, '#d6455d', 2); }
+          if (o.zz && GG.zz.length) { ctx.beginPath(); GG.zz.forEach((z, j) => { const x = X(z.i), y = Y(z.p); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.strokeStyle = '#c43bb4'; ctx.lineWidth = 1.4; ctx.stroke(); }
+          if (o.dots) { ctx.fillStyle = GCOL.warn; for (let i = i0; i <= i1; i++) if (GG.sq[i]) { ctx.beginPath(); ctx.arc(X(i), ph0 + 5, Math.max(1.6, Math.min(3, bw * .3)), 0, 7); ctx.fill(); } }
+          const pt = GG.pattern;
+          if (o.pat && pt && pt.name !== '불규칙') { const x1 = n - 1 + 14; ctx.strokeStyle = '#5b4fd8'; ctx.lineWidth = 2;
+            [[pt.us, pt.ub], [pt.ls, pt.lb]].forEach(([sl, ic]) => { ctx.beginPath(); ctx.moveTo(X(pt.x0i), Y(sl * pt.x0i + ic)); ctx.lineTo(X(x1), Y(sl * x1 + ic)); ctx.stroke(); });
+            TAGS.push([pt.upNow, '#5b4fd8', PSH(pt.name) + ' 상단'], [pt.loNow, '#5b4fd8', PSH(pt.name) + ' 하단']); }
+          const hl2 = (v2, col, dash, lb) => { const y = Y(v2); if (y < p.y || y > p.y + p.h) return; ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke(); ctx.restore(); TAGS.push([v2, col, lb]); };
+          if (o.lv && atEnd) { hl2(LP.U, GCOL.up, [5, 4], '저항'); hl2(LP.D, GCOL.dn, [5, 4], '지지'); hl2(LP.U2, GCOL.up, [2, 4], '저항2'); hl2(LP.D2, GCOL.dn, [2, 4], '지지2');
+            if (GG.pos) { hl2(GG.pos.e, GCOL.acc, [], '진입'); hl2(GG.pos.stop, GCOL.dn, [], '손절'); hl2(GG.pos.t1, GCOL.up, [], 'TP1'); } }
+          if (scenOn) {
+            const cl = b[n - 1].c, X0 = X(n - 1), XF = k => X0 + k * bw;
+            ctx.fillStyle = 'rgba(120,130,150,.08)'; ctx.fillRect(RC, p.y, R - RC, p.h);
+            ctx.font = font(11); ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('시나리오 구간', RC + 6, p.y + 24);
+            ctx.save(); ctx.lineWidth = 2.2; ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = GCOL.up; ctx.beginPath(); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(6), Y(LP.U)); ctx.lineTo(XF(14), Y(LP.U2)); ctx.stroke();
+            ctx.strokeStyle = GCOL.dn; ctx.beginPath(); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(6), Y(LP.D)); ctx.lineTo(XF(14), Y(LP.D2)); ctx.stroke();
+            ctx.setLineDash([2, 4]); ctx.lineWidth = 1; ctx.strokeStyle = C.faint; ctx.beginPath(); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(10), Y(LP.q90)); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(10), Y(LP.q10)); ctx.stroke(); ctx.restore();
+            const tagAt = (x, y, txt, col) => { ctx.font = font(11, 700); const w = ctx.measureText(txt).width + 10; ctx.fillStyle = col; ctx.fillRect(x + 4, y - 9, w, 18); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x + 9, y + .5); };
+            let yu = Y(LP.U2), yd = Y(LP.D2); if (yd - yu < 22) { const m2 = (yu + yd) / 2; yu = m2 - 11; yd = m2 + 11; }
+            tagAt(XF(14), yu, `상방 ${LP.up}%`, GCOL.up); tagAt(XF(14), yd, `하방 ${LP.dn}%`, GCOL.dn);
+            ctx.fillStyle = C.faint; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('80% 범위', XF(10) + 4, Y(LP.q90) - 2);
+          }
         }
         if (state.plan && !isD) [[state.plan.buy, C.amber, '눌림 ', 0], [state.plan.stop, C.down, '손절 ', 1]].forEach(([pv, col, lb, dn]) => {
           if (!ok(pv) || pv < bot || pv > top) return; const y = Math.round(Y(pv)) + .5;
@@ -1552,6 +1698,14 @@ function drawChart() {
         sigAt.forEach((list, i) => {
           if (i < i0 || i > i1) return; const x = X(i); let below = 0, above = 0;
           list.forEach(s => {
+            if (s.meta.g) { const g = s.meta.g, col = g.col, dn = g.below, sz = Math.max(3, Math.min(5, bw * .5)), showT = bw >= 2.2, stp = showT ? 24 : 10;
+              const y = dn ? Y(b[i].l) + 5 + below * stp : Y(b[i].h) - 5 - above * stp; ctx.fillStyle = col;
+              if (g.shape === 'arrow') { ctx.beginPath(); if (dn) { ctx.moveTo(x, y); ctx.lineTo(x - sz, y + sz * 1.4); ctx.lineTo(x + sz, y + sz * 1.4); } else { ctx.moveTo(x, y); ctx.lineTo(x - sz, y - sz * 1.4); ctx.lineTo(x + sz, y - sz * 1.4); } ctx.fill(); }
+              else { const yy2 = dn ? y + sz : y - sz; ctx.beginPath(); if (g.shape === 'circle') ctx.arc(x, yy2, sz * .8, 0, 7); else ctx.rect(x - sz * .8, yy2 - sz * .8, sz * 1.6, sz * 1.6); ctx.fill(); }
+              if (showT) { ctx.font = font(10.5, 600); const tw = ctx.measureText(g.sh).width + 8, th = 15, by = dn ? y + sz * 1.5 + 2 : y - sz * 1.5 - 2 - th;
+                ctx.fillStyle = C.panel; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x - tw / 2, by, tw, th, 3); else ctx.rect(x - tw / 2, by, tw, th); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.sh, x, by + th / 2 + .5); ctx.font = font(10, 700); }
+              if (dn) below++; else above++; return; }
             const side = s.meta.side; const col = side === 'buy' ? C.up : side === 'sell' ? C.down : C.rec; ctx.fillStyle = col;
             if (s.meta.pill) { const pm = s.meta.pill; ctx.font = font(11, 700); const tw = ctx.measureText(pm.n).width + 12, th = 18;
               const yy0 = side === 'buy' ? Y(b[i].l) + 8 + below * 22 : Y(b[i].h) - 8 - th - above * 22;
@@ -1575,12 +1729,12 @@ function drawChart() {
       for (let k = 0; k <= 4; k++) { const val = bot + (top - bot) * k / 4; axisLabel(Y(val), fmt(val, val < 10 ? 2 : val < 1000 ? 2 : 0)); }
       const lc = b[b.length - 1]; const ly = Y(lc.c);
       if (ly > p.y && ly < p.y + p.h) { const col = lc.c >= (b[b.length - 2]?.c ?? lc.o) ? C.up : C.down; ctx.fillStyle = col; ctx.fillRect(R + 1, ly - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillText(fmt(lc.c), R + 5, ly); }
-      if (SC) { const c0 = lc.c, items = [[c0 * (1 + SC.ru), '#1e8e5a', `상방 ${SC.up}%`], [c0 * (1 + SC.rd), '#d6455d', `하방 ${SC.dn}%`]];
-        const yu0 = Y(items[0][0]), yd0 = Y(items[1][0]), gap = yd0 - yu0, sh = gap < 22 ? (22 - gap) / 2 : 0; items.forEach(([pv, col, lb], k) => { const y = Y(pv) + (k ? sh : -sh); ctx.font = font(11, 700); const tw = ctx.measureText(lb).width + 10; const bx = R - tw - 2;
-          ctx.fillStyle = col; ctx.fillRect(bx, y - 9, tw, 18); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(lb, bx + 5, y + .5);
-          ctx.fillStyle = col; ctx.fillRect(R + 1, y - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.fillText(fmt(pv), R + 5, y); }); }
+      if (TAGS.length) { const placed = []; TAGS.sort((x, y) => Y(x[0]) - Y(y[0])).forEach(([v2, col, lb]) => { let y = Y(v2); if (y < p.y + 8 || y > p.y + p.h - 8) return; placed.forEach(py => { if (Math.abs(py - y) < 16) y = py + 16; }); placed.push(y);
+          ctx.fillStyle = col; ctx.fillRect(R + 1, y - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(fmt(v2), R + 5, y);
+ }); }
       const q = b[vi];
-      title(p, EZS ? [[`${symLabel(state.sel)} · 일봉`, C.ink], [`21일선 ${fmt(EZS.G.e21[vi])}`, '#e07b16'], [`200일선 ${EZS.G.s200[vi] == null ? '–' : fmt(EZS.G.s200[vi])}`, '#d6455d'], [`종가 ${fmt(q.c)}`, C.muted]] : [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
+      const chq = b[vi - 1] ? q.c / b[vi - 1].c - 1 : null;
+      title(p, GG ? [[q.t.slice(0, 10), C.ink], [`시 ${fmt(q.o)}`, C.muted], [`고 ${fmt(q.h)}`, C.muted], [`저 ${fmt(q.l)}`, C.muted], [`종 ${fmt(q.c)}`, C.ink], [pct(chq), chq >= 0 ? C.up : C.down], [`거래량 ${q.v ? (q.v / 1e6).toFixed(1) + 'M' : '–'}`, C.muted]] : EZS ? [[`${symLabel(state.sel)} · 일봉`, C.ink], [`21일선 ${fmt(EZS.G.e21[vi])}`, '#e07b16'], [`200일선 ${EZS.G.s200[vi] == null ? '–' : fmt(EZS.G.s200[vi])}`, '#d6455d'], [`종가 ${fmt(q.c)}`, C.muted]] : [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
     } else if (p.k === 's5' || p.k === 's10' || p.k === 's20') {
       const a = I[p.k]; const lab = { s5: '막내 5-3-3', s10: '둘째 10-6-6', s20: '큰형 20-12-12' }[p.k]; const EE = eng(b), cj = EE.code[{ s5: 0, s10: 1, s20: 2 }[p.k]][vi];
       const Y = val => p.y + 3 + (100 - val) / 100 * (p.h - 6);
@@ -1709,12 +1863,17 @@ $('#list').onclick = e => {
 };
 $('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.filter = c.dataset.f; renderList(); };
 $('#detail').onclick = e => {
+  const gc = e.target.closest('#gobBar .gchip');
+  if (gc) {
+    if (gc.dataset.ovl) state.ovl[gc.dataset.ovl] = !state.ovl[gc.dataset.ovl];
+    else if (gc.dataset.cat === '__all') { state.cats = CAT_DEF(); state.catAll = true; }
+    else { const k = gc.dataset.cat; if (state.catAll) { Object.keys(state.cats).forEach(x => state.cats[x] = x === k); state.catAll = false; } else { state.cats[k] = !state.cats[k]; if (!Object.values(state.cats).some(Boolean)) { state.cats = CAT_DEF(); state.catAll = true; } } }
+    $('#gobBar').outerHTML = gobBar(); saveUI(); drawChart(); return;
+  }
   const tf = e.target.closest('#tfSeg button'); if (tf && !tf.disabled) { state.tf = tf.dataset.tf; state.per = tf.dataset.tf === 'd' ? 126 : 120; state.hl = null; setupChart(); return; }
   const per = e.target.closest('#perSeg button'); if (per) { state.per = +per.dataset.per; resetView(); setupChart(); return; }
   const z = e.target.closest('#zoomSeg button');
   if (z) { if (z.dataset.z === 'in') zoom(1 / 1.3); else if (z.dataset.z === 'out') zoom(1.3); else { const v = state.view; v.start = curBars().length - v.count; clampView(); sched(); } return; }
-  const sc = e.target.closest('#scSeg button'); if (sc) { state.scenOn = state.scenOn === false; renderDetail(); return; }
-  const gb = e.target.closest('#gobSeg button'); if (gb) { state.gobOn = gb.dataset.g === 'on'; document.querySelectorAll('#gobSeg button').forEach(x => x.classList.toggle('on', x === gb)); drawChart(); return; }
   const tvb = e.target.closest('#tvInt button'); if (tvb) { state.tvInt = tvb.dataset.tv; document.querySelectorAll('#tvInt button').forEach(x => x.classList.toggle('on', x === tvb)); loadTV(); return; }
   const j = e.target.closest('tr[data-jump]'); if (j) jumpTo(j.dataset.jump, j.dataset.type);
 };
