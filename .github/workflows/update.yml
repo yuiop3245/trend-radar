@@ -12,6 +12,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      alert:
+        description: "텔레그램 알림 (none: 안 보냄 / test: 연결 확인 / us·kr: 오늘 확정 신호)"
+        type: choice
+        options: [none, test, us, kr]
+        default: none
 
 permissions:
   contents: read
@@ -41,6 +47,16 @@ jobs:
 
       - name: 시세 받기
         run: python scripts/update_data.py
+
+      - name: 신호 알림 (텔레그램)
+        # 장 마감 뒤 실행(미국 21:50 UTC, 국내 06:45 UTC) 또는 수동 실행에서 고른 경우에만
+        if: (github.event_name == 'schedule' && (github.event.schedule == '50 21 * * 1-5' || github.event.schedule == '45 6 * * 1-5')) || (github.event_name == 'workflow_dispatch' && inputs.alert != 'none')
+        continue-on-error: true
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERT_MARKET: ${{ github.event_name == 'workflow_dispatch' && inputs.alert || (github.event.schedule == '45 6 * * 1-5' && 'kr' || 'us') }}
+        run: node scripts/alert.mjs
 
       - name: 배포 폴더 준비
         run: |
