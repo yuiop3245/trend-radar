@@ -101,9 +101,76 @@ def fetch(sym, keys, prev, failed):
         time.sleep(0.2)
     if kr:
         entry["kr"] = True
+        if "d" in keys:
+            bars, src, errs = kr_daily(sym)
+            if bars:
+                entry["d"] = bars
+                entry["dsrc"] = src
+            else:
+                entry["dsrc"] = "yahoo"
+            if errs:
+                KR_NOTES[sym] = errs
         if entry.get("d"):
             fill_kr_daily(tk, sym, entry)
     return entry
+
+
+KR_NOTES = {}
+
+
+def kr_df_bars(df, cols):
+    """국내 데이터 표(pykrx·FinanceDataReader)를 [날짜, 시, 고, 저, 종, 거래량] 목록으로."""
+    out = []
+    if df is None or getattr(df, "empty", True):
+        return out
+    for ts, row in df.iterrows():
+        try:
+            o, h, l, c = (float(row[k]) for k in cols[:4])
+            v = row[cols[4]] if cols[4] in row else 0
+            v = 0 if v is None or (isinstance(v, float) and math.isnan(v)) else int(v)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if any(math.isnan(x) for x in (o, h, l, c)) or c <= 0:
+            continue
+        if o <= 0 or h <= 0 or l <= 0:  # 거래 없는 날(시가 0 등)은 종가로 채운다
+            o = h = l = c
+        t = ts.strftime("%Y-%m-%d")
+        out.append([t, round(o, 4), round(max(h, o, c), 4), round(min(l, o, c), 4), round(c, 4), v])
+    return out
+
+
+def kr_daily(sym, years=5):
+    """국내 일봉을 한국거래소 데이터로: pykrx → FinanceDataReader 순서로 시도.
+    둘 다 안 되면 None (야후 일봉을 그대로 씀)."""
+    end = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).date()
+    start = end - dt.timedelta(days=int(365.25 * years) + 7)
+    code = sym.split(".")[0]
+    errs = []
+    try:
+        from pykrx import stock
+        s, e = start.strftime("%Y%m%d"), end.strftime("%Y%m%d")
+        if sym == "^KS11":
+            df = stock.get_index_ohlcv(s, e, "1001")
+        else:
+            df = stock.get_market_ohlcv(s, e, code)
+            if df is None or df.empty:
+                df = stock.get_etf_ohlcv_by_date(s, e, code)
+        bars = kr_df_bars(df, ["시가", "고가", "저가", "종가", "거래량"])
+        if len(bars) > 200:
+            return bars, "pykrx", errs
+        errs.append(f"pykrx {len(bars)}개")
+    except Exception as ex:  # 설치 안 됨·사이트 변경·접속 실패
+        errs.append(f"pykrx: {ex}"[:200])
+    try:
+        import FinanceDataReader as fdr
+        df = fdr.DataReader("KS11" if sym == "^KS11" else code, start.isoformat())
+        bars = kr_df_bars(df, ["Open", "High", "Low", "Close", "Volume"])
+        if len(bars) > 200:
+            return bars, "fdr", errs
+        errs.append(f"fdr {len(bars)}개")
+    except Exception as ex:
+        errs.append(f"fdr: {ex}"[:200])
+    return None, None, errs
 
 
 def fill_kr_daily(tk, sym, entry):
@@ -194,6 +261,8 @@ def main():
     data["source"] = "Yahoo Finance via yfinance"
     if failed:
         data["failed"] = failed
+    if KR_NOTES:
+        data["krNotes"] = KR_NOTES
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     print(f"data.json 저장 ({os.path.getsize(OUT) // 1024}KB)" + (f" · 실패 {len(failed)}건" if failed else ""))
