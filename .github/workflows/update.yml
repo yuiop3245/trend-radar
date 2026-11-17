@@ -6,6 +6,9 @@ on:
     - cron: "5,35 13-20 * * 1-5"
     # 장 마감 뒤 일봉 확정 (한국시간 06:50 / 서머타임 05:50 무렵)
     - cron: "50 21 * * 1-5"
+    # 한국 장중 (한국시간 09:05~15:35) 30분마다 + 마감 뒤 한 번
+    - cron: "5,35 0-6 * * 1-5"
+    - cron: "45 6 * * 1-5"
   push:
     branches: [main]
   workflow_dispatch:
@@ -22,6 +25,7 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
