@@ -715,7 +715,7 @@ function gobCalc(sym) {
   const sq = c.map((_, i) => bbU[i] != null && atr20[i] != null && e20[i] != null && bbU[i] < e20[i] + 1.5 * atr20[i] && bbL[i] > e20[i] - 1.5 * atr20[i]);
   const vs20 = smaN(v, 20);
   // 주봉 10/30 EMA
-  const wk = b.map(x => { const d = new Date(x.t.slice(0, 10) + 'T00:00:00Z'); const dow = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - dow); return d.toISOString().slice(0, 10); });
+  const wk = b.map(x => { const dn = Date.UTC(+x.t.slice(0, 4), +x.t.slice(5, 7) - 1, +x.t.slice(8, 10)) / 864e5; return Math.floor((dn + 3) / 7); }); // 월요일 시작 주 번호
   const wIdx = []; const wC = []; wk.forEach((k, i) => { if (!wC.length || wk[i - 1] !== k) wC.push(c[i]); else wC[wC.length - 1] = c[i]; wIdx.push(wC.length - 1); });
   const w10 = emaN(wC, 10), w30 = emaN(wC, 30);
   const wUp = i => w10[wIdx[i]] != null && w30[wIdx[i]] != null && w10[wIdx[i]] > w30[wIdx[i]];
@@ -929,7 +929,7 @@ function gobCalc(sym) {
   const v50 = smaN(v, 50)[i - 1];
   const resP = (() => { const ph = PH.filter(x => x.k <= n - 1 && x.i >= n - 61 && x.p > c[n - 1] && x.p < c[n - 1] * 1.2); return ph.length ? ph[ph.length - 1].p : null; })();
   const out = {
-    sym, BND, hA: h, lA: l, atrA: atr, R, Ps: c.map((_, j) => j >= 21 ? trendPts(j).filter(Boolean).length : null),
+    sym, BND, hA: h, lA: l, atrA: atr, R, Ps: c.map((_, j) => j >= 21 ? (c[j] > e21[j]) + (e8[j] > e21[j]) + (e21[j] > e55[j]) + (s200[j] != null && c[j] > s200[j]) + (s200[j] != null && s200[j - 20] != null && s200[j] > s200[j - 20]) + wUp(j) + (DM.adx[j] > 20 && DM.p[j] > DM.m[j]) : null),
     res: resP, atr: atr[n - 1], c: c[n - 1], n, C: c, e14, s100, bbU, bbL, PH, PL, pattern, tl, zz,
     g: { gname: GRADE_N[G], pull: e14[i], bands: [5, 20, 60, 120, 240].map(k => [k, BND[k].H[i], BND[k].L[i]]), align: e8[i] > e21[i] && e21[i] > e55[i] ? '정배열' : e8[i] < e21[i] && e21[i] < e55[i] ? '역배열' : '혼조', weekly: wUp(i) ? '주봉 상승' : '주봉 약세',
       s200: s200[i], adx: DM.adx[i], di: DM.p[i] > DM.m[i] ? '+DI 우위' : '-DI 우위', bp: bpT ? Math.round(bpU / bpT * 100) : null, sqNow: sq[i], sqCount: sqN,
@@ -1000,11 +1000,11 @@ function gobLP(G) {
   const sdv = arr => { const m = arr.reduce((x, y) => x + y, 0) / arr.length; return Math.sqrt(arr.reduce((x, y) => x + (y - m) ** 2, 0) / Math.max(1, arr.length - 1)); };
   const sig = (sdv(lr.slice(-20)) + sdv(lr)) / 2;
   const rnd = mulberry((Math.round(c * 1000) ^ (n * 7919)) | 0); let spare = null; const gs = () => { if (spare != null) { const z = spare; spare = null; return z; } let u = 0; while (!u) u = rnd(); const rr = Math.sqrt(-2 * Math.log(u)), th = 2 * Math.PI * rnd(); spare = rr * Math.sin(th); return rr * Math.cos(th); };
-  const NP = 8000, fin = new Float64Array(NP), lu = Math.log(U / c), ld = Math.log(Dn / c); let up = 0, dn = 0;
+  const hist = a ? gobHist(G, (U - c) / a, (c - Dn) / a) : null, useH = !!(hist && hist.n >= 40);
+  const NP = useH ? 2000 : 8000, fin = new Float64Array(NP), lu = Math.log(U / c), ld = Math.log(Dn / c); let up = 0, dn = 0;
   for (let p = 0; p < NP; p++) { let x = 0, hit = 0; for (let d = 0; d < 10; d++) { x += sig * gs(); if (!hit) { if (x >= lu) hit = 1; else if (x <= ld) hit = -1; } } if (hit > 0) up++; else if (hit < 0) dn++; fin[p] = c * Math.exp(x); }
   fin.sort(); const q = f => fin[Math.floor(f * (NP - 1))], r = x => Math.round(x / NP * 100);
   const mc = { up: r(up), dn: r(dn), none: Math.max(0, 100 - r(up) - r(dn)), q10: q(.1), q50: q(.5), q90: q(.9) };
-  const hist = a ? gobHist(G, (U - c) / a, (c - Dn) / a) : null, useH = !!(hist && hist.n >= 40);
   const P0 = useH ? { up: hist.up, dn: hist.dn, none: hist.none, q10: c * (1 + hist.q10), q50: c * (1 + hist.q50), q90: c * (1 + hist.q90) } : mc;
   G._lp = { U, U2, D: Dn, D2, uSrc, dSrc, ...P0, src: useH ? 'hist' : 'mc', hist, mc, sigD: sig * 100, sig10: sig * Math.sqrt(10) * 100 };
   G._lpk = mk; return G._lp;
