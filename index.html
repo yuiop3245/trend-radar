@@ -733,28 +733,30 @@ function gobCalc(sym) {
     return best;
   };
   // 봉마다 다시 계산하지 않도록: 피벗 묶음이 그대로면 후보 선의 '아직 유효' 여부만 한 봉씩 이어서 확인
-  const mkTL = up => { let key = '', cands = [];
+  const mkTL = up => { let key = '', cands = [], P = [], best = null;
     return (piv, i) => {
       const a = atr[i]; if (a == null) return null;
-      const P = []; for (let z = piv.length - 1; z >= 0 && P.length < 6 && piv[z].i >= i - 120; z--) P.unshift(piv[z]); if (P.length < 2) return null;
-      const tol = .15 * a, near = .35 * a, k2 = P.map(x => x.i).join(',');
-      if (k2 !== key) { key = k2; cands = [];
+      let z0 = piv.length; while (z0 > 0 && piv.length - z0 < 6 && piv[z0 - 1].i >= i - 120) z0--;
+      if (piv.length - z0 < 2) { key = ''; return null; }
+      const k2 = z0 + '|' + piv.length;
+      const near = .35 * a; let changed = false;
+      if (k2 !== key) { key = k2; cands = []; P = piv.slice(z0); changed = true; const tol = .15 * a;
         for (let x = 0; x < P.length - 1; x++) for (let y = x + 1; y < P.length; y++) {
           const p = P[x], q = P[y]; if (q.i - p.i < 5) continue;
           const sl = (q.p - p.p) / (q.i - p.i), at = j => p.p + sl * (j - p.i);
           let ok = true;
           for (let j = p.i; j <= q.i && ok; j++) ok = up ? h[j] <= at(j) + tol : l[j] >= at(j) - tol;
-          if (ok) cands.push({ p, q, sl, at, upto: q.i, ok: true });
+          if (ok) cands.push({ p, q, sl, at, upto: q.i, ok: true, touch: P.filter(w => w.i >= p.i && Math.abs(w.p - at(w.i)) <= near).length });
         } }
-      let best = null;
+      const tol = .15 * a;
       for (const cd of cands) {
         if (!cd.ok) continue;
-        for (let j = cd.upto + 1; j < i && cd.ok; j++) { cd.ok = up ? c[j] <= cd.at(j) + tol : c[j] >= cd.at(j) - tol; cd.upto = j; }
-        if (!cd.ok) continue;
-        const touch = P.filter(z => z.i >= cd.p.i && Math.abs(z.p - cd.at(z.i)) <= near).length;
-        const sc = touch * 1e6 + cd.q.i * 10 + (cd.q.i - cd.p.i);
-        if (!best || sc > best.sc) best = { sc, s: cd.sl, b: cd.p.p - cd.sl * cd.p.i, x0: cd.p.i, qi: cd.q.i, touch, at: cd.at };
+        for (let j = cd.upto + 1; j < i && cd.ok; j++) { cd.ok = up ? c[j] <= cd.at(j) + tol : c[j] >= cd.at(j) - tol; cd.upto = j; if (!cd.ok) changed = true; }
       }
+      if (changed) { best = null;
+        for (const cd of cands) { if (!cd.ok) continue;
+          const sc = cd.touch * 1e6 + cd.q.i * 10 + (cd.q.i - cd.p.i);
+          if (!best || sc > best.sc) best = { sc, s: cd.sl, b: cd.p.p - cd.sl * cd.p.i, x0: cd.p.i, qi: cd.q.i, touch: cd.touch, at: cd.at }; } }
       return best;
     }; };
   const tlU = mkTL(true), tlL = mkTL(false);
@@ -765,7 +767,7 @@ function gobCalc(sym) {
   const f2 = x => fmt(x);
   const ev = []; const add = (i, k, d, extra) => ev.push({ i, t: b[i].t, k, d, ...(extra || {}) });
   let pos = null, lastExit = -99, msOn = false, peg = null, surge = -99, lastSetup = -99, lastVcp = -1, lastPat = '', lastPatI = -99, lastPatDir = 0, wmUsed = new Set(), lastNH = -99;
-  const ph = [], pl = []; let iph = 0, ipl = 0;
+  const ph = [], pl = []; let iph = 0, ipl = 0, pivKey = '', pivC = null;
   // 직전 252봉 최고가 (단조 덱으로 한 번에)
   const hiPrev = new Array(n).fill(-Infinity); { const dq = []; for (let i = 1; i < n; i++) { const j = i - 1; while (dq.length && h[dq[dq.length - 1]] <= h[j]) dq.pop(); dq.push(j); while (dq[0] < i - 252) dq.shift(); hiPrev[i] = h[dq[0]]; } }
   for (let i = 60; i < n; i++) {
@@ -802,7 +804,9 @@ function gobCalc(sym) {
     // ── 피벗 기반 (VCP · 패턴 · W/M)
     while (iph < PH.length && PH[iph].k <= i) ph.push(PH[iph++]); while (ipl < PL.length && PL[ipl].k <= i) pl.push(PL[ipl++]);
     if (ph.length >= 3 && pl.length >= 3) {
-      const hs = ph.slice(-3), depths = hs.map((x, j) => { const nxt = hs[j + 1]?.i ?? i + 1; const lo = pl.slice(-12).filter(q => q.i > x.i && q.i < nxt); return lo.length ? (x.p - Math.min(...lo.map(q => q.p))) / x.p : null; });
+      const pk = ph.length + '|' + pl.length; if (pk !== pivKey) { pivKey = pk; pivC = null; }
+      const hs = ph.slice(-3), depths = pivC ? pivC.depths : hs.map((x, j) => { const nxt = hs[j + 1]?.i ?? i + 1; const lo = pl.slice(-12).filter(q => q.i > x.i && q.i < nxt); return lo.length ? (x.p - Math.min(...lo.map(q => q.p))) / x.p : null; });
+      if (!pivC) pivC = { depths };
       const lastL = pl[pl.length - 1].i;
       if (depths.every(d => d != null) && depths[0] > depths[1] && depths[1] > depths[2] && depths[2] < depths[0] * .6 && c[i] > e55[i] && lastL !== lastVcp && lastL > hs[2].i) { lastVcp = lastL; add(i, 'VCP', `최근 세 번의 눌림 깊이가 ${depths.map(d => (d * 100).toFixed(1) + '%').join(' → ')}로 줄었습니다. 변동성이 수축하는 VCP 구조입니다.`); }
       // 채널·삼각형
@@ -819,7 +823,7 @@ function gobCalc(sym) {
         }
       }
       // W / M
-      const allP = [...ph.slice(-3).map(x => ({ ...x, t: 'H' })), ...pl.slice(-3).map(x => ({ ...x, t: 'L' }))].sort((x, y) => x.i - y.i).slice(-3);
+      const allP = pivC.allP || (pivC.allP = [...ph.slice(-3).map(x => ({ ...x, t: 'H' })), ...pl.slice(-3).map(x => ({ ...x, t: 'L' }))].sort((x, y) => x.i - y.i).slice(-3));
       if (allP.length === 3 && i - allP[2].k <= 30) {
         const [p1, p2, p3] = allP, tol = Math.max(.8 * a, .03 * p1.p), id = p1.i + '-' + p3.i;
         if (!wmUsed.has(id) && p1.t === 'L' && p2.t === 'H' && p3.t === 'L' && Math.abs(p1.p - p3.p) <= tol && c[i] > p2.p && c[i - 1] <= p2.p) { wmUsed.add(id); add(i, 'W', `쌍바닥(${f2(p1.p)} / ${f2(p3.p)}) 후 넥라인 ${f2(p2.p)} 돌파.`); }
@@ -940,7 +944,7 @@ function gobLP(G) {
   const sdv = arr => { const m = arr.reduce((x, y) => x + y, 0) / arr.length; return Math.sqrt(arr.reduce((x, y) => x + (y - m) ** 2, 0) / Math.max(1, arr.length - 1)); };
   const sig = (sdv(lr.slice(-20)) + sdv(lr)) / 2;
   const rnd = mulberry((Math.round(c * 1000) ^ (n * 7919)) | 0); let spare = null; const gs = () => { if (spare != null) { const z = spare; spare = null; return z; } let u = 0; while (!u) u = rnd(); const rr = Math.sqrt(-2 * Math.log(u)), th = 2 * Math.PI * rnd(); spare = rr * Math.sin(th); return rr * Math.cos(th); };
-  const NP = 20000, fin = new Float64Array(NP), lu = Math.log(U / c), ld = Math.log(Dn / c); let up = 0, dn = 0;
+  const NP = 8000, fin = new Float64Array(NP), lu = Math.log(U / c), ld = Math.log(Dn / c); let up = 0, dn = 0;
   for (let p = 0; p < NP; p++) { let x = 0, hit = 0; for (let d = 0; d < 10; d++) { x += sig * gs(); if (!hit) { if (x >= lu) hit = 1; else if (x <= ld) hit = -1; } } if (hit > 0) up++; else if (hit < 0) dn++; fin[p] = c * Math.exp(x); }
   fin.sort(); const q = f => fin[Math.floor(f * (NP - 1))], r = x => Math.round(x / NP * 100);
   G._lp = { U, U2, D: Dn, D2, up: r(up), dn: r(dn), none: Math.max(0, 100 - r(up) - r(dn)), q10: q(.1), q50: q(.5), q90: q(.9), sigD: sig * 100, sig10: sig * Math.sqrt(10) * 100 };
