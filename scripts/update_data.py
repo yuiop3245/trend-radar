@@ -24,7 +24,7 @@ OUT = os.path.join(ROOT, "data.json")
 
 # (키, yfinance 기간, 간격, 장중 여부)
 FRAMES = [
-    ("d", "2y", "1d", False),
+    ("d", "5y", "1d", False),
     ("h1", "60d", "1h", True),
     ("h30", "60d", "30m", True),
     ("m5", "5d", "5m", True),
@@ -101,7 +101,41 @@ def fetch(sym, keys, prev, failed):
         time.sleep(0.2)
     if kr:
         entry["kr"] = True
+        if entry.get("d"):
+            fill_kr_daily(tk, sym, entry)
     return entry
+
+
+def fill_kr_daily(tk, sym, entry):
+    """야후 국내 일봉은 하루씩 늦게 들어오는 날이 있다(삼성전자·SK하이닉스·코스피 등).
+    1) 짧은 기간 일봉을 한 번 더 받아 더 최신 날짜가 있으면 붙이고
+    2) 그래도 빠진 날은 30분봉(없으면 1시간봉)을 모아 일봉을 만든다. 만든 날짜는 dsyn에 적는다."""
+    d = entry["d"]
+    last = d[-1][0]
+    try:
+        recent = to_bars(tk.history(period="5d", interval="1d", auto_adjust=False, prepost=False), False, "1d", True)
+        for b in recent:
+            if b[0] > last:
+                d.append(b)
+                last = b[0]
+    except Exception as e:
+        print(f"{sym} 최근 일봉 재확인 실패: {e}", file=sys.stderr)
+    src = entry.get("h30") or entry.get("h1") or []
+    days = {}
+    for t, o, h, l, c, v in src:
+        day = t[:10]
+        if day <= last:
+            continue
+        g = days.get(day)
+        if g is None:
+            days[day] = [day, o, h, l, c, v]
+        else:
+            g[2] = max(g[2], h); g[3] = min(g[3], l); g[4] = c; g[5] += v
+    if days:
+        syn = sorted(days)
+        d.extend(days[k] for k in syn)
+        entry["dsyn"] = syn
+        print(f"{sym}: 일봉 지연 → 분봉으로 {', '.join(syn)} 채움")
 
 
 def load_signals(path):
