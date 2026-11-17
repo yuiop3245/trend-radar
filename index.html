@@ -313,7 +313,7 @@ const VERDICT = {
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ok = x => x != null && isFinite(x);
-const fmt = (x, d) => { if (!ok(x)) return '–'; if (d == null) d = Math.abs(x) >= 10000 ? 0 : 2; return Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); };
+const NF = {}; const fmt = (x, d) => { if (!ok(x)) return '–'; if (d == null) d = Math.abs(x) >= 10000 ? 0 : 2; return (NF[d] || (NF[d] = new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }))).format(Number(x)); };
 const pct = (x, d = 1) => ok(x) ? (x > 0 ? '+' : '') + (x * 100).toFixed(d) + '%' : '–';
 const pcls = x => ok(x) ? (x > 0 ? 'up' : x < 0 ? 'down' : '') : 'muted';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -732,6 +732,32 @@ function gobCalc(sym) {
     }
     return best;
   };
+  // 봉마다 다시 계산하지 않도록: 피벗 묶음이 그대로면 후보 선의 '아직 유효' 여부만 한 봉씩 이어서 확인
+  const mkTL = up => { let key = '', cands = [];
+    return (piv, i) => {
+      const a = atr[i]; if (a == null) return null;
+      const P = []; for (let z = piv.length - 1; z >= 0 && P.length < 6 && piv[z].i >= i - 120; z--) P.unshift(piv[z]); if (P.length < 2) return null;
+      const tol = .15 * a, near = .35 * a, k2 = P.map(x => x.i).join(',');
+      if (k2 !== key) { key = k2; cands = [];
+        for (let x = 0; x < P.length - 1; x++) for (let y = x + 1; y < P.length; y++) {
+          const p = P[x], q = P[y]; if (q.i - p.i < 5) continue;
+          const sl = (q.p - p.p) / (q.i - p.i), at = j => p.p + sl * (j - p.i);
+          let ok = true;
+          for (let j = p.i; j <= q.i && ok; j++) ok = up ? h[j] <= at(j) + tol : l[j] >= at(j) - tol;
+          if (ok) cands.push({ p, q, sl, at, upto: q.i, ok: true });
+        } }
+      let best = null;
+      for (const cd of cands) {
+        if (!cd.ok) continue;
+        for (let j = cd.upto + 1; j < i && cd.ok; j++) { cd.ok = up ? c[j] <= cd.at(j) + tol : c[j] >= cd.at(j) - tol; cd.upto = j; }
+        if (!cd.ok) continue;
+        const touch = P.filter(z => z.i >= cd.p.i && Math.abs(z.p - cd.at(z.i)) <= near).length;
+        const sc = touch * 1e6 + cd.q.i * 10 + (cd.q.i - cd.p.i);
+        if (!best || sc > best.sc) best = { sc, s: cd.sl, b: cd.p.p - cd.sl * cd.p.i, x0: cd.p.i, qi: cd.q.i, touch, at: cd.at };
+      }
+      return best;
+    }; };
+  const tlU = mkTL(true), tlL = mkTL(false);
   const patName = (U, Lo, a) => { const kU = U.s / a, kL = Lo.s / a, th = .03;
     return kU > th && kL > th ? '상승 채널' : kU < -th && kL < -th ? '하락 채널' : kU < -th && kL > th ? '대칭 삼각형' : Math.abs(kU) <= th && kL > th ? '상승 삼각형' : kU < -th && Math.abs(kL) <= th ? '하강 삼각형' : Math.abs(kU) <= th && Math.abs(kL) <= th ? '박스권' : null; };
   const trendPts = i => [c[i] > e21[i], e8[i] > e21[i], e21[i] > e55[i], s200[i] != null && c[i] > s200[i], s200[i] != null && s200[i - 20] != null && s200[i] > s200[i - 20], wUp(i), DM.adx[i] > 20 && DM.p[i] > DM.m[i]];
@@ -739,6 +765,9 @@ function gobCalc(sym) {
   const f2 = x => fmt(x);
   const ev = []; const add = (i, k, d, extra) => ev.push({ i, t: b[i].t, k, d, ...(extra || {}) });
   let pos = null, lastExit = -99, msOn = false, peg = null, surge = -99, lastSetup = -99, lastVcp = -1, lastPat = '', lastPatI = -99, lastPatDir = 0, wmUsed = new Set(), lastNH = -99;
+  const ph = [], pl = []; let iph = 0, ipl = 0;
+  // 직전 252봉 최고가 (단조 덱으로 한 번에)
+  const hiPrev = new Array(n).fill(-Infinity); { const dq = []; for (let i = 1; i < n; i++) { const j = i - 1; while (dq.length && h[dq[dq.length - 1]] <= h[j]) dq.pop(); dq.push(j); while (dq[0] < i - 252) dq.shift(); hiPrev[i] = h[dq[0]]; } }
   for (let i = 60; i < n; i++) {
     const a = atr[i]; if (a == null) continue;
     // ── 응축 해제
@@ -771,13 +800,13 @@ function gobCalc(sym) {
       add(i, 'PEG', `시가가 전일 고가 위로 갭을 띄우고 거래량 ${fmt(v[i] / vs20[i - 1], 1)}배로 마감했습니다. 되돌림 구간 38.2% ${f2(peg.f38)} · 50% ${f2(peg.f50)} · 61.8% ${f2(peg.f62)}.`);
     }
     // ── 피벗 기반 (VCP · 패턴 · W/M)
-    const ph = conf(PH, i), pl = conf(PL, i);
+    while (iph < PH.length && PH[iph].k <= i) ph.push(PH[iph++]); while (ipl < PL.length && PL[ipl].k <= i) pl.push(PL[ipl++]);
     if (ph.length >= 3 && pl.length >= 3) {
-      const hs = ph.slice(-3), depths = hs.map((x, j) => { const nxt = hs[j + 1]?.i ?? i + 1; const lo = pl.filter(q => q.i > x.i && q.i < nxt); return lo.length ? (x.p - Math.min(...lo.map(q => q.p))) / x.p : null; });
+      const hs = ph.slice(-3), depths = hs.map((x, j) => { const nxt = hs[j + 1]?.i ?? i + 1; const lo = pl.slice(-12).filter(q => q.i > x.i && q.i < nxt); return lo.length ? (x.p - Math.min(...lo.map(q => q.p))) / x.p : null; });
       const lastL = pl[pl.length - 1].i;
       if (depths.every(d => d != null) && depths[0] > depths[1] && depths[1] > depths[2] && depths[2] < depths[0] * .6 && c[i] > e55[i] && lastL !== lastVcp && lastL > hs[2].i) { lastVcp = lastL; add(i, 'VCP', `최근 세 번의 눌림 깊이가 ${depths.map(d => (d * 100).toFixed(1) + '%').join(' → ')}로 줄었습니다. 변동성이 수축하는 VCP 구조입니다.`); }
       // 채널·삼각형
-      const U = tlFit(ph, i, true), Lo = tlFit(pl, i, false);
+      const U = tlU(ph, i), Lo = tlL(pl, i);
       if (U && Lo && U.at(i) > Lo.at(i)) {
         const name = patName(U, Lo, a);
         if (name) {
@@ -790,7 +819,7 @@ function gobCalc(sym) {
         }
       }
       // W / M
-      const allP = [...ph.map(x => ({ ...x, t: 'H' })), ...pl.map(x => ({ ...x, t: 'L' }))].sort((x, y) => x.i - y.i).slice(-3);
+      const allP = [...ph.slice(-3).map(x => ({ ...x, t: 'H' })), ...pl.slice(-3).map(x => ({ ...x, t: 'L' }))].sort((x, y) => x.i - y.i).slice(-3);
       if (allP.length === 3 && i - allP[2].k <= 30) {
         const [p1, p2, p3] = allP, tol = Math.max(.8 * a, .03 * p1.p), id = p1.i + '-' + p3.i;
         if (!wmUsed.has(id) && p1.t === 'L' && p2.t === 'H' && p3.t === 'L' && Math.abs(p1.p - p3.p) <= tol && c[i] > p2.p && c[i - 1] <= p2.p) { wmUsed.add(id); add(i, 'W', `쌍바닥(${f2(p1.p)} / ${f2(p3.p)}) 후 넥라인 ${f2(p2.p)} 돌파.`); }
@@ -801,7 +830,7 @@ function gobCalc(sym) {
     { let lo10 = Infinity; for (let j = i - 10; j < i; j++) lo10 = Math.min(lo10, l[j]); if (c[i] - lo10 >= 6 * a) surge = i; }
     if (surge > 0 && i > surge && i - surge <= 20 && l[i] <= e8[i] && c[i] > e21[i]) { add(i, 'PB', `최근 급등(10봉 ${'≥'} 6ATR) 뒤 처음 8일선(${f2(e8[i])})까지 눌리고 21일선 위에서 마감했습니다.`); surge = -99; }
     // ── 52주 신고가
-    if (i >= 120) { let mx = -Infinity; for (let j = Math.max(0, i - 252); j < i; j++) mx = Math.max(mx, h[j]); if (h[i] > mx && i - lastNH >= 5) { lastNH = i; add(i, 'NH', `52주(가능한 기간) 최고가 ${f2(mx)}를 넘었습니다. 위에 매물이 적은 신고가 구간입니다.`); } }
+    if (i >= 120) { const mx = hiPrev[i]; if (h[i] > mx && i - lastNH >= 5) { lastNH = i; add(i, 'NH', `52주(가능한 기간) 최고가 ${f2(mx)}를 넘었습니다. 위에 매물이 적은 신고가 구간입니다.`); } }
     // ── 포지션
     if (pos) {
       const k = i - pos.i0; let closed = false;
@@ -812,12 +841,11 @@ function gobCalc(sym) {
         else if (pos.tp1 && !pos.tp2 && h[i] >= pos.t2) { pos.tp2 = true; add(i, 'TP2', `2차 목표 ${f2(pos.t2)}에 닿았습니다. 2차 분할청산 자리입니다.`); }
         if (!pos.trim && c[i] - pos.e >= 1.5 * pos.R && c[i] > bbU[i]) { pos.trim = true; add(i, 'TRIM', `진입 대비 ${fmt((c[i] - pos.e) / pos.R, 1)}R 수익에 시그마 밴드 상단 ${f2(bbU[i])}를 넘었습니다. 일부 Trim하고 눌림에서 다시 싣는 구간입니다.`); }
         if (pos.type === 'BO' && !pos.srf && k >= 2 && k <= 10 && l[i] <= pos.res + .3 * a && c[i] > pos.res) { pos.srf = true; add(i, 'SRF', `돌파했던 저항 ${f2(pos.res)}까지 되밀린 뒤 그 위에서 마감했습니다. 저항이 지지로 바뀐 걸 확인한 2차 진입 자리입니다.`); }
-        if (pos.py < 2 && k >= 2 && c[i] > pos.e && l[i - 1] <= e14[i - 1] && c[i] > h[i - 1] && e8[i] > e21[i]) { pos.py++; add(i, pos.py === 1 ? 'PY1' : 'PY2', '보유 중 14일선까지 눌렸다가 전일 고가를 넘기며 재상승했습니다. 수익 포지션에만 물량을 더 싣는 자리입니다.'); }
+        if (pos.py < 2 && k >= 2 && c[i] > pos.e && l[i - 1] <= e14[i - 1] && c[i] > h[i - 1] && e8[i] > e21[i]) { pos.py++; pos.x14 = false; add(i, pos.py === 1 ? 'PY1' : 'PY2', '보유 중 14일선까지 눌렸다가 전일 고가를 넘기며 재상승했습니다. 수익 포지션에만 물량을 더 싣는 자리입니다.'); }
         if (c[i] < e8[i] && c[i - 1] >= e8[i - 1]) { pos.e8x = true; add(i, 'E8', `8일선(${f2(e8[i])}) 아래 마감. 단기 탄력이 꺾였다는 첫 경고입니다.`); }
         else if (pos.e8x && c[i] > e8[i] && c[i - 1] <= e8[i - 1]) { pos.e8x = false; add(i, 'R8', `8일선(${f2(e8[i])}) 위로 다시 마감했습니다. 단기 탄력이 돌아왔습니다.`); }
         if (c[i] < e14[i] && !pos.x14) { pos.x14 = true; add(i, 'X14', '14일선 이탈 마감. 보유 물량 일부를 정리하는 트레일링 규칙입니다.'); }
         if (c[i] < e21[i] && !pos.x21) { pos.x21 = true; add(i, 'X21', '21일선 이탈 마감. 중기 추세 기준선이 깨져 비중을 크게 줄이는 자리입니다.'); }
-        if (c[i] > e8[i]) { pos.x14 = false; }
         pos.b21 = c[i] < e21[i] ? pos.b21 + 1 : 0;
         if (pos.b21 >= 3) { add(i, 'FIN', `21일선 3봉 연속 이탈 기준이 깨졌습니다. 이번 사이클(진입 ${f2(pos.e)}, ${k}봉 보유)을 마무리합니다.`); closed = true; }
       }
@@ -1338,7 +1366,7 @@ const GRULES = [
   ['급등 후 풀백', '최근 10봉 상승폭이 ATR의 6배 이상인 뒤 처음 8일선까지 눌리고 21일선 위에서 마감.'],
   ['TP1 / TP2 / 부분익절 고려', 'TP1 도달 시 손절을 본전으로 올리고 관리 상태로 전환. 수익 1.5R 이상에서 시그마 밴드 상단을 넘으면 부분익절 고려.'],
   ['과열 경고', '종가가 시그마 밴드 상단 위, 21일선 이격이 ATR의 3배 이상, RSI 72 초과.'],
-  ['8선 이탈 · 분할청산 14선/21선 · 최종 청산', '보유 중 각 EMA 아래 마감 시 순서대로 경고와 분할 청산. 손절선 이탈 또는 21일선 이탈 뒤 3봉 연속 아래면 최종 청산.'],
+  ['8선 이탈 · 분할청산 14선/21선 · 최종 청산', '보유 중 각 EMA 아래 마감 시 순서대로 경고와 분할 청산. 14선·21선 분할청산은 한 번 보유하는 동안 한 번씩만 냄(피라미딩으로 물량을 더 실으면 14선은 다시 켜짐). 손절선 이탈 또는 21일선 이탈 뒤 3봉 연속 아래면 최종 청산.'],
   ['PEG / 되돌림 매수 / 재돌파 / 무효', '시가가 전일 고가 위로 3% 이상(또는 1ATR 이상) 갭, 거래량 1.4배 이상이면 PEG. 갭 구간에 피보나치 38.2/50/61.8%. 30봉 안에 그 구간을 메우고 양봉이면 되돌림 매수, 이후 PEG 이후 고점을 넘으면 재돌파, 전일 종가 아래로 마감하면 무효.'],
   ['모멘텀 BUY / SELL', 'MACD(12,26,9) 히스토그램이 0을 상향 돌파하고 종가가 21일선 위면 BUY(TP=+3ATR, SL=−1.5ATR, 유효 8봉). 반대면 SELL. SELL 뒤 히스토그램이 3봉 연속 개선되면 하락 모멘텀 종료.'],
   ['PBB / PBS', '21일선 > 55일선 추세에서 21일선 터치 후 양봉 마감이면 PBB, 반대 추세에서 21일선 반등 후 음봉이면 PBS.'],
@@ -1839,7 +1867,9 @@ function renderStamp() {
 const unpack = a => (a || []).map(x => Array.isArray(x) ? { t: x[0], o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] } : x);
 // 야후 일봉이 하루 늦게 들어오는 종목(삼성전자·SK하이닉스·코스피 등)은 30분봉(없으면 1시간봉)으로 빠진 날을 채운다
 function fillDaily(T) {
-  const d = T.d || [], src = (T.h30 && T.h30.length ? T.h30 : T.h1) || []; if (!d.length || !src.length) return;
+  const d = T.d || [], src = (T.h30 && T.h30.length ? T.h30 : T.h1) || []; if (!d.length) return;
+  if (T.dsyn && T.dsyn.length) { const S = new Set(T.dsyn); d.forEach(x => { if (S.has(x.t.slice(0, 10))) x.syn = true; }); }
+  if (!src.length) return;
   const last = d[d.length - 1].t.slice(0, 10), by = new Map();
   src.forEach(x => { const day = x.t.slice(0, 10); if (day <= last) return; const g = by.get(day);
     if (!g) by.set(day, { t: day, o: x.o, h: x.h, l: x.l, c: x.c, v: x.v || 0, syn: true }); else { g.h = Math.max(g.h, x.h); g.l = Math.min(g.l, x.l); g.c = x.c; g.v += x.v || 0; } });
@@ -1871,7 +1901,7 @@ async function loadRemote() {
       const old = D.tickers[s];
       const recs = new Map();
       [...(T.rec || []).map(x => ({ ...x, src: 'repo' })), ...((old && !old.demo ? old.rec : []) || []).filter(x => !x.src)].forEach(x => recs.set(x.t + '|' + x.sig, x));
-      D.tickers[s] = { name: T.name || old?.name || '', label: T.label || '', kr: !!T.kr, tv: T.tv || '', base: T.base || null, dir: T.dir || 1, demo: false, auto: true, d: unpack(T.d), h1: unpack(T.h1), h30: unpack(T.h30), m5: unpack(T.m5), rec: [...recs.values()].sort((a, b) => a.t < b.t ? -1 : 1) }; fillDaily(D.tickers[s]);
+      D.tickers[s] = { name: T.name || old?.name || '', label: T.label || '', kr: !!T.kr, tv: T.tv || '', base: T.base || null, dir: T.dir || 1, demo: false, auto: true, dsyn: T.dsyn || [], d: unpack(T.d), h1: unpack(T.h1), h30: unpack(T.h30), m5: unpack(T.m5), rec: [...recs.values()].sort((a, b) => a.t < b.t ? -1 : 1) }; fillDaily(D.tickers[s]);
     });
     Object.keys(D.tickers).forEach(s => { if (D.tickers[s].demo) delete D.tickers[s]; });
     const order = [...(j.order || Object.keys(j.tickers))];
