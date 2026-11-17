@@ -224,10 +224,6 @@ const P = { slopeMin: 0.10, overbought: 80, oversold: 20, bottomMax: 35, cluster
 const KDN = { 2: '상승강화', 4: '상승유지', 1: '상승둔화', 3: '상승둔화', '-2': '하락강화', '-4': '하락유지', '-1': '하락둔화', '-3': '하락둔화', 0: '중립' };
 const STN = { 3: '바닥반등', 2: '3형제 상승정렬', 1: '상승우위', 0: '중립', '-1': '하락우위', '-2': '3형제 하락정렬', '-3': '과열꺾임' };
 const SIG = {
-  ST3:  { s: '바닥', n: '3형제 바닥반등', side: 'buy', easy: '세 스토캐스틱 평균이 20 아래에서 막내가 위로 — 바닥 반등 시작', rule: '3형제 평균 K ≤ 20 이고 막내(5-3-3) K>D·K기울기 > 0.1 (원본 f_trendState = 3)' },
-  ST2:  { s: '정렬', n: '3형제 상승정렬', side: 'buy', easy: '막내·둘째·큰형이 모두 위를 향함 — 추세 상승', rule: '세 개 모두 K>D, K기울기 > 0.1, D기울기 ≥ 0 (원본 상태 2)' },
-  STm2: { s: '하락', n: '3형제 하락정렬', side: 'sell', easy: '세 스토캐스틱이 모두 아래를 향함 — 추세 하락', rule: '세 개 모두 K<D, K기울기 < −0.1, D기울기 ≤ 0 (원본 상태 −2)' },
-  STm3: { s: '과열↓', n: '과열꺾임', side: 'sell', easy: '평균 80 위에서 막내가 꺾임 — 추격매수 금지', rule: '3형제 평균 K ≥ 80 이고 막내 K<D·K기울기 < −0.1 (원본 상태 −3)' },
   BUY5: { s: '사', n: '5분 기술매수', side: 'buy', easy: '바닥 집결 → 막내 반등 → 지지 반응 순서 완성, 또는 상승 재전파', rule: 'REPLAY5 기술매수: 상위·기준지수 미훼손 + 추격 아님 + (바닥→막내→지지 3단계 또는 막내 상승+RSI·MACD 상승)' },
   PS:   { s: '분할', n: '분할매도해', side: 'sell', easy: '30분봉 막내+둘째 약화 + RSI·MACD 동반 하락', rule: 'STOCH C60: 30분 막내·둘째 약화 + 가격약화 + RSI·MACD 히스토 동반 하락' },
   AX:   { s: '정리', n: '다정리해', side: 'sell', easy: '30분·60분 모두 약화 + 구조훼손 — 추세 종료', rule: 'STOCH C60: 30분·60분 모두 약화 확인 + (30분 종가<120선 또는 60분 종가<60선)' }
@@ -551,7 +547,7 @@ function idxOnOrAfter(b, day) { for (let i = 0; i < b.length; i++) if (b[i].t.sl
 function dailySignals(sym) {
   const T = D.tickers[sym]; const b = T?.d || [];
   if (!b.length) return [];
-  const out = detectC(b).map(x => ({ ...x, t: b[x.i].t, meta: SIG[x.type] }));
+  const out = [];
   const add = (t, type, how, memo) => { const i = idxOnOrAfter(b, t.slice(0, 10)); if (i >= 0) out.push({ i, t, type, how, memo, meta: metaOf(type, memo) }); };
   buySignals(sym).events.forEach(e => add(e.t, e.type, e.how));
   sellSignals(sym).forEach(e => add(e.t, e.type, e.how));
@@ -559,6 +555,32 @@ function dailySignals(sym) {
   return out.sort((a, c) => a.i - c.i || (a.t < c.t ? -1 : 1));
 }
 const fwd = (b, i, n) => i + n < b.length ? b[i + n].c / b[i].c - 1 : null;
+
+// 모든 시간봉에 같은 행동 신호(사·분할·정리·내 기록)를 해당 봉 위치에 표시
+function chartSigs(sym, tf, b) {
+  const T = D.tickers[sym]; if (!T || !b.length) return [];
+  const ev = [], m5c = T.m5?.length ? closesOf(T.m5, 'm5') : [], h30c = T.h30?.length ? closesOf(T.h30, 'h30') : [];
+  buySignals(sym).events.forEach(e => ev.push({ type: 'BUY5', t: e.t, tc: m5c[e.i], how: e.how }));
+  sellSignals(sym).forEach(e => ev.push({ type: e.type, t: e.t, tc: h30c[e.i], how: e.how }));
+  (T.rec || []).forEach(r => ev.push({ type: 'REC:' + r.sig, t: r.t, tc: r.t.length > 10 ? toMin(r.t) + 1 : null, memo: r.memo, how: r.memo }));
+  const map = new Map();
+  let starts = null, cl = null;
+  if (tf !== 'd') { starts = b.map(x => toMin(x.t)); cl = closesOf(b, tf); }
+  ev.forEach(e => {
+    let i = -1;
+    if (tf === 'd') { i = idxOnOrAfter(b, e.t.slice(0, 10)); if (i < 0 || b[i].t !== e.t.slice(0, 10)) return; }
+    else {
+      if (e.tc == null) return; const m = e.tc - 1; let lo = 0, hi = starts.length - 1;
+      while (lo <= hi) { const md = (lo + hi) >> 1; if (starts[md] <= m) { i = md; lo = md + 1; } else hi = md - 1; }
+      if (i < 0 || cl[i] < m) return;
+    }
+    const k = i + '|' + e.type;
+    if (map.has(k)) { const x = map.get(k); x.n++; x.hows.push(e.t + ' ' + (e.how || '')); }
+    else map.set(k, { i, t: e.t, type: e.type, meta: metaOf(e.type, e.memo), memo: e.memo, how: e.how, n: 1, hows: [e.t + ' ' + (e.how || '')] });
+  });
+  const vals = [...map.values()].filter(x => !(x.type === 'PS' && map.has(x.i + '|AX')));
+  return vals.map(x => x.n > 1 ? { ...x, memo: `${x.n}번 · 마지막 ${x.hows[x.hows.length - 1]}` } : { ...x, memo: x.t + ' · ' + (x.how || x.meta.easy) });
+}
 
 /* ============ 판정 ============ */
 function evaluate(sym) {
@@ -813,7 +835,7 @@ function renderDetail() {
       <span>▲ 매수 쪽 · ▼ 매도 쪽 · ◆ 내 기록</span>
     </div>
     <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-    <p class="hint">드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨: 일봉·4시간 = 3형제 상태 전환(바닥·정렬·하락·과열↓) · 5분 = 사(기술매수) · 30분 = 분할/정리(매도 행동)</p>
+    <p class="hint">드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨(모든 시간봉 공통): ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆기록 = 내 기록. 한 봉에 여러 번이면 마우스를 올려 횟수 확인</p>
   </div>`;
   const indT = e.empty ? '' : `<div class="card pro-only"><h2>지표 현황</h2><p class="sub">각 시간프레임 마지막 봉 기준</p><div class="scroll">${indTable(T)}</div></div>`;
   const sigs = dailySignals(sym);
@@ -825,7 +847,7 @@ function renderDetail() {
       const after = r == null ? '' : (r > 0 ? ' → 이후 올랐어요' : ' → 이후 내렸어요');
       return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(s.t.slice(0, 10))}</td><td>${tag(s)}</td><td class="r num">${res}</td><td>${esc(s.meta.easy)}<span class="muted">${after}</span></td></tr>`; }).join('')}
     </tbody></table></div>` : '<div class="empty">아직 신호가 없어요</div>'}</div>`;
-  const logT = `<div class="card"><h2>신호 로그</h2><p class="sub">일봉 3형제 상태 + 5분 매수(사) + 30분 매도 행동 + 내 기록 · 성과는 신호가 난 날의 일봉 종가 기준 · 행을 누르면 차트 이동</p>
+  const logT = `<div class="card"><h2>신호 로그</h2><p class="sub">5분 매수(사) + 30분 매도 행동(분할·정리) + 내 기록 · 성과는 신호가 난 날의 일봉 종가 기준 · 행을 누르면 그 신호가 난 시간봉으로 이동</p>
     ${sigs.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">5일 후</th><th class="r">10일 후</th><th>설명</th></tr></thead><tbody>
     ${sigs.slice().reverse().map(s => { const r5 = fwd(b, s.i, 5), r10 = fwd(b, s.i, 10);
       return `<tr class="click" data-jump="${esc(s.t)}" data-type="${esc(s.type)}"><td class="num">${esc(s.t)}</td><td>${tag(s)}</td><td class="r num ${pcls(r5)}">${r5 == null ? '진행 중' : pct(r5)}</td><td class="r num ${pcls(r10)}">${r10 == null ? '진행 중' : pct(r10)}</td><td>${esc(state.mode === 'easy' ? s.meta.easy : (s.memo || s.how || s.meta.rule))}</td></tr>`; }).join('')}
@@ -979,10 +1001,7 @@ function drawChart() {
   if (chart.hover && chart.hover.x >= L && chart.hover.x <= R) hi = clamp(Math.round(v.start + (chart.hover.x - L) / bw - 0.5), i0, i1);
   const vi = hi != null ? hi : i1; // 값 표시용 인덱스
   const isD = state.tf === 'd';
-  const sigs = isD ? dailySignals(state.sel).filter(x => !['BUY5', 'PS', 'AX'].includes(x.type))
-    : state.tf === 'm5' ? buySignals(state.sel).events.map(x => ({ ...x, meta: SIG.BUY5 }))
-    : state.tf === 'h30' ? sellSignals(state.sel).map(x => ({ ...x, meta: SIG[x.type] }))
-    : detectC(b).map(x => ({ ...x, t: b[x.i].t, meta: SIG[x.type] }));
+  const sigs = chartSigs(state.sel, state.tf, b);
   const sigAt = new Map(); sigs.forEach(s => { if (!sigAt.has(s.i)) sigAt.set(s.i, []); sigAt.get(s.i).push(s); });
 
   const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.y, PW, p.h); ctx.clip(); fn(); ctx.restore(); };
@@ -1036,13 +1055,13 @@ function drawChart() {
           list.forEach(s => {
             const side = s.meta.side; const col = side === 'buy' ? C.up : side === 'sell' ? C.down : C.rec; ctx.fillStyle = col;
             if (side === 'buy') {
-              const y = Y(b[i].l) + 6 + below * 22; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, y + 7); ctx.lineTo(x + 5, y + 7); ctx.fill();
-              if (bw > 5) { ctx.textBaseline = 'top'; ctx.fillText(s.meta.s, x, y + 8); } below++;
+              const lbl = bw > 9, y = Y(b[i].l) + 6 + below * (lbl ? 22 : 9); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, y + 7); ctx.lineTo(x + 5, y + 7); ctx.fill();
+              if (lbl) { ctx.textBaseline = 'top'; ctx.fillText(s.meta.s, x, y + 8); } below++;
             } else {
-              const y = Y(b[i].h) - 6 - above * 22;
+              const lbl = bw > 9, y = Y(b[i].h) - 6 - above * (lbl ? 22 : 9);
               if (side === 'sell') { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, y - 7); ctx.lineTo(x + 5, y - 7); ctx.fill(); }
               else { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, y - 5); ctx.lineTo(x, y - 10); ctx.lineTo(x + 5, y - 5); ctx.fill(); }
-              if (bw > 5) { ctx.textBaseline = 'bottom'; ctx.fillText(s.meta.s, x, y - 9); } above++;
+              if (lbl) { ctx.textBaseline = 'bottom'; ctx.fillText(s.meta.s, x, y - 9); } above++;
             }
           });
         });
