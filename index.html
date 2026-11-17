@@ -671,7 +671,7 @@ const GN = {
   PBB: ['PBB', 'PBB · 눌림 지지', 'buy'], PBS: ['PBS', 'PBS · 반등 저항', 'sell'], MRL: ['MR↑', 'MR Long', 'buy'], MRS: ['MR↓', 'MR Short', 'sell'],
   PATU: ['패턴↑', '패턴 상방 돌파', 'buy'], PATD: ['패턴↓', '패턴 하방 이탈', 'sell'], W: ['W', 'W 돌파', 'buy'], M: ['M', 'M 이탈', 'sell'], NH: ['NH', 'NH (52주 신고가)', 'info']
 };
-const BCOL = {5: '#8b95a5', 20: '#2f6fde', 60: '#e07b16', 120: '#8a4fd8', 240: '#d6455d'};
+const BCOL = {5: '#111827', 20: '#e0312d', 60: '#16a34a', 120: '#2563eb', 240: '#ec4899'};
 const GCOL = { up: '#1f9d6a', dn: '#d6455d', acc: '#2f6fde', warn: '#d98a1c', vio: '#8a4fd8', faint: '#7b8794' };
 // [카테고리, 색, 모양] — 쭈야 화면과 같은 분류
 const LBPR = { buy: 0, exit: 0, add: 1, part: 1, hold: 2, ref: 4 };
@@ -1365,8 +1365,8 @@ function renderDetail() {
       <div class="seg small" id="zoomSeg"><button data-z="out" title="축소">－</button><button data-z="in" title="확대">＋</button><button data-z="end">최신</button></div>
     </div>
     ${gobBar()}
-    <div class="legend easy-only"><span><i style="background:#e07b16"></i>20일선 · 단기 추세</span><span><i style="background:#d6455d"></i>240일선 · 장기 추세</span>${['buy', 'add', 'tp', 'sell'].map(ezPill).join(' ')}</div>
-    <div class="legend pro-only" id="gobLeg"><span><i style="background:#8b95a5"></i>5일</span><span><i style="background:#2f6fde"></i>20일</span><span><i style="background:#e07b16"></i>60일</span><span><i style="background:#8a4fd8"></i>120일</span><span><i style="background:#d6455d"></i>240일</span><span class="muted">(실선 = 고가 이평 · 점선 = 저가 이평)</span><span><i style="background:#9aa3af"></i>시그마 밴드(20, 2σ)</span><span><i style="background:#c43bb4"></i>지그재그</span><span><i style="background:#5b4fd8"></i>패턴 상·하단선</span><span><i style="background:#d98a1c;width:7px;height:7px;border-radius:50%"></i>응축(스퀴즈) 봉</span></div>
+    <div class="legend easy-only"><span><i style="background:#e0312d"></i>20일선 · 단기 추세</span><span><i style="background:#ec4899"></i>240일선 · 장기 추세</span>${['buy', 'add', 'tp', 'sell'].map(ezPill).join(' ')}</div>
+    <div class="legend pro-only" id="gobLeg"><span><i style="background:#111827"></i>5일</span><span><i style="background:#e0312d"></i>20일</span><span><i style="background:#16a34a"></i>60일</span><span><i style="background:#2563eb"></i>120일</span><span><i style="background:#ec4899"></i>240일</span><span class="muted">(같은 색 두 줄: 위 = 고가 이평 · 아래 = 저가 이평)</span><span><i style="background:#9aa3af"></i>시그마 밴드(20, 2σ)</span><span><i style="background:#c43bb4"></i>지그재그</span><span><i style="background:#5b4fd8"></i>패턴 상·하단선</span><span><i style="background:#d98a1c;width:7px;height:7px;border-radius:50%"></i>응축(스퀴즈) 봉</span></div>
     <div class="legend pro-only" id="oldLeg">
       <span><i style="background:var(--up)"></i>양봉 · %K</span><span><i style="background:var(--down)"></i>음봉 · %D</span><span><i style="background:var(--amber)"></i>20EMA</span>
       <span><i style="background:var(--upS);height:10px;border:1px solid var(--up)"></i>+DI>−DI & ADX≥20</span><span><i style="background:var(--downS);height:10px;border:1px solid var(--down)"></i>−DI>+DI & ADX≥20</span>
@@ -1435,7 +1435,7 @@ const GRULES = [
   ['확신 등급', '조건 점검 8개 이상이고 등급 S/H면 A, 6개 이상이고 S/H/N이면 B, 그 외 S/H/N은 C, W/D는 D.'],
   ['NH (52주 신고가)', '고가가 직전 52주(데이터가 짧으면 가능한 기간, 최소 120봉) 최고가를 넘은 봉. 5봉 안에 다시 나오면 생략.'],
   ['5선 회복', '보유 중 5일 저가선 이탈(5선↓)이 나온 뒤 종가가 5일 고가선 위로 다시 마감한 봉.'],
-  ['시그마 밴드 · 이평선', '시그마 밴드 = 볼린저밴드(20, 2σ). 이평선 = 5·20·60·120·240일 고가 단순이평(실선)·저가 단순이평(점선). 추세 비교(정배열, 종가가 선 위인지 등)에는 두 선의 중간값을 씀.'],
+  ['시그마 밴드 · 이평선', '시그마 밴드 = 볼린저밴드(20, 2σ). 이평선 = 5(검정)·20(빨강)·60(초록)·120(파랑)·240(분홍)일 고가 단순이평·저가 단순이평 (같은 색 실선 두 줄, 위가 고가·아래가 저가). 추세 비교(정배열, 종가가 선 위인지 등)에는 두 선의 중간값을 씀.'],
   ['지그재그', '확정 피벗(좌우 5봉) 고점·저점을 교대로 이은 선. 같은 종류가 연속이면 더 극단적인 쪽만 남김.'],
   ['추세선·채널', '확정 피벗 고점 두 개, 저점 두 개를 잇는 정석 추세선. 선과 피벗 사이를 캔들이 뚫지 않는 선만 쓰고, 오늘 이후 14봉 앞까지 연장해 그림. 위아래 선이 모두 있으면 채널·삼각형·박스권 이름을 붙임.'],
   ['지지·저항 레벨', '차트에 직접 그은 수평선·추세선(오늘 값)이 있으면 그 선을 먼저 씀. 없으면 확정 피벗 고점·저점과 5·20·60·120·240일 고가·저가선 중 현재가 +0.6ATR 이상에서 가장 가까운 값(3ATR 안에 없으면 +2ATR). 저항2 = 거기서 1ATR 이상 위. 아래쪽은 피벗 저점으로 반대 방향.'],
@@ -1783,7 +1783,7 @@ function drawChart() {
           ctx.fillStyle = col; ctx.fillRect(x - w / 2, y1, w, Math.max(1, y2 - y1));
         }
         if (EZS) {
-          const G = EZS.G, pl = EZS.plan; path(G.e21, Y, '#e07b16', 2); path(G.s200, Y, '#d6455d', 2);
+          const G = EZS.G, pl = EZS.plan; path(G.e21, Y, '#e0312d', 2); path(G.s200, Y, '#ec4899', 2);
           const zx = RC + 6, zw = R - zx; ctx.fillStyle = 'rgba(120,130,150,.07)'; ctx.fillRect(zx, p.y, zw, p.h);
           const yE = Y(pl.entry), yS = Y(pl.stop), yT = Y(pl.target);
           ctx.fillStyle = 'rgba(30,142,90,.14)'; ctx.fillRect(zx + 4, Math.min(yT, yE), zw - 8, Math.abs(yE - yT));
@@ -1799,7 +1799,7 @@ function drawChart() {
         if (GG) {
           const o = state.ovl, n = b.length, ph0 = p.y + p.h * .82;
           if (o.band) { ctx.save(); ctx.setLineDash([4, 3]); path(GG.bbU, Y, '#9aa3af', 1); path(GG.bbL, Y, '#9aa3af', 1); ctx.restore(); }
-          if (o.ma) [5, 20, 60, 120, 240].forEach((k, z) => { const w = [1, 1.3, 1.5, 1.5, 1.7][z]; path(GG.BND[k].H, Y, BCOL[k], w); ctx.save(); ctx.setLineDash([4, 3]); path(GG.BND[k].L, Y, BCOL[k], w); ctx.restore(); });
+          if (o.ma) [5, 20, 60, 120, 240].forEach((k, z) => { const w = [1, 1.3, 1.5, 1.5, 1.7][z]; path(GG.BND[k].H, Y, BCOL[k], w); path(GG.BND[k].L, Y, BCOL[k], w); });
           if (o.zz && GG.zz.length) { ctx.beginPath(); GG.zz.forEach((z, j) => { const x = X(z.i), y = Y(z.p); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.strokeStyle = '#c43bb4'; ctx.lineWidth = 1.4; ctx.stroke(); }
           if (o.dots) { ctx.fillStyle = GCOL.warn; for (let i = i0; i <= i1; i++) if (GG.sq[i]) { ctx.beginPath(); ctx.arc(X(i), ph0 + 5, Math.max(1.6, Math.min(3, bw * .3)), 0, 7); ctx.fill(); } }
           const pt = GG.pattern;
@@ -1893,7 +1893,7 @@ function drawChart() {
       if (ly > p.y && ly < p.y + p.h) { const col = lc.c >= (b[b.length - 2]?.c ?? lc.o) ? C.up : C.down; tagBox(ly, col, fmt(lc.c)); }
       const q = b[vi];
       const chq = b[vi - 1] ? q.c / b[vi - 1].c - 1 : null;
-      title(p, GG ? [[q.t.slice(0, 10), C.ink], [`시 ${fmt(q.o)}`, C.muted], [`고 ${fmt(q.h)}`, C.muted], [`저 ${fmt(q.l)}`, C.muted], [`종 ${fmt(q.c)}`, C.ink], [pct(chq), chq >= 0 ? C.up : C.down], [`거래량 ${q.v ? (q.v / 1e6).toFixed(1) + 'M' : '–'}`, C.muted]] : EZS ? [[`${symLabel(state.sel)} · 일봉`, C.ink], [`20일선 ${fmt(EZS.G.e21[vi])}`, '#e07b16'], [`240일선 ${EZS.G.s200[vi] == null ? '–' : fmt(EZS.G.s200[vi])}`, '#d6455d'], [`종가 ${fmt(q.c)}`, C.muted]] : [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
+      title(p, GG ? [[q.t.slice(0, 10), C.ink], [`시 ${fmt(q.o)}`, C.muted], [`고 ${fmt(q.h)}`, C.muted], [`저 ${fmt(q.l)}`, C.muted], [`종 ${fmt(q.c)}`, C.ink], [pct(chq), chq >= 0 ? C.up : C.down], [`거래량 ${q.v ? (q.v / 1e6).toFixed(1) + 'M' : '–'}`, C.muted]] : EZS ? [[`${symLabel(state.sel)} · 일봉`, C.ink], [`20일선 ${fmt(EZS.G.e21[vi])}`, '#e0312d'], [`240일선 ${EZS.G.s200[vi] == null ? '–' : fmt(EZS.G.s200[vi])}`, '#ec4899'], [`종가 ${fmt(q.c)}`, C.muted]] : [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
     } else if (p.k === 's5' || p.k === 's10' || p.k === 's20') {
       const a = I[p.k]; const lab = { s5: '막내 5-3-3', s10: '둘째 10-6-6', s20: '큰형 20-12-12' }[p.k]; const EE = eng(b), cj = EE.code[{ s5: 0, s10: 1, s20: 2 }[p.k]][vi];
       const Y = val => p.y + 3 + (100 - val) / 100 * (p.h - 6);
