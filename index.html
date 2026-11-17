@@ -198,6 +198,7 @@ table.rt{font-size:13.5px;min-width:820px}
 .tile span{display:block;color:var(--muted);font-size:12px}.tile b{display:block;font-size:20px;font-weight:900;margin-top:2px}.tile small{color:var(--muted);font-size:12px}
 .dash td:first-child{color:var(--muted);white-space:nowrap;width:140px}
 @media (max-width:700px){.chips{padding:12px 12px 0;gap:6px}.chip{padding:5px 11px;font-size:13px}.radar .toolbar,.todaybar{padding-left:12px;padding-right:12px}.rt .why{min-width:240px}}
+.livetag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:#fff4e0;color:#b26a00;font-size:11px;font-weight:700;white-space:nowrap}
 </style>
 </head>
 <body class="easy">
@@ -737,7 +738,7 @@ function gobCalc(sym) {
   const grade = p => p >= 6 ? 'S' : p === 5 ? 'H' : p >= 3 ? 'N' : p === 2 ? 'W' : 'D';
   const f2 = x => fmt(x);
   const ev = []; const add = (i, k, d, extra) => ev.push({ i, t: b[i].t, k, d, ...(extra || {}) });
-  let pos = null, lastExit = -99, msOn = false, peg = null, surge = -99, lastSetup = -99, lastVcp = -1, lastPat = '', wmUsed = new Set(), lastNH = -99;
+  let pos = null, lastExit = -99, msOn = false, peg = null, surge = -99, lastSetup = -99, lastVcp = -1, lastPat = '', lastPatI = -99, lastPatDir = 0, wmUsed = new Set(), lastNH = -99;
   for (let i = 60; i < n; i++) {
     const a = atr[i]; if (a == null) continue;
     // ── 응축 해제
@@ -781,9 +782,10 @@ function gobCalc(sym) {
         const name = patName(U, Lo, a);
         if (name) {
           const key = name + U.x0 + '-' + U.qi + '/' + Lo.x0 + '-' + Lo.qi;
+          const cool = d => i - lastPatI < 3 || (d === lastPatDir && i - lastPatI < 10);
           if (key !== lastPat) {
-            if (c[i] > U.at(i) + .2 * a && c[i - 1] <= U.at(i - 1) + .2 * atr[i - 1]) { lastPat = key; add(i, 'PATU', `${name} 상단선(${f2(U.at(i))})을 종가로 넘었습니다.`, { nm: name + ' · 상방 돌파', sh: PSH(name) + '↑' }); }
-            else if (c[i] < Lo.at(i) - .2 * a && c[i - 1] >= Lo.at(i - 1) - .2 * atr[i - 1]) { lastPat = key; add(i, 'PATD', `${name} 하단선(${f2(Lo.at(i))})을 종가로 깼습니다.`, { nm: name + ' · 하방 이탈', sh: PSH(name) + '↓' }); }
+            if (c[i] > U.at(i) + .2 * a && c[i - 1] <= U.at(i - 1) + .2 * atr[i - 1]) { if (cool(1)) { lastPat = key; } else { lastPat = key; lastPatI = i; lastPatDir = 1; add(i, 'PATU', `${name} 상단선(${f2(U.at(i))})을 종가로 넘었습니다.`, { nm: name + ' · 상방 돌파', sh: PSH(name) + '↑' }); } }
+            else if (c[i] < Lo.at(i) - .2 * a && c[i - 1] >= Lo.at(i - 1) - .2 * atr[i - 1]) { if (cool(-1)) { lastPat = key; } else { lastPat = key; lastPatI = i; lastPatDir = -1; add(i, 'PATD', `${name} 하단선(${f2(Lo.at(i))})을 종가로 깼습니다.`, { nm: name + ' · 하방 이탈', sh: PSH(name) + '↓' }); } }
           }
         }
       }
@@ -823,10 +825,10 @@ function gobCalc(sym) {
     } else {
       const res = ph.filter(x => x.i >= i - 60).pop();
       const big = h[i] - l[i] >= 1.2 * a && c[i] >= l[i] + (h[i] - l[i]) * 2 / 3;
-      if (res && c[i] > res.p && c[i - 1] <= res.p && (v[i] >= (vs20[i] || Infinity) || big) && c[i] > e21[i] && c[i] > e55[i]) {
+      if (res && c[i] > res.p && c[i - 1] <= res.p && (v[i] >= (vs20[i - 1] || Infinity) || big) && c[i] > e21[i] && c[i] > e55[i]) {
         const stop = Math.min(l[i], c[i] - 1.5 * a), Rr = c[i] - stop;
         pos = { type: 'BO', i0: i, e: c[i], stop, R: Rr, t1: c[i] + 2 * Rr, t2: c[i] + 3.5 * Rr, res: res.p, py: 0, b21: 0 };
-        add(i, 'BO', `최근 피벗 고점(저항) ${f2(res.p)}을 종가로 처음 넘었습니다${big ? ' (장대양봉)' : ` (거래량 ${fmt(v[i] / vs20[i], 1)}배)`}. 진입 ${f2(c[i])} · 손절 ${f2(stop)} · TP1 ${f2(pos.t1)} · TP2 ${f2(pos.t2)}.`);
+        add(i, 'BO', `최근 피벗 고점(저항) ${f2(res.p)}을 종가로 처음 넘었습니다${big ? ' (장대양봉)' : ` (거래량 ${fmt(v[i] / vs20[i - 1], 1)}배)`}. 진입 ${f2(c[i])} · 손절 ${f2(stop)} · TP1 ${f2(pos.t1)} · TP2 ${f2(pos.t2)}.`);
       } else {
         let below = 0; for (let j = i - 8; j < i; j++) if (c[j] < e21[j]) below++;
         if (s200[i] != null && c[i] > s200[i] && c[i] > e55[i] && below >= 3 && c[i] > e21[i] && c[i] > h[i - 1]) {
@@ -934,7 +936,7 @@ function headCard(sym) {
   return `<div class="ghead"><span class="sym">${esc(symLabel(sym))}</span><span class="nm">${esc(T.label ? sym + ' · ' + (T.name || '') : (T.name || ''))}</span>
     <span class="px num">${last ? fmt(last.c) : '–'}</span><span class="num ${pcls(chg)}" style="font-weight:700">${pct(chg)}</span>
     ${G ? `<span class="pro-only">${statePill(G.status)}</span>` : ''}${S ? `<span class="spill easy-only" style="background:${S.light.bg};color:${S.light.col}">${S.light.t}</span>` : ''}
-    <span class="muted" style="font-size:12px">${last ? esc(last.t.slice(0, 10)) + ' 일봉 기준 · 장중엔 30분마다 갱신' : ''}</span></div>`;
+    <span class="muted" style="font-size:12px">${last ? esc(last.t.slice(0, 10)) + ' 일봉 기준' + (last.syn ? ' (야후 일봉 지연 → 30분봉으로 채움)' : '') + ' · 장중엔 30분마다 갱신' : ''}</span>${liveTag(sym)}</div>`;
 }
 function gobTiles(sym) {
   const G = gobCalc(sym); if (!G) return ''; const L = gobLP(G), b = D.tickers[sym].d, last = b[b.length - 1], chg = last.c / b[b.length - 2].c - 1;
@@ -1234,7 +1236,7 @@ function renderList() {
     rows = list.map(e => {
       const P = e.S?.plan;
       const np = P ? `<span class="np">${fmt(P.entry)} <span class="muted">${P.kind === 'hold' ? '진입' : pct(e.dist)}</span><small>${P.kind === 'hold' ? '보유 중 · 손절 ' + fmt(P.stop) : '매수 검토 가격'}</small></span>` : '–';
-      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${light(e)}</td><td>${e.ezToday.length ? e.ezToday.map(x => ezPill(x.z)).join(' ') : e.today.length ? `<span class="muted">참고 라벨 ${e.today.length}개</span>` : '<span class="muted">–</span>'}</td><td>${np}</td><td class="why">${e.S ? esc(e.S.why) : `상장(데이터) 기간이 짧아 일봉 ${(e.T.d || []).length}개뿐이에요. 80개가 쌓이면 신호를 계산합니다.`}</td></tr>`;
+      return `<tr data-sym="${esc(e.sym)}" class="${e.sym === state.sel ? 'sel' : ''}">${symCell(e)}${pxCells(e)}<td>${light(e)}</td><td>${e.ezToday.length ? e.ezToday.map(x => ezPill(x.z)).join(' ') + liveTag(e.sym) : e.today.length ? `<span class="muted">참고 라벨 ${e.today.length}개</span>` + liveTag(e.sym) : '<span class="muted">–</span>'}</td><td>${np}</td><td class="why">${e.S ? esc(e.S.why) : `상장(데이터) 기간이 짧아 일봉 ${(e.T.d || []).length}개뿐이에요. 80개가 쌓이면 신호를 계산합니다.`}</td></tr>`;
     }).join('');
   } else {
     head = `<tr><th class="sticky">종목</th><th class="r">현재가</th><th class="r">등락</th><th>상태</th><th class="c">추세</th><th class="c">확신</th><th class="c">조건</th><th class="r">RS</th><th class="c">10일 ↑ / ↓</th><th>오늘 신호</th><th>최근 신호</th></tr>`;
@@ -1244,7 +1246,7 @@ function renderList() {
         <td>${G ? statePill(G.status) : `<span class="muted">일봉 ${(e.T.d || []).length}개 · 80개부터 분석</span>`}</td><td class="c">${G ? `<span class="gb sm" style="background:${gcol(G.G)}" title="${GRADE_N[G.G]} ${G.P}/7">${G.G}</span>` : '–'}</td><td class="c"><b>${G ? G.conv : '–'}</b></td>
         <td class="c num">${G ? G.ok9 + '/9' : '–'}</td><td class="r num ${G ? pcls(G.rs) : ''}">${G && G.rs != null ? pct(G.rs) : '–'}</td>
         <td class="c num">${L ? `<span style="color:${GCOL.up};font-weight:700">${L.up}%</span> / <span style="color:${GCOL.dn};font-weight:700">${L.dn}%</span>` : '–'}</td>
-        <td>${e.today.length ? e.today.map(gpill).join(' ') : '<span class="muted">–</span>'}</td>
+        <td>${e.today.length ? e.today.map(gpill).join(' ') + liveTag(e.sym) : '<span class="muted">–</span>'}</td>
         <td>${le ? `${gpill(le)} <span class="muted num">${esc(le.t.slice(5, 10).replace('-', '/'))}</span>` : '<span class="muted">–</span>'}</td></tr>`;
     }).join('');
   }
@@ -1328,7 +1330,7 @@ const GRULES = [
   ['응축 점 / 응축 해제', '볼린저밴드(20, 2σ)가 켈트너채널(20, 1.5×ATR) 안에 들어간 봉에 주황 점. 6봉 중 5봉 이상 응축 뒤 처음 풀린 봉이 응축 해제이고, 방향은 MACD 히스토그램 부호.'],
   ['VCP 형성', '확정 피벗(좌우 5봉) 기준 최근 세 번의 눌림 깊이가 연속으로 줄고 마지막이 첫 번째의 60% 미만, 종가가 55일선 위.'],
   ['셋업 형성 중', '관찰 상태에서 최근 45봉 최고 피벗 고점(저항)의 95~100% 구간, 55일선 위, 최근 6봉 내 응축 또는 ATR이 50일 평균의 85% 미만.'],
-  ['돌파 진입', '가장 최근에 확정된 피벗 고점(60봉 이내)을 종가가 처음 넘고, 거래량이 20일 평균 이상이거나 장대양봉(1.2ATR 이상, 위쪽 1/3 마감)일 때. 21·55일선 위. 손절 = 돌파봉 저가와 종가−1.5ATR 중 낮은 값, TP1=2R, TP2=3.5R.'],
+  ['돌파 진입', '가장 최근에 확정된 피벗 고점(60봉 이내)을 종가가 처음 넘고, 거래량이 전일까지 20일 평균 이상이거나 장대양봉(1.2ATR 이상, 위쪽 1/3 마감)일 때. 21·55일선 위. 손절 = 돌파봉 저가와 종가−1.5ATR 중 낮은 값, TP1=2R, TP2=3.5R.'],
   ['21일선 회복 매수', '200일선과 55일선 위에서, 최근 8봉 중 3봉 이상 21일선 아래에 있던 가격이 21일선 위로, 전일 고가보다 높게 마감. 손절은 최근 5봉 저점(종가−2.5ATR보다 아래로는 안 내림).'],
   ['SR flip', '진입 후 2~10봉 안에 저가가 돌파한 저항선(+0.3ATR)까지 내려왔다가 그 위에서 마감.'],
   ['돌파 청산', '진입 후 15봉 안에 종가가 저항선−0.5ATR 아래로 복귀.'],
@@ -1341,7 +1343,7 @@ const GRULES = [
   ['모멘텀 BUY / SELL', 'MACD(12,26,9) 히스토그램이 0을 상향 돌파하고 종가가 21일선 위면 BUY(TP=+3ATR, SL=−1.5ATR, 유효 8봉). 반대면 SELL. SELL 뒤 히스토그램이 3봉 연속 개선되면 하락 모멘텀 종료.'],
   ['PBB / PBS', '21일선 > 55일선 추세에서 21일선 터치 후 양봉 마감이면 PBB, 반대 추세에서 21일선 반등 후 음봉이면 PBS.'],
   ['MR Long / Short', '전일 시그마 밴드 밖 + RSI 33 미만(또는 75 초과)에서 밴드 안으로 복귀한 봉.'],
-  ['채널·삼각형 돌파/이탈', '120봉 안 확정 피벗 고점(저점) 두 개를 잇는 추세선 중, 두 점 사이 봉의 고가(저가)가 선을 0.15ATR 넘게 뚫지 않고 이후 종가도 선 안에 있는 선을 고름(접점 많은 선 → 최근 선 우선). 상단·하단 선 기울기(ATR 대비)로 상승·하락 채널, 대칭·상승·하강 삼각형, 박스권을 구분. 선 밖으로 0.2ATR 이상 종가가 나가면 돌파·이탈.'],
+  ['채널·삼각형 돌파/이탈', '120봉 안 확정 피벗 고점(저점) 두 개를 잇는 추세선 중, 두 점 사이 봉의 고가(저가)가 선을 0.15ATR 넘게 뚫지 않고 이후 종가도 선 안에 있는 선을 고름(접점 많은 선 → 최근 선 우선). 상단·하단 선 기울기(ATR 대비)로 상승·하락 채널, 대칭·상승·하강 삼각형, 박스권을 구분. 선 밖으로 0.2ATR 이상 종가가 나가면 돌파·이탈. 같은 방향 신호는 10봉, 반대 방향은 3봉 안에 다시 내지 않음(가짜 연속 신호 방지).'],
   ['W 돌파 / M 이탈', '저점-고점-저점(또는 반대) 피벗에서 두 저점 차가 0.8ATR 또는 3% 이내이고 넥라인을 종가로 넘을 때.'],
   ['추세 등급 S·H·N·W·D', '7점 만점: 종가>21일선, 8>21, 21>55, 종가>200일선, 200일선 상승, 주봉 상승(주봉 10>30 EMA), ADX>20이고 +DI 우위. 6점 이상 S, 5점 H, 3~4점 N, 2점 W, 이하 D.'],
   ['확신 등급', '조건 점검 8개 이상이고 등급 S/H면 A, 6개 이상이고 S/H/N이면 B, 그 외 S/H/N은 C, W/D는 D.'],
@@ -1835,6 +1837,25 @@ function renderStamp() {
   } else el.textContent = '수동 입력 모드 — data.json이 없어 붙여넣은 데이터로 보여주는 중';
 }
 const unpack = a => (a || []).map(x => Array.isArray(x) ? { t: x[0], o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] } : x);
+// 야후 일봉이 하루 늦게 들어오는 종목(삼성전자·SK하이닉스·코스피 등)은 30분봉(없으면 1시간봉)으로 빠진 날을 채운다
+function fillDaily(T) {
+  const d = T.d || [], src = (T.h30 && T.h30.length ? T.h30 : T.h1) || []; if (!d.length || !src.length) return;
+  const last = d[d.length - 1].t.slice(0, 10), by = new Map();
+  src.forEach(x => { const day = x.t.slice(0, 10); if (day <= last) return; const g = by.get(day);
+    if (!g) by.set(day, { t: day, o: x.o, h: x.h, l: x.l, c: x.c, v: x.v || 0, syn: true }); else { g.h = Math.max(g.h, x.h); g.l = Math.min(g.l, x.l); g.c = x.c; g.v += x.v || 0; } });
+  [...by.keys()].sort().forEach(k => d.push(by.get(k)));
+}
+function mktNow(kr) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: kr ? 'Asia/Seoul' : 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return { day: `${p.year}-${p.month}-${p.day}`, min: (+p.hour % 24) * 60 + +p.minute, wd: p.weekday };
+}
+// 오늘 일봉이 아직 장중(종가 미확정)인지
+function dayLive(sym) {
+  const T = D.tickers[sym], b = T?.d; if (!b || !b.length) return false;
+  const m = mktNow(!!T.kr); if (m.wd === 'Sat' || m.wd === 'Sun') return false;
+  return b[b.length - 1].t.slice(0, 10) === m.day && m.min < (T.kr ? 15 * 60 + 40 : 16 * 60 + 10);
+}
+const liveTag = sym => dayLive(sym) ? ' <span class="livetag" title="오늘 봉이 아직 마감 전이라 종가에 따라 신호가 생기거나 사라질 수 있어요">장중·미확정</span>' : '';
 function dispT(sym, t) {
   if (!t || t.length <= 10 || !(D.tickers[sym]?.kr)) return t;
   const m = toMin(t) - 30, d = new Date(m * 60000); return d.toISOString().slice(0, 16).replace('T', ' ');
@@ -1850,7 +1871,7 @@ async function loadRemote() {
       const old = D.tickers[s];
       const recs = new Map();
       [...(T.rec || []).map(x => ({ ...x, src: 'repo' })), ...((old && !old.demo ? old.rec : []) || []).filter(x => !x.src)].forEach(x => recs.set(x.t + '|' + x.sig, x));
-      D.tickers[s] = { name: T.name || old?.name || '', label: T.label || '', kr: !!T.kr, tv: T.tv || '', base: T.base || null, dir: T.dir || 1, demo: false, auto: true, d: unpack(T.d), h1: unpack(T.h1), h30: unpack(T.h30), m5: unpack(T.m5), rec: [...recs.values()].sort((a, b) => a.t < b.t ? -1 : 1) };
+      D.tickers[s] = { name: T.name || old?.name || '', label: T.label || '', kr: !!T.kr, tv: T.tv || '', base: T.base || null, dir: T.dir || 1, demo: false, auto: true, d: unpack(T.d), h1: unpack(T.h1), h30: unpack(T.h30), m5: unpack(T.m5), rec: [...recs.values()].sort((a, b) => a.t < b.t ? -1 : 1) }; fillDaily(D.tickers[s]);
     });
     Object.keys(D.tickers).forEach(s => { if (D.tickers[s].demo) delete D.tickers[s]; });
     const order = [...(j.order || Object.keys(j.tickers))];
