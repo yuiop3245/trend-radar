@@ -155,6 +155,17 @@ table.rt{font-size:13.5px;min-width:820px}
 .rt td.sticky,.rt th.sticky{position:sticky;left:0;background:var(--panel);z-index:1}
 .rt tbody tr:hover td.sticky{background:var(--panel2)}.rt tr.sel td.sticky{background:var(--hl)}
 .detailwrap{margin-top:14px}
+.ezgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}.pro .ezgrid{grid-template-columns:1fr}
+.ezside h3{font-size:15px;margin:0 0 10px}.ezside hr{border:0;border-top:1px solid var(--line);margin:16px -16px}
+.ezside .light{display:inline-flex;align-items:center;gap:8px;font-size:22px;font-weight:900;padding:8px 18px;border-radius:999px;margin:8px 0}.ezside .light i{width:12px;height:12px;border-radius:50%}
+.ezside .why{font-size:14.5px;line-height:1.6;margin:6px 0 0}
+.ezck{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}.ezck li{display:grid;grid-template-columns:58px 1fr;gap:8px;align-items:start;font-size:14px}
+.ezck .st{font-weight:800;text-align:center;border-radius:7px;padding:3px 0;font-size:13px}.ezck .st.yes{background:#e3f4ea;color:#1e8e5a}.ezck .st.no{background:#fbe4e8;color:#d6455d}
+.ezck .dt{color:var(--muted);font-size:12px;margin-top:2px}
+.ezsum{background:var(--panel2);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:13.5px}
+.ezrow{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:14px}.ezrow b{font-size:18px}.ezrow.sm{padding:0 0 4px;font-size:12px}
+.ezst{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center;font-size:13.5px;margin:8px 0}.ezst .pill{text-align:center}
+@media (max-width:900px){.ezgrid{grid-template-columns:1fr}}
 .gobgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:4px}.gobgrid h3{font-size:14px;margin:0 0 8px}.checks li .q{align-self:center}
 @media (max-width:800px){.gobgrid{grid-template-columns:1fr}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -615,6 +626,7 @@ function chartSigs(sym, tf, b) {
   });
   let vals = [...map.values()].filter(x => !(x.type === 'PS' && map.has(x.i + '|AX')));
   const gx = [];
+  if (tf === 'd' && state.mode !== 'pro') return ezEvents(sym).map(e => ({ i: e.i, t: e.t, type: 'Z:' + e.k, meta: { s: EZ[e.z].n, n: EZ[e.z].n, side: e.z === 'sell' || e.z === 'tp' ? 'sell' : 'buy', pill: EZ[e.z], easy: EZ[e.z].easy }, memo: e.t + ' · ' + EZ[e.z].n + ' — ' + e.d, how: e.d, n: 1 }));
   if (tf === 'd' && state.mode === 'pro' && state.gobOn !== false) { vals = vals.filter(x => x.type.startsWith('REC:')); const G = gobCalc(sym); if (G) G.ev.forEach(e => { const m = GN[e.k]; gx.push({ i: e.i, t: e.t, type: 'G:' + e.k, meta: { s: m[0], n: e.nm || m[1], side: m[2] === 'info' ? 'rec' : m[2], easy: e.d, rule: e.d }, memo: e.t + ' · ' + (e.nm || m[1]) + ' — ' + e.d, how: e.d, n: 1 }); }); }
   return gx.concat(vals.map(x => x.n > 1 ? { ...x, memo: `${x.n}번 · 마지막 ${dispT(sym, x.hows[x.hows.length - 1].slice(0, 16))}${x.hows[x.hows.length - 1].slice(16)}` } : { ...x, memo: dispT(sym, x.t) + ' · ' + (x.how || x.meta.easy) }));
 }
@@ -789,7 +801,9 @@ function gobCalc(sym) {
   const conv = ok9 >= 8 && 'SH'.includes(G) ? 'A' : ok9 >= 6 && 'SHN'.includes(G) ? 'B' : 'SHN'.includes(G) ? 'C' : 'D';
   const status = pos ? (pos.tp1 ? '관리' : '보유') : i - lastExit <= 5 ? '청산 직후 · 관찰' : '관찰';
   let sqN = 0; for (let j = n - 20; j < n; j++) if (sq[j]) sqN++;
+  const resP = (() => { const ph = PH.filter(x => x.k <= n - 1 && x.i >= n - 61 && x.p > c[n - 1] && x.p < c[n - 1] * 1.2); return ph.length ? ph[ph.length - 1].p : null; })();
   const out = {
+    res: resP, atr: atr[n - 1], c: c[n - 1],
     bench: T.kr ? '코스피' : 'SPY', ev, pos, status, P, G, pts, conv, checks, ok9, rs, hi52, lo52, sq, e8, e21, e55, s200,
     dash: {
       align: e8[i] > e21[i] && e21[i] > e55[i] ? '정배열' : e8[i] < e21[i] && e21[i] < e55[i] ? '역배열' : '혼조',
@@ -1073,6 +1087,7 @@ function renderDetail() {
   const el = $('#detail'); const sym = state.sel;
   if (!sym) { el.innerHTML = D.pending ? '<div class="card empty">최신 시세를 불러오는 중…</div>' : '<div class="card empty">종목이 없어요. [데이터 입력]에서 종목을 추가해 주세요.</div>'; return; }
   const T = D.tickers[sym], e = evaluate(sym), b = T.d || [];
+  if (state.mode !== 'pro' && state.tf !== 'd') { state.tf = 'd'; state.view = null; }
   state.plan = e.empty ? null : { buy: e.buyPx, stop: e.stopPx };
   const head = `<div class="card head">
     <div>
@@ -1100,12 +1115,13 @@ function renderDetail() {
   </div>`;
   const hasTF = k => (T[k] || []).length > 0;
   const chart = `<div class="card" id="chartCard">
-    <div class="charthead"><h2>차트</h2>
-      <div class="seg small" id="tfSeg">${['d', 'h4', 'h1', 'h30', 'm5'].map(k => `<button data-tf="${k}" ${seriesOf(T, k).length ? '' : 'disabled'}>${TFN[k]}</button>`).join('')}</div>
+    <div class="charthead"><h2>${E(esc(symLabel(sym)) + ' 일봉 · 신호 4가지만 표시', '차트')}</h2>
+      <div class="seg small pro-only" id="tfSeg">${['d', 'h4', 'h1', 'h30', 'm5'].map(k => `<button data-tf="${k}" ${seriesOf(T, k).length ? '' : 'disabled'}>${TFN[k]}</button>`).join('')}</div>
       <div class="seg small" id="perSeg"></div>
       <div class="seg small" id="zoomSeg"><button data-z="out" title="축소">－</button><button data-z="in" title="확대">＋</button><button data-z="end">최신</button></div>
     </div>
-    <div class="legend">
+    <div class="legend easy-only"><span><i style="background:#e07b16"></i>21일선 · 단기 추세</span><span><i style="background:#d6455d"></i>200일선 · 장기 추세</span>${['buy', 'add', 'tp', 'sell'].map(ezPill).join(' ')}</div>
+    <div class="legend pro-only">
       <span><i style="background:var(--up)"></i>양봉 · %K</span><span><i style="background:var(--down)"></i>음봉 · %D</span>
       <span><i style="background:var(--amber)"></i>20EMA</span>
       <span><i style="background:var(--upS);height:10px;border:1px solid var(--up)"></i>${E('오르는 힘 우세 (DMI)', '+DI>−DI & ADX≥20')}</span>
@@ -1113,12 +1129,16 @@ function renderDetail() {
       <span>▲ 매수 쪽 · ▼ 매도 쪽 · ◆ 내 기록</span>
     </div>
     <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-    <p class="hint">점선 = 다음 계획 가격 (주황 눌림 기준 · 파랑 손절 참고, 분봉 차트에서 표시) · 드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨(모든 시간봉 공통): ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆기록 = 내 기록. 한 봉에 여러 번이면 마우스를 올려 횟수 확인</p>
+    <p class="hint easy-only">오른쪽 칸은 다음 계획의 가격대입니다 (파란 점선 매수 검토, 초록 목표, 빨강 손절) · 내 트레이딩뷰 규칙 신호(사·분할·정리)는 위 표의 '레이더 판정'과 전문가 모드에서 봐요.</p>
+    <p class="hint pro-only">점선 = 다음 계획 가격 (주황 눌림 기준 · 파랑 손절 참고, 분봉 차트에서 표시) · 드래그로 좌우 이동 · Ctrl(⌘)+휠 또는 ＋/－로 확대·축소 · 봉에 올리면 가격과 신호 · 라벨(모든 시간봉 공통): ▲사 = 5분 기술매수 · ▼분할 = 분할매도해 · ▼정리 = 다정리해(30분 판정) · ◆기록 = 내 기록. 한 봉에 여러 번이면 마우스를 올려 횟수 확인</p>
   </div>`;
   const indT = e.empty ? '' : `<div class="card pro-only"><h2>지표 현황</h2><p class="sub">각 시간프레임 마지막 봉 기준</p><div class="scroll">${indTable(T)}</div></div>`;
   const sigs = dailySignals(sym);
   const recent = sigs.slice(-8).reverse();
-  const recentT = `<div class="card"><h2>최근 신호, 그리고 그 뒤에 어떻게 됐나</h2><p class="sub">행을 누르면 차트가 그 날짜로 이동해요.</p>
+  const ezR = ezEvents(sym).slice(-10).reverse();
+  const ezRecent = `<div class="card easy-only"><div class="perfhead"><h2>최근 신호, 그리고 그 뒤에 어떻게 됐나</h2><span class="muted" style="font-size:12.5px">행을 누르면 차트가 그 날짜로 이동합니다</span></div>
+    ${ezR.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">10일 뒤</th><th>무슨 뜻이었나</th></tr></thead><tbody>${ezR.map(x => { const r = fwd(b, x.i, 10); return `<tr class="click" data-jump="${esc(x.t)}" data-type="Z:${x.k}"><td class="num">${esc(x.t.slice(2, 10).replace(/-/g, '.'))}</td><td>${ezPill(x.z)}</td><td class="r num ${pcls(r)}">${r == null ? '아직' : pct(r)}</td><td class="muted">${EZ[x.z].easy}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty">이 기간엔 신호가 없어요</div>'}</div>`;
+  const recentT = `<div class="card pro-only"><h2>최근 신호, 그리고 그 뒤에 어떻게 됐나</h2><p class="sub">행을 누르면 차트가 그 날짜로 이동해요.</p>
     ${recent.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">10일 뒤</th><th>무슨 뜻이었나</th></tr></thead><tbody>
     ${recent.map(s => { const r = fwd(b, s.i, 10); const left = b.length - 1 - s.i;
       const res = r == null ? `<span class="muted">진행 중 (${left}일째)</span>` : `<span class="${pcls(r)}">${pct(r)}</span>`;
@@ -1138,7 +1158,7 @@ function renderDetail() {
     <div class="tile"><span>눌림 기준 (5분 20EMA)</span><b class="num">${fmt(e.buyPx)}</b><small>${pct(e.dist)}</small></div>
     <div class="tile"><span>손절 참고</span><b class="num">${fmt(e.stopPx)}</b><small>5분 24봉 저가</small></div>
   </div>`;
-  el.innerHTML = head + tiles + checks + chart + gobCards(sym) + tvCard() + indT + recentT + logT + perfCard(sym) + rulesCard();
+  el.innerHTML = head + tiles + `<div class="ezgrid">${chart}${ezSide(sym)}</div>` + ezRecent + checks + gobCards(sym) + tvCard() + indT + recentT + logT + perfCard(sym) + rulesCard();
   setupChart();
   const tb = $('#tvBox'); if (tb) { tb.addEventListener('toggle', () => { state.tvOpen = tb.open; if (tb.open) loadTV(); }); if (state.tvOpen) loadTV(); }
 }
@@ -1203,6 +1223,78 @@ function gobCards(sym) {
   <div class="card pro-only"><details><summary>규칙 사전 (고버니식) — 각 라벨이 어떤 규칙으로 계산되는지</summary>
     <table style="margin-top:10px"><thead><tr><th>라벨</th><th>계산 규칙 (일봉)</th></tr></thead><tbody>${GRULES.map(([a, r]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(r)}</td></tr>`).join('')}</tbody></table>
     <p class="note">고버니 원본 코드를 본 게 아니라 이 규칙 설명을 그대로 옮겨 만든 거라, 세부 계산(피벗 확정 방식, 시그마 밴드 기간 등)이 원본과 조금 다를 수 있어요. 10일 위/아래 확률(몬테카를로)과 시나리오 경로는 아직 넣지 않았어요.</p></details></div>`;
+}
+
+/* ============ 주린이: 고버니식 4가지 신호 ============ */
+const EZK = { BO: 'buy', R21: 'buy', SRF: 'buy', PY1: 'add', PY2: 'add', TP1: 'tp', TP2: 'tp', TRIM: 'tp', FIN: 'sell', BOX: 'sell' };
+const EZ = {
+  buy: { n: '매수', col: '#1e8e5a', bg: '#e3f4ea', easy: '막혀 있던 고점을 거래량과 함께 넘었거나, 21일선을 다시 회복했습니다. 손절가를 먼저 정하고 들어가는 자리입니다.' },
+  add: { n: '추가 매수', col: '#2f6fde', bg: '#e6eefc', easy: '보유 중 눌렸다가 다시 올라섰습니다. 수익 중일 때만 조금 더 싣는 자리입니다.' },
+  tp: { n: '일부 익절', col: '#b87406', bg: '#fbf0dc', easy: '목표가에 닿았거나 너무 빨리 올랐습니다. 일부를 팔아 수익을 챙겨 두는 자리입니다.' },
+  sell: { n: '매도', col: '#d6455d', bg: '#fbe4e8', easy: '추세가 꺾였거나 손절선을 깼습니다. 남은 물량을 정리하고 다음 기회를 기다리는 자리입니다.' }
+};
+function ezEvents(sym) { const G = gobCalc(sym); return G ? G.ev.filter(e => EZK[e.k]).map(e => ({ ...e, z: EZK[e.k] })) : []; }
+function ezPill(z) { const m = EZ[z]; return `<span class="pill" style="background:${m.bg};color:${m.col}">${m.n}</span>`; }
+function ezState(sym) {
+  const G = gobCalc(sym); if (!G) return null;
+  const n = D.tickers[sym].d.length, i = n - 1, c = G.c, e21 = G.e21[i], s200 = G.s200[i], a = G.atr;
+  const ev = ezEvents(sym); const lastSell = ev.filter(e => e.z === 'sell').pop(); const lastBuy = ev.filter(e => e.z === 'buy').pop();
+  const recentSell = lastSell && i - lastSell.i <= 10;
+  const md = t => t.slice(5, 10).replace('-', '/');
+  const checks = [
+    { q: '장기 추세: 200일선 위에 있나요?', ok: s200 != null && c > s200, dt: `200일선 ${s200 == null ? '–' : fmt(s200)}` },
+    { q: '단기 추세: 21일선 위에 있나요?', ok: c > e21, dt: `21일선 ${fmt(e21)}` },
+    { q: '최근 2주 안에 매도 신호가 없었나요?', ok: !recentSell, dt: lastSell ? `${md(lastSell.t)} 매도 신호` : '최근 매도 신호 없음' }
+  ];
+  const yes = checks.filter(x => x.ok).length;
+  let light, why, plan;
+  if (G.pos) {
+    light = { t: '보유', col: '#1e8e5a', bg: '#e3f4ea' };
+    why = `${lastBuy ? md(lastBuy.t) + ' 매수 신호' : '매수 신호'} 이후 보유 중입니다. 손절가 ${fmt(G.pos.stop)} 아래로 마감하면 정리합니다.`;
+    plan = { kind: 'hold', title: '지금 보유 중인 계획', entry: G.pos.e, stop: G.pos.stop, target: G.pos.tp1 ? G.pos.t2 : G.pos.t1 };
+  } else {
+    let entry = c < (s200 ?? -Infinity) ? Math.max(s200, e21) : Math.max(e21, G.res || 0);
+    if (!(entry > 0)) entry = e21;
+    const stop = entry - 1.5 * a, target = entry + 2 * (entry - stop);
+    plan = { kind: 'wait', title: '다음 매수 계획 (아직 진입 전)', entry, stop, target };
+    if (s200 != null && c < s200) { light = { t: '위험', col: '#d6455d', bg: '#fbe4e8' }; why = `장기 추세선인 200일선(${fmt(s200)}) 아래에 있습니다. 하락 추세에서는 매수 신호를 기다리지 않습니다.`; }
+    else if (yes === 3) { light = { t: '매수 대기', col: '#2f6fde', bg: '#e6eefc' }; why = `추세는 살아 있습니다. ${fmt(entry)} 위로 거래량이 붙어 마감하면 매수 신호가 나옵니다.`; }
+    else if (c <= e21) { light = { t: '관망', col: '#6b7280', bg: '#eef0f3' }; why = `단기 추세선인 21일선(${fmt(e21)}) 아래로 내려와 쉬는 중입니다.`; }
+    else { light = { t: '관망', col: '#6b7280', bg: '#eef0f3' }; why = `${md(lastSell.t)} 매도 신호 뒤 쉬는 중입니다. 다시 힘이 붙는지 지켜봅니다.`; }
+  }
+  return { G, checks, yes, light, why, plan, ev, c };
+}
+function ezSide(sym) {
+  const S = ezState(sym); if (!S) return '<div class="card easy-only empty">일봉이 80개 이상 있어야 볼 수 있어요.</div>';
+  const b = D.tickers[sym].d; const { plan: P } = S;
+  const st = z => { const a = S.ev.filter(e => e.z === z).map(e => fwd(b, e.i, 10)).filter(r => r != null);
+    if (!a.length) return '이 기간엔 나온 적이 없습니다';
+    const avg = a.reduce((x, y) => x + y, 0) / a.length;
+    const k = z === 'sell' ? a.filter(r => r < 0).length : a.filter(r => r > 0).length;
+    return `<b>${a.length}번 중 ${k}번</b> 10일 뒤 ${z === 'sell' ? '더 내렸음' : '올랐음'} <span class="muted">(평균 ${pct(avg)})</span>`; };
+  let up = 0, tot = 0; for (let i = 0; i < b.length - 10; i++) { tot++; if (b[i + 10].c > b[i].c) up++; }
+  const rr = (P.target - P.entry) / Math.max(1e-9, P.entry - P.stop);
+  return `<aside class="card easy-only ezside">
+    <div class="muted" style="font-size:12px">${esc(symLabel(sym))} 지금 신호</div>
+    <div class="light" style="background:${S.light.bg};color:${S.light.col}"><i style="background:${S.light.col}"></i>${S.light.t}</div>
+    <p class="why">${esc(S.why)}</p>
+    <hr>
+    <h3>지금 사도 될까?</h3>
+    <ol class="ezck">${S.checks.map(x => `<li><span class="st ${x.ok ? 'yes' : 'no'}">${x.ok ? '예' : '아니오'}</span><div><div>${x.q}</div><div class="dt num">${esc(x.dt)}</div></div></li>`).join('')}</ol>
+    <div class="ezsum">${S.yes === 3 ? "3개 모두 '예'입니다. 아래 매수 검토 가격 위로 마감하는지 지켜보세요." : `3개 중 ${S.yes}개만 '예'입니다. 지금은 사는 때가 아니라 기다리는 때입니다.`}</div>
+    <hr>
+    <h3>${P.title}</h3>
+    <div class="ezrow"><span>${P.kind === 'hold' ? '진입 가격' : '매수 검토 가격'}</span><b class="num" style="color:#2f6fde">${fmt(P.entry)}</b></div>
+    <div class="ezrow sm"><span></span><span class="muted num">${P.kind === 'hold' ? '진입 뒤 지금 ' + pct(S.c / P.entry - 1) : '지금보다 ' + pct(P.entry / S.c - 1)}</span></div>
+    <div class="ezrow"><span>손절 가격</span><b class="num" style="color:#d6455d">${fmt(P.stop)}</b></div>
+    <div class="ezrow"><span>목표 가격</span><b class="num" style="color:#1e8e5a">${fmt(P.target)}</b></div>
+    ${P.entry > P.stop ? `<div class="ezrow"><span>손익비</span><b class="num">1 : ${fmt(rr, 1)}</b></div>` : '<div class="ezrow sm"><span class="muted">1차 익절 뒤 손절을 본전으로 올렸어요</span></div>'}
+    <p class="note">${P.kind === 'hold' ? '손절 가격 아래로 마감하면 정리하고, 목표 가격에 닿으면 일부 익절합니다.' : '종가가 매수 검토 가격 위로 마감하는 것을 먼저 확인합니다. 손절·목표 가격은 실제로 산 다음에만 쓰는 값입니다. 증권사 앱에 매수 검토 가격 알림을 걸어 두세요.'}</p>
+    <hr>
+    <h3>이 신호들, 실제로 맞았을까?</h3>
+    ${['buy', 'add', 'tp', 'sell'].map(z => `<div class="ezst">${ezPill(z)}<span>${st(z)}</span></div>`).join('')}
+    <p class="note">${esc(b[0].t.slice(0, 7))} ~ ${esc(b[b.length - 1].t.slice(0, 7))} 일봉 기준입니다. 같은 기간 아무 날이나 샀어도 10일 뒤 오른 비율이 ${tot ? Math.round(up / tot * 100) : 0}%였습니다. 횟수가 적어서 참고만 하세요.</p>
+  </aside>`;
 }
 function tag(s) { return `<span class="tag ${s.meta.side}" title="${esc(s.meta.n)}">${esc(state.mode === 'easy' ? s.meta.n : s.meta.s + ' · ' + s.meta.n)}</span>`; }
 function indTable(T) {
@@ -1336,12 +1428,13 @@ function drawChart() {
     ctx.fillText('이 시간프레임 데이터가 없어요. [데이터 입력]에서 붙여넣어 주세요.', 12, 64); tip.style.display = 'none'; return;
   }
   const I = ind(b); const v = state.view; const pro = state.mode === 'pro';
-  const P = [{ k: 'price', h: W < 600 ? 260 : 320 }, { k: 's5', h: 72 }, { k: 's10', h: 72 }, { k: 's20', h: 72 }];
+  const ezD = !pro && state.tf === 'd'; const EZS = ezD ? ezState(state.sel) : null;
+  const P = ezD ? [{ k: 'price', h: W < 600 ? 320 : 420 }] : [{ k: 'price', h: W < 600 ? 260 : 320 }, { k: 's5', h: 72 }, { k: 's10', h: 72 }, { k: 's20', h: 72 }];
   if (pro) P.push({ k: 'rsi', h: 62 }, { k: 'macd', h: 72 }, { k: 'dmi', h: 72 });
   const GAP = 8, AXB = 22; let yy = 2; P.forEach(p => { p.y = yy; yy += p.h + GAP; }); const H = yy - GAP + AXB;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-  const L = 4, R = W - 58, PW = R - L, bw = PW / v.count;
+  const L = 4, R = W - 58, PWall = R - L, ZW = EZS ? Math.round(PWall * .26) : 0, PW = PWall - ZW, RC = L + PW, bw = PW / v.count;
   Object.assign(chart, { L, PW, bw });
   const X = i => L + (i - v.start + 0.5) * bw;
   const i0 = Math.max(0, Math.floor(v.start)), i1 = Math.min(b.length - 1, Math.ceil(v.start + v.count));
@@ -1352,8 +1445,8 @@ function drawChart() {
   const sigs = chartSigs(state.sel, state.tf, b);
   const sigAt = new Map(); sigs.forEach(s => { if (!sigAt.has(s.i)) sigAt.set(s.i, []); sigAt.get(s.i).push(s); });
 
-  const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.y, PW, p.h); ctx.clip(); fn(); ctx.restore(); };
-  const frame = p => { ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.strokeRect(L + .5, p.y + .5, PW - 1, p.h - 1); };
+  const clip = (p, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(L, p.y, PWall, p.h); ctx.clip(); fn(); ctx.restore(); };
+  const frame = p => { ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.strokeRect(L + .5, p.y + .5, PWall - 1, p.h - 1); };
   const path = (arr, Y, color, w = 1.4) => {
     ctx.beginPath(); let on = false;
     for (let i = Math.max(0, i0 - 1); i <= Math.min(b.length - 1, i1 + 1); i++) {
@@ -1381,11 +1474,12 @@ function drawChart() {
     if (p.k === 'price') {
       let lo = Infinity, hiP = -Infinity;
       for (let i = i0; i <= i1; i++) { lo = Math.min(lo, b[i].l); hiP = Math.max(hiP, b[i].h); if (I.ema20[i] != null) { lo = Math.min(lo, I.ema20[i]); hiP = Math.max(hiP, I.ema20[i]); } }
+      if (EZS) { const pl = EZS.plan; [pl.entry, pl.stop, pl.target].forEach(x => { if (ok(x)) { lo = Math.min(lo, x); hiP = Math.max(hiP, x); } }); for (let i = i0; i <= i1; i++) { const q = EZS.G.s200[i]; if (q != null) { lo = Math.min(lo, q); hiP = Math.max(hiP, q); } } }
       const span = (hiP - lo) || hiP * .02 || 1; const top = hiP + span * .12, bot = lo - span * .10;
       const ph = p.h * .82;
       const Y = val => p.y + 4 + (top - val) / (top - bot) * (ph - 4);
       clip(p, () => {
-        dmiBg(p); highlight(p);
+        if (!EZS) dmiBg(p); highlight(p);
         for (let k = 0; k <= 4; k++) { const val = bot + (top - bot) * k / 4; hline(p, Y(val), C.grid); }
         let mv = 0; for (let i = i0; i <= i1; i++) mv = Math.max(mv, b[i].v || 0);
         if (mv > 0) { ctx.globalAlpha = .28; for (let i = i0; i <= i1; i++) { const vh = (b[i].v || 0) / mv * p.h * .16; ctx.fillStyle = b[i].c >= b[i].o ? C.up : C.down; ctx.fillRect(X(i) - bw * .35, p.y + p.h - vh, Math.max(1, bw * .7), vh); } ctx.globalAlpha = 1; }
@@ -1395,7 +1489,20 @@ function drawChart() {
           const y1 = Y(Math.max(q.o, q.c)), y2 = Y(Math.min(q.o, q.c)); const w = Math.max(1, bw * .68);
           ctx.fillStyle = col; ctx.fillRect(x - w / 2, y1, w, Math.max(1, y2 - y1));
         }
-        path(I.ema20, Y, C.amber, 1.5);
+        if (EZS) {
+          const G = EZS.G, pl = EZS.plan; path(G.e21, Y, '#e07b16', 2); path(G.s200, Y, '#d6455d', 2);
+          const zx = RC + 6, zw = R - zx; ctx.fillStyle = 'rgba(120,130,150,.07)'; ctx.fillRect(zx, p.y, zw, p.h);
+          const yE = Y(pl.entry), yS = Y(pl.stop), yT = Y(pl.target);
+          ctx.fillStyle = 'rgba(30,142,90,.14)'; ctx.fillRect(zx + 4, Math.min(yT, yE), zw - 8, Math.abs(yE - yT));
+          ctx.fillStyle = 'rgba(214,69,93,.12)'; ctx.fillRect(zx + 4, Math.min(yE, yS), zw - 8, Math.abs(yS - yE));
+          const items = [[yT, '#1e8e5a', false, '목표', pl.target], [yE, '#2f6fde', true, pl.kind === 'hold' ? '진입' : '매수 검토', pl.entry], [yS, '#d6455d', false, '손절', pl.stop]];
+          let lastY = -1e9; const ly = items.map(([y]) => { const v2 = Math.max(y, lastY + 15); lastY = v2; return v2; });
+          items.forEach(([y, col, dash, lb, pv], k) => { ctx.save(); if (dash) ctx.setLineDash([5, 4]); ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(zx + 4, y); ctx.lineTo(R - 4, y); ctx.stroke(); ctx.restore();
+            ctx.font = font(11, 700); ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(lb, zx + 8, ly[k] - 8 + (k ? 0 : 0));
+            ctx.fillRect(R + 2, ly[k] - 8, 54, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.fillText(fmt(pv), R + 5, ly[k]); });
+          ctx.save(); ctx.setLineDash([2, 3]); ctx.strokeStyle = '#2f6fde'; ctx.beginPath(); ctx.moveTo(X(b.length - 1), Y(b[b.length - 1].c)); ctx.lineTo(zx + 4, yE); ctx.stroke(); ctx.restore();
+          ctx.font = font(10.5); ctx.fillStyle = C.muted; ctx.textBaseline = 'bottom'; ctx.fillText('앞으로', zx + 8, p.y + p.h - 4);
+        } else path(I.ema20, Y, C.amber, 1.5);
         if (pro && isD && state.gobOn !== false) { const G = gobCalc(state.sel); if (G) {
           path(G.e8, Y, '#7a8ca8', 1); path(G.e55, Y, '#8e5bd6', 1.2); path(G.s200, Y, C.ink, 1.4);
           ctx.fillStyle = '#f08a00'; for (let i = i0; i <= i1; i++) if (G.sq[i]) { ctx.beginPath(); ctx.arc(X(i), p.y + p.h - 4, Math.max(1.5, Math.min(3, bw * .25)), 0, 7); ctx.fill(); }
@@ -1411,6 +1518,12 @@ function drawChart() {
           if (i < i0 || i > i1) return; const x = X(i); let below = 0, above = 0;
           list.forEach(s => {
             const side = s.meta.side; const col = side === 'buy' ? C.up : side === 'sell' ? C.down : C.rec; ctx.fillStyle = col;
+            if (s.meta.pill) { const pm = s.meta.pill; ctx.font = font(11, 700); const tw = ctx.measureText(pm.n).width + 12, th = 18;
+              const yy0 = side === 'buy' ? Y(b[i].l) + 8 + below * 22 : Y(b[i].h) - 8 - th - above * 22;
+              ctx.fillStyle = pm.col; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x - tw / 2, yy0, tw, th, 5); else ctx.rect(x - tw / 2, yy0, tw, th); ctx.fill();
+              ctx.beginPath(); if (side === 'buy') { ctx.moveTo(x, yy0 - 5); ctx.lineTo(x - 4, yy0); ctx.lineTo(x + 4, yy0); } else { ctx.moveTo(x, yy0 + th + 5); ctx.lineTo(x - 4, yy0 + th); ctx.lineTo(x + 4, yy0 + th); } ctx.fill();
+              ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(pm.n, x, yy0 + th / 2 + .5); ctx.font = font(10, 700);
+              if (side === 'buy') below++; else above++; return; }
             if (side === 'buy') {
               const lbl = bw > 9, y = Y(b[i].l) + 6 + below * (lbl ? 22 : 9); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, y + 7); ctx.lineTo(x + 5, y + 7); ctx.fill();
               if (lbl) { ctx.textBaseline = 'top'; ctx.fillText(s.meta.s, x, y + 8); } below++;
@@ -1428,7 +1541,7 @@ function drawChart() {
       const lc = b[b.length - 1]; const ly = Y(lc.c);
       if (ly > p.y && ly < p.y + p.h) { const col = lc.c >= (b[b.length - 2]?.c ?? lc.o) ? C.up : C.down; ctx.fillStyle = col; ctx.fillRect(R + 1, ly - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillText(fmt(lc.c), R + 5, ly); }
       const q = b[vi];
-      title(p, [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
+      title(p, EZS ? [[`${symLabel(state.sel)} · 일봉`, C.ink], [`21일선 ${fmt(EZS.G.e21[vi])}`, '#e07b16'], [`200일선 ${EZS.G.s200[vi] == null ? '–' : fmt(EZS.G.s200[vi])}`, '#d6455d'], [`종가 ${fmt(q.c)}`, C.muted]] : [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
     } else if (p.k === 's5' || p.k === 's10' || p.k === 's20') {
       const a = I[p.k]; const lab = { s5: '막내 5-3-3', s10: '둘째 10-6-6', s20: '큰형 20-12-12' }[p.k]; const EE = eng(b), cj = EE.code[{ s5: 0, s10: 1, s20: 2 }[p.k]][vi];
       const Y = val => p.y + 3 + (100 - val) / 100 * (p.h - 6);
