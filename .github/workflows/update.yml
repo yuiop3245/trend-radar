@@ -39,6 +39,9 @@ jobs:
       - name: 패키지 설치
         run: pip install yfinance
 
+      - name: 국내 시세 패키지 설치 (실패해도 계속 — 그땐 야후 일봉 사용)
+        run: pip install pykrx finance-datareader || echo "국내 패키지 설치 실패"
+
       - name: 시세 받기
         run: python scripts/update_data.py
 
