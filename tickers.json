@@ -1,7 +1,7 @@
 [
-  {"symbol": "KORU", "name": "Direxion 한국 3배"},
-  {"symbol": "SOXL", "name": "반도체 3배"},
-  {"symbol": "SOXS", "name": "반도체 인버스 3배"},
-  {"symbol": "TQQQ", "name": "나스닥100 3배"},
-  {"symbol": "SQQQ", "name": "나스닥100 인버스 3배"}
+  {"symbol": "KORU", "name": "Direxion 한국 3배", "base": "EWY", "dir": 1},
+  {"symbol": "SOXL", "name": "반도체 3배", "base": "SOXX", "dir": 1},
+  {"symbol": "SOXS", "name": "반도체 인버스 3배", "base": "SOXX", "dir": -1},
+  {"symbol": "TQQQ", "name": "나스닥100 3배", "base": "QQQ", "dir": 1},
+  {"symbol": "SQQQ", "name": "나스닥100 인버스 3배", "base": "QQQ", "dir": -1}
 ]
