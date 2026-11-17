@@ -312,7 +312,7 @@ const VERDICT = {
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ok = x => x != null && isFinite(x);
-const fmt = (x, d = 2) => ok(x) ? Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
+const fmt = (x, d) => { if (!ok(x)) return '–'; if (d == null) d = Math.abs(x) >= 10000 ? 0 : 2; return Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); };
 const pct = (x, d = 1) => ok(x) ? (x > 0 ? '+' : '') + (x * 100).toFixed(d) + '%' : '–';
 const pcls = x => ok(x) ? (x > 0 ? 'up' : x < 0 ? 'down' : '') : 'muted';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -713,6 +713,26 @@ function gobCalc(sym) {
     if (H) PH.push({ i, p: h[i], k: i + 5 }); if (L) PL.push({ i, p: l[i], k: i + 5 });
   }
   const conf = (arr, i) => { const o2 = []; for (const x of arr) { if (x.k > i) break; o2.push(x); } return o2; };
+  // 정석 추세선: 확정 피벗 두 점을 잇고, 그 사이 봉의 고가(저가)가 선을 넘지 않으며, 이후 종가도 선 안에 있는 선 중 접점이 가장 많고 최근인 선
+  const tlFit = (piv, i, up) => {
+    const a = atr[i]; if (a == null) return null;
+    const P = piv.filter(x => x.i >= i - 120).slice(-6); if (P.length < 2) return null;
+    const tol = .15 * a, near = .35 * a; let best = null;
+    for (let x = 0; x < P.length - 1; x++) for (let y = x + 1; y < P.length; y++) {
+      const p = P[x], q = P[y]; if (q.i - p.i < 5) continue;
+      const sl = (q.p - p.p) / (q.i - p.i), at = j => p.p + sl * (j - p.i);
+      let ok = true;
+      for (let j = p.i; j <= q.i && ok; j++) ok = up ? h[j] <= at(j) + tol : l[j] >= at(j) - tol;
+      for (let j = q.i + 1; j < i && ok; j++) ok = up ? c[j] <= at(j) + tol : c[j] >= at(j) - tol;
+      if (!ok) continue;
+      const touch = P.filter(z => z.i >= p.i && Math.abs(z.p - at(z.i)) <= near).length;
+      const sc = touch * 1e6 + q.i * 10 + (q.i - p.i);
+      if (!best || sc > best.sc) best = { sc, s: sl, b: p.p - sl * p.i, x0: p.i, qi: q.i, touch, at };
+    }
+    return best;
+  };
+  const patName = (U, Lo, a) => { const kU = U.s / a, kL = Lo.s / a, th = .03;
+    return kU > th && kL > th ? '상승 채널' : kU < -th && kL < -th ? '하락 채널' : kU < -th && kL > th ? '대칭 삼각형' : Math.abs(kU) <= th && kL > th ? '상승 삼각형' : kU < -th && Math.abs(kL) <= th ? '하강 삼각형' : Math.abs(kU) <= th && Math.abs(kL) <= th ? '박스권' : null; };
   const trendPts = i => [c[i] > e21[i], e8[i] > e21[i], e21[i] > e55[i], s200[i] != null && c[i] > s200[i], s200[i] != null && s200[i - 20] != null && s200[i] > s200[i - 20], wUp(i), DM.adx[i] > 20 && DM.p[i] > DM.m[i]];
   const grade = p => p >= 6 ? 'S' : p === 5 ? 'H' : p >= 3 ? 'N' : p === 2 ? 'W' : 'D';
   const f2 = x => fmt(x);
@@ -756,13 +776,11 @@ function gobCalc(sym) {
       const lastL = pl[pl.length - 1].i;
       if (depths.every(d => d != null) && depths[0] > depths[1] && depths[1] > depths[2] && depths[2] < depths[0] * .6 && c[i] > e55[i] && lastL !== lastVcp && lastL > hs[2].i) { lastVcp = lastL; add(i, 'VCP', `최근 세 번의 눌림 깊이가 ${depths.map(d => (d * 100).toFixed(1) + '%').join(' → ')}로 줄었습니다. 변동성이 수축하는 VCP 구조입니다.`); }
       // 채널·삼각형
-      const H3 = ph.filter(x => x.i >= i - 90).slice(-3), L3 = pl.filter(x => x.i >= i - 90).slice(-3);
-      if (H3.length === 3 && L3.length === 3) {
-        const reg = P3 => { const mx = P3.reduce((s, q) => s + q.i, 0) / 3, my = P3.reduce((s, q) => s + q.p, 0) / 3; let nu = 0, de = 0; P3.forEach(q => { nu += (q.i - mx) * (q.p - my); de += (q.i - mx) ** 2; }); const s = de ? nu / de : 0; return { s, at: x => my + s * (x - mx) }; };
-        const U = reg(H3), Lo = reg(L3), kU = U.s / a, kL = Lo.s / a, th = .03;
-        const name = kU > th && kL > th ? '상승 채널' : kU < -th && kL < -th ? '하락 채널' : kU < -th && kL > th ? '대칭 삼각형' : Math.abs(kU) <= th && kL > th ? '상승 삼각형' : kU < -th && Math.abs(kL) <= th ? '하강 삼각형' : Math.abs(kU) <= th && Math.abs(kL) <= th ? '박스권' : null;
+      const U = tlFit(ph, i, true), Lo = tlFit(pl, i, false);
+      if (U && Lo && U.at(i) > Lo.at(i)) {
+        const name = patName(U, Lo, a);
         if (name) {
-          const key = name + H3[2].i + L3[2].i;
+          const key = name + U.x0 + '-' + U.qi + '/' + Lo.x0 + '-' + Lo.qi;
           if (key !== lastPat) {
             if (c[i] > U.at(i) + .2 * a && c[i - 1] <= U.at(i - 1) + .2 * atr[i - 1]) { lastPat = key; add(i, 'PATU', `${name} 상단선(${f2(U.at(i))})을 종가로 넘었습니다.`, { nm: name + ' · 상방 돌파', sh: PSH(name) + '↑' }); }
             else if (c[i] < Lo.at(i) - .2 * a && c[i - 1] >= Lo.at(i - 1) - .2 * atr[i - 1]) { lastPat = key; add(i, 'PATD', `${name} 하단선(${f2(Lo.at(i))})을 종가로 깼습니다.`, { nm: name + ' · 하방 이탈', sh: PSH(name) + '↓' }); }
@@ -849,20 +867,19 @@ function gobCalc(sym) {
   let sqN = 0; for (let j = n - 20; j < n; j++) if (sq[j]) sqN++;
   // 현재 패턴(채널·삼각형) 선
   let pattern = null;
-  { const H3 = PH.filter(x => x.k <= i && x.i >= i - 90).slice(-3), L3 = PL.filter(x => x.k <= i && x.i >= i - 90).slice(-3);
-    if (H3.length === 3 && L3.length === 3) {
-      const rg = P3 => { const mx = P3.reduce((t, q) => t + q.i, 0) / 3, my = P3.reduce((t, q) => t + q.p, 0) / 3; let nu = 0, de = 0; P3.forEach(q => { nu += (q.i - mx) * (q.p - my); de += (q.i - mx) ** 2; }); const sl = de ? nu / de : 0; return { s: sl, b: my - sl * mx }; };
-      const U = rg(H3), Lo = rg(L3), kU = U.s / a, kL = Lo.s / a, th = .03;
-      const name = kU > th && kL > th ? '상승 채널' : kU < -th && kL < -th ? '하락 채널' : kU < -th && kL > th ? '대칭 삼각형' : Math.abs(kU) <= th && kL > th ? '상승 삼각형' : kU < -th && Math.abs(kL) <= th ? '하강 삼각형' : Math.abs(kU) <= th && Math.abs(kL) <= th ? '박스권' : '불규칙';
-      pattern = { name, us: U.s, ub: U.b, ls: Lo.s, lb: Lo.b, x0i: Math.min(H3[0].i, L3[0].i), upNow: U.s * i + U.b, loNow: Lo.s * i + Lo.b };
-    } }
+  let tl = { U: null, L: null };
+  { const U = tlFit(conf(PH, i), i, true), Lo = tlFit(conf(PL, i), i, false);
+    tl = { U: U && { s: U.s, b: U.b, x0: U.x0, touch: U.touch, now: U.at(i) }, L: Lo && { s: Lo.s, b: Lo.b, x0: Lo.x0, touch: Lo.touch, now: Lo.at(i) } };
+    if (U && Lo && U.at(i) > Lo.at(i)) { const name = patName(U, Lo, atr[i]);
+      if (name) pattern = { name, us: U.s, ub: U.b, ls: Lo.s, lb: Lo.b, ux0: U.x0, lx0: Lo.x0, x0i: Math.min(U.x0, Lo.x0), upNow: U.at(i), loNow: Lo.at(i) }; }
+  }
   // 지그재그 (확정 피벗을 고점·저점 교대로)
   const zz = []; [...PH.map(x => ({ i: x.i, p: x.p, t: 'H' })), ...PL.map(x => ({ i: x.i, p: x.p, t: 'L' }))].sort((x, y) => x.i - y.i).forEach(q => { const lp = zz[zz.length - 1]; if (lp && lp.t === q.t) { if ((q.t === 'H' && q.p > lp.p) || (q.t === 'L' && q.p < lp.p)) zz[zz.length - 1] = q; } else zz.push(q); });
   let bpU = 0, bpT = 0; for (let j = n - 20; j < n; j++) { bpT += v[j]; if (c[j] > c[j - 1]) bpU += v[j]; }
   const v50 = smaN(v, 50)[i - 1];
   const resP = (() => { const ph = PH.filter(x => x.k <= n - 1 && x.i >= n - 61 && x.p > c[n - 1] && x.p < c[n - 1] * 1.2); return ph.length ? ph[ph.length - 1].p : null; })();
   const out = {
-    res: resP, atr: atr[n - 1], c: c[n - 1], n, C: c, e14, s100, bbU, bbL, PH, PL, pattern, zz,
+    res: resP, atr: atr[n - 1], c: c[n - 1], n, C: c, e14, s100, bbU, bbL, PH, PL, pattern, tl, zz,
     g: { gname: GRADE_N[G], pull: e8[i], align: e8[i] > e21[i] && e21[i] > e55[i] ? '정배열' : e8[i] < e21[i] && e21[i] < e55[i] ? '역배열' : '혼조', weekly: wUp(i) ? '주봉 상승' : '주봉 약세',
       s200: s200[i], adx: DM.adx[i], di: DM.p[i] > DM.m[i] ? '+DI 우위' : '-DI 우위', bp: bpT ? Math.round(bpU / bpT * 100) : null, sqNow: sq[i], sqCount: sqN,
       vr: v50 ? v[i] / v50 : null, fromHi: c[i] / hi52 - 1, hi52, rsi: R[i], atr: a, atrPct: a / c[i] * 100, e8: e8[i], e21: e21[i], e55: e55[i] },
@@ -1324,7 +1341,7 @@ const GRULES = [
   ['모멘텀 BUY / SELL', 'MACD(12,26,9) 히스토그램이 0을 상향 돌파하고 종가가 21일선 위면 BUY(TP=+3ATR, SL=−1.5ATR, 유효 8봉). 반대면 SELL. SELL 뒤 히스토그램이 3봉 연속 개선되면 하락 모멘텀 종료.'],
   ['PBB / PBS', '21일선 > 55일선 추세에서 21일선 터치 후 양봉 마감이면 PBB, 반대 추세에서 21일선 반등 후 음봉이면 PBS.'],
   ['MR Long / Short', '전일 시그마 밴드 밖 + RSI 33 미만(또는 75 초과)에서 밴드 안으로 복귀한 봉.'],
-  ['채널·삼각형 돌파/이탈', '90봉 안의 확정 피벗 고점·저점 최근 3개씩에 회귀선을 긋고 기울기(ATR 대비)로 상승·하락 채널, 대칭·상승·하강 삼각형, 박스권을 구분. 선 밖으로 0.2ATR 이상 종가가 나가면 돌파·이탈.'],
+  ['채널·삼각형 돌파/이탈', '120봉 안 확정 피벗 고점(저점) 두 개를 잇는 추세선 중, 두 점 사이 봉의 고가(저가)가 선을 0.15ATR 넘게 뚫지 않고 이후 종가도 선 안에 있는 선을 고름(접점 많은 선 → 최근 선 우선). 상단·하단 선 기울기(ATR 대비)로 상승·하락 채널, 대칭·상승·하강 삼각형, 박스권을 구분. 선 밖으로 0.2ATR 이상 종가가 나가면 돌파·이탈.'],
   ['W 돌파 / M 이탈', '저점-고점-저점(또는 반대) 피벗에서 두 저점 차가 0.8ATR 또는 3% 이내이고 넥라인을 종가로 넘을 때.'],
   ['추세 등급 S·H·N·W·D', '7점 만점: 종가>21일선, 8>21, 21>55, 종가>200일선, 200일선 상승, 주봉 상승(주봉 10>30 EMA), ADX>20이고 +DI 우위. 6점 이상 S, 5점 H, 3~4점 N, 2점 W, 이하 D.'],
   ['확신 등급', '조건 점검 8개 이상이고 등급 S/H면 A, 6개 이상이고 S/H/N이면 B, 그 외 S/H/N은 C, W/D는 D.'],
@@ -1332,7 +1349,7 @@ const GRULES = [
   ['8선 회복', '보유 중 8일선 이탈(8선↓)이 나온 뒤 종가가 다시 8일선 위로 마감한 봉.'],
   ['시그마 밴드 · 이평선', '시그마 밴드 = 볼린저밴드(20, 2σ). 이평선 = EMA 8·14·21·55, SMA 100·200.'],
   ['지그재그', '확정 피벗(좌우 5봉) 고점·저점을 교대로 이은 선. 같은 종류가 연속이면 더 극단적인 쪽만 남김.'],
-  ['추세선·채널', '90봉 안 확정 피벗 고점·저점 최근 3개씩의 회귀선을 현재까지 이어서 14봉 앞까지 연장해 그림.'],
+  ['추세선·채널', '확정 피벗 고점 두 개, 저점 두 개를 잇는 정석 추세선. 선과 피벗 사이를 캔들이 뚫지 않는 선만 쓰고, 오늘 이후 14봉 앞까지 연장해 그림. 위아래 선이 모두 있으면 채널·삼각형·박스권 이름을 붙임.'],
   ['지지·저항 레벨', '위쪽 레벨 = 확정 피벗 고점과 8·21·55·100·200일선 중 현재가 +0.6ATR 이상에서 가장 가까운 값(3ATR 안에 없으면 +2ATR). 저항2 = 거기서 1ATR 이상 위. 아래쪽은 피벗 저점으로 반대 방향. (근사치)'],
   ['10일 시나리오 확률', '최근 20일·60일 일간 로그수익률 표준편차 평균으로 추세 없는(드리프트 0) 2만 개 경로를 10일 돌려, 위쪽 레벨에 먼저 닿은 비율 = 상방, 아래쪽 먼저 = 하방, 둘 다 안 닿음 = 횡보. 10일 뒤 가격 10·50·90% 분위 = 80% 범위·중앙값.'],
   ['차트 시나리오 경로', '현재가 → 6봉 뒤 위쪽 레벨 → 14봉 뒤 저항2 (초록), 현재가 → 아래쪽 레벨 → 지지2 (빨강), 회색 점선은 10봉 뒤 80% 범위.']
@@ -1379,7 +1396,7 @@ function ezState(sym) {
   let light, why, plan;
   if (G.pos) {
     light = { t: '보유', col: '#1e8e5a', bg: '#e3f4ea' };
-    why = `${lastBuy ? md(lastBuy.t) + ' 매수 신호' : '매수 신호'} 이후 보유 중입니다. 손절가 ${fmt(G.pos.stop)} 아래로 마감하면 정리합니다.`;
+    why = `${lastBuy ? md(lastBuy.t) + ' 매수 신호' : '매수 신호'} 이후 보유 중입니다${G.pos.tp1 ? '(1차 익절 후 손절을 본전으로 올림)' : ''}. 손절가 ${fmt(G.pos.stop)} 아래로 마감하거나 21일선(${fmt(e21)}) 아래로 3일 연속 마감하면 정리합니다.`;
     plan = { kind: 'hold', title: '지금 보유 중인 계획', entry: G.pos.e, stop: G.pos.stop, target: G.pos.tp1 ? G.pos.t2 : G.pos.t1 };
   } else {
     let entry = c < (s200 ?? -Infinity) ? Math.max(s200, e21) : Math.max(e21, G.res || 0);
@@ -1668,16 +1685,16 @@ function drawChart() {
           if (o.zz && GG.zz.length) { ctx.beginPath(); GG.zz.forEach((z, j) => { const x = X(z.i), y = Y(z.p); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.strokeStyle = '#c43bb4'; ctx.lineWidth = 1.4; ctx.stroke(); }
           if (o.dots) { ctx.fillStyle = GCOL.warn; for (let i = i0; i <= i1; i++) if (GG.sq[i]) { ctx.beginPath(); ctx.arc(X(i), ph0 + 5, Math.max(1.6, Math.min(3, bw * .3)), 0, 7); ctx.fill(); } }
           const pt = GG.pattern;
-          if (o.pat && pt && pt.name !== '불규칙') { const x1 = n - 1 + 14; ctx.strokeStyle = '#5b4fd8'; ctx.lineWidth = 2;
-            [[pt.us, pt.ub], [pt.ls, pt.lb]].forEach(([sl, ic]) => { ctx.beginPath(); ctx.moveTo(X(pt.x0i), Y(sl * pt.x0i + ic)); ctx.lineTo(X(x1), Y(sl * x1 + ic)); ctx.stroke(); });
-            TAGS.push([pt.upNow, '#5b4fd8', PSH(pt.name) + ' 상단'], [pt.loNow, '#5b4fd8', PSH(pt.name) + ' 하단']); }
+          if (o.pat && GG.tl) { const x1 = n - 1 + 14; ctx.strokeStyle = '#5b4fd8'; ctx.lineWidth = 2;
+            [[GG.tl.U, '상단'], [GG.tl.L, '하단']].forEach(([t, side]) => { if (!t) return; ctx.beginPath(); ctx.moveTo(X(t.x0), Y(t.s * t.x0 + t.b)); ctx.lineTo(X(x1), Y(t.s * x1 + t.b)); ctx.stroke();
+              TAGS.push([t.now, '#5b4fd8', (pt ? PSH(pt.name) : '추세') + ' ' + side]); }); }
           const hl2 = (v2, col, dash, lb) => { const y = Y(v2); if (y < p.y || y > p.y + p.h) return; ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke(); ctx.restore(); TAGS.push([v2, col, lb]); };
           if (o.lv && atEnd) { hl2(LP.U, GCOL.up, [5, 4], '저항'); hl2(LP.D, GCOL.dn, [5, 4], '지지'); hl2(LP.U2, GCOL.up, [2, 4], '저항2'); hl2(LP.D2, GCOL.dn, [2, 4], '지지2');
             if (GG.pos) { hl2(GG.pos.e, GCOL.acc, [], '진입'); hl2(GG.pos.stop, GCOL.dn, [], '손절'); hl2(GG.pos.t1, GCOL.up, [], 'TP1'); } }
           if (scenOn) {
             const cl = b[n - 1].c, X0 = X(n - 1), XF = k => X0 + k * bw;
             ctx.fillStyle = 'rgba(120,130,150,.08)'; ctx.fillRect(RC, p.y, R - RC, p.h);
-            ctx.font = font(11); ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('시나리오 구간', RC + 6, p.y + 24);
+            ctx.font = font(11); ctx.fillStyle = C.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('시나리오 구간', RC + 6, p.y + 24); ctx.font = font(10); ctx.fillStyle = C.faint; ctx.fillText('회색 점선 = 80% 범위', RC + 6, p.y + 40);
             ctx.save(); ctx.lineWidth = 2.2; ctx.setLineDash([6, 4]);
             ctx.strokeStyle = GCOL.up; ctx.beginPath(); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(6), Y(LP.U)); ctx.lineTo(XF(14), Y(LP.U2)); ctx.stroke();
             ctx.strokeStyle = GCOL.dn; ctx.beginPath(); ctx.moveTo(X0, Y(cl)); ctx.lineTo(XF(6), Y(LP.D)); ctx.lineTo(XF(14), Y(LP.D2)); ctx.stroke();
@@ -1685,7 +1702,7 @@ function drawChart() {
             const tagAt = (x, y, txt, col) => { ctx.font = font(11, 700); const w = ctx.measureText(txt).width + 10; ctx.fillStyle = col; ctx.fillRect(x + 4, y - 9, w, 18); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, x + 9, y + .5); };
             let yu = Y(LP.U2), yd = Y(LP.D2); if (yd - yu < 22) { const m2 = (yu + yd) / 2; yu = m2 - 11; yd = m2 + 11; }
             tagAt(XF(14), yu, `상방 ${LP.up}%`, GCOL.up); tagAt(XF(14), yd, `하방 ${LP.dn}%`, GCOL.dn);
-            ctx.fillStyle = C.faint; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('80% 범위', XF(10) + 4, Y(LP.q90) - 2);
+            ctx.fillStyle = C.faint; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; 
           }
         }
         if (state.plan && !isD) [[state.plan.buy, C.amber, '눌림 ', 0], [state.plan.stop, C.down, '손절 ', 1]].forEach(([pv, col, lb, dn]) => {
@@ -1728,10 +1745,13 @@ function drawChart() {
       frame(p);
       for (let k = 0; k <= 4; k++) { const val = bot + (top - bot) * k / 4; axisLabel(Y(val), fmt(val, val < 10 ? 2 : val < 1000 ? 2 : 0)); }
       const lc = b[b.length - 1]; const ly = Y(lc.c);
-      if (ly > p.y && ly < p.y + p.h) { const col = lc.c >= (b[b.length - 2]?.c ?? lc.o) ? C.up : C.down; ctx.fillStyle = col; ctx.fillRect(R + 1, ly - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillText(fmt(lc.c), R + 5, ly); }
-      if (TAGS.length) { const placed = []; TAGS.sort((x, y) => Y(x[0]) - Y(y[0])).forEach(([v2, col, lb]) => { let y = Y(v2); if (y < p.y + 8 || y > p.y + p.h - 8) return; placed.forEach(py => { if (Math.abs(py - y) < 16) y = py + 16; }); placed.push(y);
-          ctx.fillStyle = col; ctx.fillRect(R + 1, y - 8, 56, 16); ctx.fillStyle = '#fff'; ctx.font = font(10.5, 700); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(fmt(v2), R + 5, y);
- }); }
+      const tagBox = (y, col, txt) => { ctx.font = font(10.5, 700); const w = Math.max(56, ctx.measureText(txt).width + 9); ctx.fillStyle = col; ctx.fillRect(R + 1, y - 8, w, 16); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, R + 5, y); };
+      const placed = [];
+      if (ly > p.y && ly < p.y + p.h) { placed.push(ly); }
+      if (TAGS.length) { TAGS.sort((x, y) => Math.abs(Y(x[0]) - ly) - Math.abs(Y(y[0]) - ly)).forEach(([v2, col, lb]) => { const y0 = Y(v2); if (y0 < p.y + 8 || y0 > p.y + p.h - 8) return;
+          let y = y0; for (let k = 0; k < 40; k++) { const cand = y0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 4; if (cand < p.y + 8 || cand > p.y + p.h - 8) continue; if (placed.every(py => Math.abs(py - cand) >= 17)) { y = cand; break; } }
+          placed.push(y); tagBox(y, col, fmt(v2)); }); }
+      if (ly > p.y && ly < p.y + p.h) { const col = lc.c >= (b[b.length - 2]?.c ?? lc.o) ? C.up : C.down; tagBox(ly, col, fmt(lc.c)); }
       const q = b[vi];
       const chq = b[vi - 1] ? q.c / b[vi - 1].c - 1 : null;
       title(p, GG ? [[q.t.slice(0, 10), C.ink], [`시 ${fmt(q.o)}`, C.muted], [`고 ${fmt(q.h)}`, C.muted], [`저 ${fmt(q.l)}`, C.muted], [`종 ${fmt(q.c)}`, C.ink], [pct(chq), chq >= 0 ? C.up : C.down], [`거래량 ${q.v ? (q.v / 1e6).toFixed(1) + 'M' : '–'}`, C.muted]] : EZS ? [[`${symLabel(state.sel)} · 일봉`, C.ink], [`21일선 ${fmt(EZS.G.e21[vi])}`, '#e07b16'], [`200일선 ${EZS.G.s200[vi] == null ? '–' : fmt(EZS.G.s200[vi])}`, '#d6455d'], [`종가 ${fmt(q.c)}`, C.muted]] : [[`${state.sel} · ${TFN[state.tf]}`, C.ink], [`20EMA ${fmt(I.ema20[vi])}`, C.amber], [`종가 ${fmt(q.c)}`, C.muted]]);
