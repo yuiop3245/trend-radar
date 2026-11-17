@@ -914,6 +914,9 @@ function gobCalc(sym) {
   let tl = { U: null, L: null };
   { const U = tlFit(conf(PH, i), i, true), Lo = tlFit(conf(PL, i), i, false);
     tl = { U: U && { s: U.s, b: U.b, x0: U.x0, touch: U.touch, now: U.at(i) }, L: Lo && { s: Lo.s, b: Lo.b, x0: Lo.x0, touch: Lo.touch, now: Lo.at(i) } };
+    // 평행 채널: 지지 추세선과 평행하게, 그 구간 최고 고가(꼬리)에 닿도록 올린 선 / 저항선이 있으면 최저 저가에 닿도록 내린 선
+    if (tl.L) { let off = -Infinity; for (let j = tl.L.x0; j <= i; j++) off = Math.max(off, h[j] - (tl.L.s * j + tl.L.b)); tl.Lp = { s: tl.L.s, b: tl.L.b + off, x0: tl.L.x0, now: tl.L.s * i + tl.L.b + off }; }
+    if (tl.U) { let off = Infinity; for (let j = tl.U.x0; j <= i; j++) off = Math.min(off, l[j] - (tl.U.s * j + tl.U.b)); tl.Up = { s: tl.U.s, b: tl.U.b + off, x0: tl.U.x0, now: tl.U.s * i + tl.U.b + off }; }
     if (U && Lo && U.at(i) > Lo.at(i)) { const name = patName(U, Lo, atr[i]);
       if (name) pattern = { name, us: U.s, ub: U.b, ls: Lo.s, lb: Lo.b, ux0: U.x0, lx0: Lo.x0, x0i: Math.min(U.x0, Lo.x0), upNow: U.at(i), loNow: Lo.at(i) }; }
   }
@@ -1366,7 +1369,7 @@ function renderDetail() {
     </div>
     ${gobBar()}
     <div class="legend easy-only"><span><i style="background:#e0312d"></i>20일선 · 단기 추세</span><span><i style="background:#ec4899"></i>240일선 · 장기 추세</span>${['buy', 'add', 'tp', 'sell'].map(ezPill).join(' ')}</div>
-    <div class="legend pro-only" id="gobLeg"><span><i style="background:#111827"></i>5일</span><span><i style="background:#e0312d"></i>20일</span><span><i style="background:#16a34a"></i>60일</span><span><i style="background:#2563eb"></i>120일</span><span><i style="background:#ec4899"></i>240일</span><span class="muted">(같은 색 두 줄: 위 = 고가 이평 · 아래 = 저가 이평)</span><span><i style="background:#9aa3af"></i>시그마 밴드(20, 2σ)</span><span><i style="background:#c43bb4"></i>지그재그</span><span><i style="background:#5b4fd8"></i>패턴 상·하단선</span><span><i style="background:#d98a1c;width:7px;height:7px;border-radius:50%"></i>응축(스퀴즈) 봉</span></div>
+    <div class="legend pro-only" id="gobLeg"><span><i style="background:#111827"></i>5일</span><span><i style="background:#e0312d"></i>20일</span><span><i style="background:#16a34a"></i>60일</span><span><i style="background:#2563eb"></i>120일</span><span><i style="background:#ec4899"></i>240일</span><span class="muted">(같은 색 두 줄: 위 = 고가 이평 · 아래 = 저가 이평)</span><span><i style="background:#9aa3af"></i>시그마 밴드(20, 2σ)</span><span><i style="background:#c43bb4"></i>지그재그</span><span><i style="background:#5b4fd8"></i>추세선·패턴 상·하단선</span><span><i style="background:#8a7ff0"></i>평행 채널(점선)</span><span><i style="background:#d98a1c;width:7px;height:7px;border-radius:50%"></i>응축(스퀴즈) 봉</span></div>
     <div class="legend pro-only" id="oldLeg">
       <span><i style="background:var(--up)"></i>양봉 · %K</span><span><i style="background:var(--down)"></i>음봉 · %D</span><span><i style="background:var(--amber)"></i>20EMA</span>
       <span><i style="background:var(--upS);height:10px;border:1px solid var(--up)"></i>+DI>−DI & ADX≥20</span><span><i style="background:var(--downS);height:10px;border:1px solid var(--down)"></i>−DI>+DI & ADX≥20</span>
@@ -1437,7 +1440,7 @@ const GRULES = [
   ['5선 회복', '보유 중 5일 저가선 이탈(5선↓)이 나온 뒤 종가가 5일 고가선 위로 다시 마감한 봉.'],
   ['시그마 밴드 · 이평선', '시그마 밴드 = 볼린저밴드(20, 2σ). 이평선 = 5(검정)·20(빨강)·60(초록)·120(파랑)·240(분홍)일 고가 단순이평·저가 단순이평 (같은 색 실선 두 줄, 위가 고가·아래가 저가). 추세 비교(정배열, 종가가 선 위인지 등)에는 두 선의 중간값을 씀.'],
   ['지그재그', '확정 피벗(좌우 5봉) 고점·저점을 교대로 이은 선. 같은 종류가 연속이면 더 극단적인 쪽만 남김.'],
-  ['추세선·채널', '확정 피벗 고점 두 개, 저점 두 개를 잇는 정석 추세선. 선과 피벗 사이를 캔들이 뚫지 않는 선만 쓰고, 오늘 이후 14봉 앞까지 연장해 그림. 위아래 선이 모두 있으면 채널·삼각형·박스권 이름을 붙임.'],
+  ['추세선·채널', '평행 채널(보라 점선) = 지지 추세선과 같은 기울기로, 그 구간에서 가장 높은 고가(꼬리)에 닿게 올린 선(지지선이 없으면 저항선을 가장 낮은 저가에 닿게 내린 선). 확정 피벗 고점 두 개, 저점 두 개를 잇는 정석 추세선. 선과 피벗 사이를 캔들이 뚫지 않는 선만 쓰고, 오늘 이후 14봉 앞까지 연장해 그림. 위아래 선이 모두 있으면 채널·삼각형·박스권 이름을 붙임.'],
   ['지지·저항 레벨', '차트에 직접 그은 수평선·추세선(오늘 값)이 있으면 그 선을 먼저 씀. 없으면 확정 피벗 고점·저점과 5·20·60·120·240일 고가·저가선 중 현재가 +0.6ATR 이상에서 가장 가까운 값(3ATR 안에 없으면 +2ATR). 저항2 = 거기서 1ATR 이상 위. 아래쪽은 피벗 저점으로 반대 방향.'],
   ['10일 시나리오 확률', '기본: 이 종목 과거 데이터에서 추세 등급(상승/중립/약세)과 RSI 구간(40 미만/40~60/60 초과)이 지금과 같았던 날을 골라(40일 미만이면 추세 등급만, 그래도 부족하면 전체), 그날 기준 같은 ATR 배수 거리의 위·아래 레벨 중 10거래일 안에 실제로 먼저 닿은 비율 = 상방/하방, 둘 다 안 닿음 = 횡보. 10일 뒤 범위는 같은 날들의 실제 10일 수익률 10·50·90% 분위. 표본이 부족하면 최근 20·60일 변동성으로 추세 없는 8천 개 경로 시뮬레이션.'],
   ['차트 시나리오 경로', '현재가 → 6봉 뒤 위쪽 레벨 → 14봉 뒤 저항2 (초록), 현재가 → 아래쪽 레벨 → 지지2 (빨강), 회색 점선은 10봉 뒤 80% 범위.']
@@ -1805,7 +1808,10 @@ function drawChart() {
           const pt = GG.pattern;
           if (o.pat && GG.tl) { const x1 = n - 1 + 14; ctx.strokeStyle = '#5b4fd8'; ctx.lineWidth = 2;
             [[GG.tl.U, '상단'], [GG.tl.L, '하단']].forEach(([t, side]) => { if (!t) return; ctx.beginPath(); ctx.moveTo(X(t.x0), Y(t.s * t.x0 + t.b)); ctx.lineTo(X(x1), Y(t.s * x1 + t.b)); ctx.stroke();
-              TAGS.push([t.now, '#5b4fd8', (pt ? PSH(pt.name) : '추세') + ' ' + side]); }); }
+              TAGS.push([t.now, '#5b4fd8', (pt ? PSH(pt.name) : '추세') + ' ' + side]); });
+            ctx.save(); ctx.setLineDash([7, 5]); ctx.lineWidth = 1.6; ctx.strokeStyle = '#8a7ff0';
+            [[GG.tl.Lp, '평행 상단'], [GG.tl.L ? null : GG.tl.Up, '평행 하단']].forEach(([t, lb]) => { if (!t) return; ctx.beginPath(); ctx.moveTo(X(t.x0), Y(t.s * t.x0 + t.b)); ctx.lineTo(X(x1), Y(t.s * x1 + t.b)); ctx.stroke(); TAGS.push([t.now, '#8a7ff0', lb]); });
+            ctx.restore(); }
           { const cl = b[b.length - 1].c, x1 = b.length - 1 + 14;
             (MAN[state.sel]?.lv || []).forEach(v2 => { const y = Y(v2); if (y < p.y || y > p.y + p.h) return; const col = v2 >= cl ? '#e07b16' : '#0f9bb5'; ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke(); ctx.restore(); TAGS.push([v2, col, '내 선']); });
             manLines(state.sel, b).forEach(t => { ctx.save(); ctx.strokeStyle = '#0b7a8f'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(X(t.i1), Y(t.at(t.i1))); ctx.lineTo(X(x1), Y(t.at(x1))); ctx.stroke(); ctx.fillStyle = '#0b7a8f'; [t.i1, t.i2].forEach(k => { ctx.beginPath(); ctx.arc(X(k), Y(t.at(k)), 3, 0, Math.PI * 2); ctx.fill(); }); ctx.restore(); TAGS.push([t.at(b.length - 1), '#0b7a8f', '내 추세선']); });
