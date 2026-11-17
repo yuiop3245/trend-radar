@@ -20,8 +20,10 @@ OUT = os.path.join(ROOT, "data.json")
 FRAMES = [
     ("d", "3y", "1d", False),
     ("h1", "60d", "1h", True),
+    ("h30", "60d", "30m", True),
     ("m5", "5d", "5m", True),
 ]
+MINUTES = {"1h": 60, "30m": 30, "5m": 5}
 
 
 def load_json(path, default):
@@ -32,14 +34,20 @@ def load_json(path, default):
         return default
 
 
-def to_bars(df, intraday):
+def to_bars(df, intraday, interval=None):
     out = []
+    now = dt.datetime.now(dt.timezone.utc)
     if df is None or df.empty:
         return out
     idx = df.index
     if intraday and getattr(idx, "tz", None) is not None:
         idx = idx.tz_convert("America/New_York")
     for ts, (_, row) in zip(idx, df.iterrows()):
+        # 아직 마감되지 않은 장중 봉은 버린다 (원본처럼 확정봉만 사용)
+        if intraday and interval in MINUTES:
+            end = min(ts + dt.timedelta(minutes=MINUTES[interval]), ts.replace(hour=16, minute=0))
+            if end.astimezone(dt.timezone.utc) > now:
+                continue
         vals = [row.get("Open"), row.get("High"), row.get("Low"), row.get("Close")]
         if any(v is None or (isinstance(v, float) and math.isnan(v)) for v in vals):
             continue
@@ -80,11 +88,12 @@ def main():
     failed = []
     for item in tickers:
         sym = item["symbol"].strip().upper()
-        entry = {"name": item.get("name", ""), "rec": sorted(recs.get(sym, []), key=lambda r: r["t"])}
+        entry = {"name": item.get("name", ""), "base": item.get("base"), "dir": item.get("dir", 1),
+                 "rec": sorted(recs.get(sym, []), key=lambda r: r["t"])}
         tk = yf.Ticker(sym)
         for key, period, interval, intraday in FRAMES:
             try:
-                bars = to_bars(tk.history(period=period, interval=interval, auto_adjust=False, prepost=False), intraday)
+                bars = to_bars(tk.history(period=period, interval=interval, auto_adjust=False, prepost=False), intraday, interval)
             except Exception as e:  # 네트워크·야후 오류
                 print(f"{sym} {interval} 실패: {e}", file=sys.stderr)
                 bars = []
@@ -94,7 +103,28 @@ def main():
             entry[key] = bars
         data["order"].append(sym)
         data["tickers"][sym] = entry
-        print(f"{sym}: 일봉 {len(entry['d'])} · 1시간 {len(entry['h1'])} · 5분 {len(entry['m5'])}")
+        print(f"{sym}: 일봉 {len(entry['d'])} · 1시간 {len(entry['h1'])} · 30분 {len(entry['h30'])} · 5분 {len(entry['m5'])}")
+
+    # 기준지수 (EWY / SOXX / QQQ 등): 5분·30분·1시간봉만
+    prev_bases = load_json(OUT, {}).get("bases", {})
+    data["bases"] = {}
+    for bsym in sorted({(t.get("base") or "").upper() for t in tickers} - {""}):
+        tk = yf.Ticker(bsym)
+        entry = {}
+        for key, period, interval, intraday in FRAMES:
+            if key == "d":
+                continue
+            try:
+                bars = to_bars(tk.history(period=period, interval=interval, auto_adjust=False, prepost=False), intraday, interval)
+            except Exception as e:
+                print(f"{bsym} {interval} 실패: {e}", file=sys.stderr)
+                bars = []
+            if not bars:
+                bars = prev_bases.get(bsym, {}).get(key, [])
+                failed.append(f"{bsym}:{interval}")
+            entry[key] = bars
+        data["bases"][bsym] = entry
+        print(f"기준지수 {bsym}: 1시간 {len(entry['h1'])} · 30분 {len(entry['h30'])} · 5분 {len(entry['m5'])}")
 
     now = dt.datetime.now(dt.timezone.utc)
     data["updatedAt"] = now.isoformat(timespec="seconds").replace("+00:00", "Z")
