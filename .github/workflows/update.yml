@@ -1,0 +1,51 @@
+name: 시세 갱신 + 페이지 배포
+
+on:
+  schedule:
+    # 시간은 UTC. 미국 장중(서머타임 포함) 30분마다
+    - cron: "5,35 13-20 * * 1-5"
+    # 장 마감 뒤 일봉 확정 (한국시간 06:50 / 서머타임 05:50 무렵)
+    - cron: "50 21 * * 1-5"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 패키지 설치
+        run: pip install yfinance
+
+      - name: 시세 받기
+        run: python scripts/update_data.py
+
+      - name: 배포 폴더 준비
+        run: |
+          mkdir -p _site
+          cp index.html data.json _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
