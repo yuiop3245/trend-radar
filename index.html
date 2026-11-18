@@ -217,7 +217,7 @@ th.click{cursor:pointer;user-select:none}
       <h1>트렌드 레이더</h1>
       <div class="upd" id="updated"></div>
     </div>
-    <div class="topbtns"><button class="btn sm" id="perfBtn">내 수익률</button><button class="btn sm" id="lockBtn" hidden title="이 기기에 기억한 비밀번호를 지우고 잠가요">잠그기</button></div>
+    <div class="topbtns"><button class="btn sm" id="perfBtn">신호 수익률</button><button class="btn sm" id="lockBtn" hidden title="이 기기에 기억한 비밀번호를 지우고 잠가요">잠그기</button></div>
     <div class="seg" id="modeSeg">
       <button data-mode="easy">주린이 모드</button>
       <button data-mode="pro">전문가 모드</button>
@@ -1042,7 +1042,7 @@ function headCard(sym) {
   return `<div class="ghead"><span class="sym">${esc(symLabel(sym))}</span><span class="nm">${esc(T.label ? sym + ' · ' + (T.name || '') : (T.name || ''))}</span>
     <span class="px num">${last ? fmt(last.c) : '–'}</span><span class="num ${pcls(chg)}" style="font-weight:700">${pct(chg)}</span>
     ${G ? `<span class="pro-only">${statePill(G.status)}</span>` : ''}${S ? `<span class="spill easy-only" style="background:${S.light.bg};color:${S.light.col}">${S.light.t}</span>` : ''}
-    <span class="muted" style="font-size:12px">${last ? esc(last.t.slice(0, 10)) + ' 일봉 기준' + (T.dsrc === 'kis' ? ' (한투 시세)' : T.dsrc === 'pykrx' || T.dsrc === 'fdr' ? ' (한국거래소 시세)' : '') + (last.syn ? ' (일봉 지연 → 30분봉으로 채움)' : '') + ' · 장중엔 30분마다 갱신' : ''}</span>${liveTag(sym)}</div>`;
+    <span class="muted" style="font-size:12px">${last ? esc(last.t.slice(0, 10)) + ' 일봉 기준' + (T.dsrc === 'pykrx' || T.dsrc === 'fdr' ? ' (한국거래소 시세)' : '') + (last.syn ? ' (일봉 지연 → 30분봉으로 채움)' : '') + ' · 장중엔 30분마다 갱신' : ''}</span>${liveTag(sym)}</div>`;
 }
 function gobTiles(sym) {
   const G = gobCalc(sym); if (!G) return ''; const L = gobLP(G), b = D.tickers[sym].d, last = b[b.length - 1], chg = last.c / b[b.length - 2].c - 1;
@@ -1994,7 +1994,7 @@ function renderStamp() {
   const el = $('#updated'); if (!el) return;
   if (D.remoteAt) {
     const t = new Date(D.remoteAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
-    el.innerHTML = `<span class="live"></span>자동 업데이트 <b>${esc(t)}</b> (한국시간) · 일봉 한투·분봉 야후 시세, 지연될 수 있음${D.locked ? ' · 잠금 중' : ''}`;
+    el.innerHTML = `<span class="live"></span>자동 업데이트 <b>${esc(t)}</b> (한국시간) · 야후 파이낸스·거래소 시세, 지연될 수 있음${D.locked ? ' · 잠금 중' : ''}`;
   } else el.textContent = '수동 입력 모드 — data.json이 없어 붙여넣은 데이터로 보여주는 중';
 }
 const unpack = a => (a || []).map(x => Array.isArray(x) ? { t: x[0], o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] } : x);
@@ -2134,39 +2134,6 @@ function simCard(sym) {
 /* ============ 내 수익률 패널 (계좌 + 전체 종목 가상 성과) ============ */
 const won = x => ok(x) ? Math.round(x).toLocaleString('ko-KR') + '원' : '–';
 const usd = x => ok(x) ? (x < 0 ? '-$' : '$') + Math.abs(x).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '–';
-function acctSym(h, us) {
-  if (us) return D.tickers[h.sym] ? h.sym : null;
-  return ['.KS', '.KQ'].map(x => h.sym + x).find(s => D.tickers[s]) || null;
-}
-function acctNow(sym) {
-  const G = sym && gobCalc(sym); if (!G) return '<span class="muted">목록에 없음</span>';
-  const n = D.tickers[sym].d.length, lastA = [...G.ev].reverse().find(e => ACT[e.k] && ACT[e.k] !== 'hold' && e.i >= n - 6);
-  const cls = { buy: 'buy', add: 'buy', part: 'sell', exit: 'sell' };
-  return `${esc(G.status)}${lastA ? ` · <span class="tag ${cls[ACT[lastA.k]] || ''}">${esc(simName(lastA.k))}</span> <span class="muted">${esc(lastA.t.slice(5, 10))}</span>` : ''}`;
-}
-function acctCard() {
-  const A = D.acct;
-  if (!A) return `<div class="card"><h2>내 한투 계좌</h2><div class="empty">${D.locked ? 'GitHub Secrets에 계좌번호(KIS_ACCOUNT)를 넣으면 다음 갱신부터 여기 잔고와 수익률이 나와요.' : '비밀번호 잠금(SITE_PASSWORD)을 켜야 계좌가 나와요. 잠금 없이 공개된 페이지에는 계좌를 절대 싣지 않아요.'}</div></div>`;
-  const fx = A.fx, ks = A.krSum || {}, us = A.usSum || {};
-  const usK = x => ok(x) && fx ? x * fx : null;
-  const buy = (ks.buy || 0) + (usK(us.buy) || 0), pl = (ks.pl || 0) + (usK(us.pl) || 0), stock = (ks.eval || 0) + (usK(us.eval) || 0);
-  const total = (ks.total || 0) + (usK(us.eval) || 0);
-  const rows = [...(A.kr || []).map(h => ({ ...h, us: false })), ...(A.us || []).map(h => ({ ...h, us: true }))].sort((a, b) => (b.us ? usK(b.eval) : b.eval) - (a.us ? usK(a.eval) : a.eval));
-  const H = (A.hist || []).filter(x => x.t);
-  const histV = H.map(x => (x.krT || 0) + (x.fx ? (x.usE || 0) * x.fx : 0)), histP = H.map(x => (x.krE - x.krB) + (x.fx ? (x.usE - x.usB) * x.fx : 0));
-  const at = new Date(A.at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  return `<div class="card"><div class="perfhead"><h2>내 한투 계좌</h2><span class="muted" style="font-size:12.5px">${esc(at)} 조회 · 환율 ${fx ? fmt(fx, 1) + '원' : '–'}</span></div>
-    <div class="tiles"><div class="tile"><span>총 평가 (국내 예수금 포함)</span><b>${won(total)}</b><small>주식 ${won(stock)}</small></div>
-      <div class="tile"><span>평가손익</span><b class="${pcls(pl)}">${won(pl)}</b><small>수익률 <b class="${pcls(pl)}" style="display:inline;font-size:inherit">${buy ? pct(pl / buy, 2) : '–'}</b></small></div>
-      <div class="tile"><span>국내</span><b class="${pcls(ks.pl)}">${won(ks.pl)}</b><small>매입 ${won(ks.buy)} · ${ks.buy ? pct(ks.pl / ks.buy, 2) : '–'}</small></div>
-      <div class="tile"><span>미국</span><b class="${pcls(us.pl)}">${usd(us.pl)}</b><small>매입 ${usd(us.buy)} · ${us.buy ? pct(us.pl / us.buy, 2) : '–'}</small></div></div>
-    ${rows.length ? `<div class="scroll"><table><thead><tr><th>종목</th><th class="r">수량</th><th class="r">평단</th><th class="r">현재가</th><th class="r">평가금액</th><th class="r">손익</th><th class="r">수익률</th><th>쭈야 지금</th></tr></thead><tbody>
-      ${rows.map(h => { const s = acctSym(h, h.us), m = h.us ? usd : won; return `<tr${s ? ` class="click" data-sel="${esc(s)}"` : ''}><td><b>${esc(h.us ? h.sym : h.name)}</b>${h.us ? '' : ` <span class="muted">${esc(h.sym)}</span>`}</td><td class="r num">${fmt(h.qty, 0)}</td><td class="r num">${h.us ? fmt(h.avg, 2) : fmt(h.avg, 0)}</td><td class="r num">${h.us ? fmt(h.px, 2) : fmt(h.px, 0)}</td><td class="r num">${m(h.eval)}</td><td class="r num ${pcls(h.pl)}">${m(h.pl)}</td><td class="r ${pcls(h.rt)}">${ok(h.rt) ? (h.rt > 0 ? '+' : '') + h.rt.toFixed(2) + '%' : '–'}</td><td>${acctNow(s)}</td></tr>`; }).join('')}
-    </tbody></table></div>` : '<div class="empty">보유 종목이 없어요</div>'}
-    ${H.length >= 2 ? `<h3 style="margin:14px 0 4px;font-size:14px">날짜별 기록 (${esc(H[0].t)} ~ ${esc(H[H.length - 1].t)}, ${H.length}일)</h3>${spark([{ v: histP, c: 'var(--up)', base: 0 }], 600, 110)}<div class="legend"><span><i style="background:var(--up)"></i>평가손익 (입출금 영향 없음)</span><span>총 평가 ${won(histV[0])} → ${won(histV[histV.length - 1])}</span></div>` : `<p class="note">날짜별 수익률 그래프는 하루하루 기록이 쌓이면 나타나요 (지금 ${H.length}일).</p>`}
-    ${A.err ? `<p class="note down">조회 실패: ${esc(Object.entries(A.err).map(([k, v]) => k + ' — ' + v).join(' / '))}</p>` : ''}
-    <p class="note">미국 예수금(달러 현금)은 아직 총 평가에 안 들어가요. 조회만 하고 주문은 하지 않아요.</p></div>`;
-}
 function simAllCard() {
   const per = SIMP.find(p => p[0] === state.simPer) || SIMP[0];
   const R = syms().map(s => ({ s, r: gobSim(s, per[2]) })).filter(x => x.r);
@@ -2187,41 +2154,10 @@ function simAllCard() {
     </tbody></table></div>
     <p class="note">${per[1]} 전부터(상장이 더 늦으면 그때부터) 각 종목에 같은 금액을 넣고 쭈야 신호대로만 매매했다고 친 결과예요. 가정: 다음 거래일 시가 체결 · 사 50% · 불태워 25%×최대 2번 · 분할매도 절반 · 다정리 전부 · 편도 0.1% 비용. 지난 성과가 앞으로를 보장하진 않아요.</p></div>`;
 }
-function vtCard() {
-  const V = D.vtrade; if (!V) return '';
-  const money = (x, cur) => cur === 'KRW' ? won(x) : usd(x);
-  const tot = {}; (V.pos || []).forEach(p => { const t = tot[p.cur] || (tot[p.cur] = { u: 0, r: 0 }); t.u += p.unreal; t.r += p.real; });
-  const sideT = { buy: '<span class="tag buy">매수</span>', sell: '<span class="tag sell">매도</span>', '-': '<span class="muted">–</span>' };
-  const stC = { '체결': '', '대기': 'warn', '건너뜀': 'muted' };
-  const ords = (V.orders || []).slice().reverse().slice(0, 40);
-  const held = (V.pos || []).filter(p => p.q > 0);
-  return `<div class="card"><div class="perfhead"><h2>가상 주문 기록 <span class="muted" style="font-size:13px;font-weight:600">(2단계 · 실제 주문은 안 보내요)</span></h2><span class="muted" style="font-size:12.5px">${esc(V.since)}부터</span></div>
-    ${V.err ? `<p class="note down">가상 주문 계산 실패: ${esc(V.err)}</p>` : ''}${V.note ? `<p class="note">${esc(V.note)}</p>` : ''}
-    <div class="tiles">${['USD', 'KRW'].map(c => `<div class="tile"><span>${c === 'USD' ? '미국' : '국내'} 가상 손익</span><b class="${pcls((tot[c]?.u || 0) + (tot[c]?.r || 0))}">${money((tot[c]?.u || 0) + (tot[c]?.r || 0), c)}</b><small>실현 ${money(tot[c]?.r || 0, c)} · 평가 ${money(tot[c]?.u || 0, c)}</small></div>`).join('')}
-      <div class="tile"><span>가상 보유</span><b>${held.length}종목</b><small>대기 주문 ${(V.orders || []).filter(o => o.st === '대기').length}건</small></div></div>
-    ${held.length ? `<div class="scroll"><table><thead><tr><th>종목</th><th class="r">수량</th><th class="r">평단</th><th class="r">현재가</th><th class="r">평가손익</th><th class="r">실현손익</th></tr></thead><tbody>${held.map(p => `<tr class="click" data-sel="${esc(p.sym)}"><td><b>${esc(symLabel(p.sym))}</b></td><td class="r num">${p.q}</td><td class="r num">${fmt(p.avg, p.cur === 'KRW' ? 0 : 2)}</td><td class="r num">${fmt(p.last, p.cur === 'KRW' ? 0 : 2)}</td><td class="r num ${pcls(p.unreal)}">${money(p.unreal, p.cur)}</td><td class="r num ${pcls(p.real)}">${money(p.real, p.cur)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-    <h3 style="margin:14px 0 6px;font-size:14px">주문 기록 (최근 40건)</h3>
-    ${ords.length ? `<div class="scroll"><table><thead><tr><th>신호일</th><th>종목</th><th>신호</th><th>주문</th><th class="r">수량</th><th>상태</th><th class="r">체결가</th><th>메모</th></tr></thead><tbody>${ords.map(o => `<tr class="click" data-sel="${esc(o.sym)}"><td class="num">${esc(o.sigT.slice(5))}</td><td><b>${esc(symLabel(o.sym))}</b></td><td>${esc(o.nm)}</td><td>${sideT[o.side] || ''}</td><td class="r num">${o.q || ''}</td><td class="${stC[o.st] || ''}">${esc(o.st)}${o.fillT ? ' <span class="muted">' + esc(o.fillT.slice(5)) + '</span>' : ''}</td><td class="r num">${o.px != null ? fmt(o.px, o.cur === 'KRW' ? 0 : 2) : ''}${o.pl != null ? ` <span class="${pcls(o.pl)}">(${o.pl > 0 ? '+' : ''}${fmt(o.pl, o.cur === 'KRW' ? 0 : 2)})</span>` : ''}</td><td class="muted">${esc(o.note || '')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">아직 가상 주문이 없어요. 장 마감 뒤 확정된 신호가 나오면 여기 쌓여요.</div>'}
-    <p class="note">규칙: 장 마감으로 확정된 일봉 신호만 · 다음 거래일 시가 체결로 기록 (미국은 주간장 시간이면 주간장 가격으로) · 사 = ${V.conf?.unit * 2 || 2}주 · 불태워 = ${V.conf?.unit || 1}주씩 최대 2번 · 분할매도 = 보유의 절반(1주면 유지) · 다정리 = 전부 · 하루 매수 ${V.conf?.maxBuysPerDay ?? '–'}건, ${won(V.conf?.maxBuyKRW)} / ${usd(V.conf?.maxBuyUSD)}까지 (매도는 한도 없이 항상 실행). 설정은 저장소 trade.json.</p></div>`;
-}
-function liveCard() {
-  const L = D.live; if (!L) return '';
-  const st = L.live ? '<b class="up">켜짐 — 실제 주문이 나가요</b>' : L.on ? '<b class="warn">스위치는 켜졌지만 대상 종목이 없거나 계좌 확인이 안 돼 멈춤</b>' : '<b>꺼짐</b> <span class="muted">(미리보기만 기록)</span>';
-  const lg = (L.log || []).slice().reverse().slice(0, 30), lim = L.limits || {};
-  const stC = { '접수': 'warn', '체결': 'up', '일부체결': 'warn', '미체결': 'muted', '거부': 'down', '오류': 'down', '건너뜀': 'muted', '미리보기': 'muted' };
-  const bot = Object.entries(L.bot || {}).filter(([, q]) => q > 0);
-  return `<div class="card"><div class="perfhead"><h2>실전 주문 <span class="muted" style="font-size:13px;font-weight:600">(3단계 · 최소 수량)</span></h2><span style="font-size:13px">스위치: ${st}</span></div>
-    ${L.err ? `<p class="note down">오류: ${esc(L.err)}</p>` : ''}${L.note ? `<p class="note down">${esc(L.note)}</p>` : ''}
-    <p class="sub" style="margin:4px 0 10px">대상 종목: ${(L.symbols || []).length ? (L.symbols || []).map(s => `<b>${esc(symLabel(s))}</b>`).join(' · ') : '<span class="muted">없음 (trade.json → live.symbols 에 적어야 주문해요)</span>'}
-      · 주문당 ${lim.unit ?? 1}주 · 하루 ${lim.maxOrdersPerDay ?? '–'}건 · 매수 ${won(lim.maxBuyKRW)} / ${usd(lim.maxBuyUSD)}까지
-      ${bot.length ? `<br>프로그램이 산 수량: ${bot.map(([s, q]) => `${esc(symLabel(s))} ${q}주`).join(' · ')}` : ''}</p>
-    ${lg.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>종목</th><th>신호</th><th>주문</th><th class="r">수량</th><th>상태</th><th>메모</th></tr></thead><tbody>${lg.map(o => `<tr><td class="num">${esc((o.day || '').slice(5))}</td><td><b>${esc(symLabel(o.sym))}</b></td><td>${esc(o.nm || '')}</td><td>${o.side === 'buy' ? '<span class="tag buy">매수</span>' : '<span class="tag sell">매도</span>'}</td><td class="r num">${o.q}</td><td class="${stC[o.st] || ''}" style="font-weight:700">${esc(o.st)}${o.filled != null && o.st !== '체결' ? ` (${o.filled}주)` : ''}</td><td class="muted">${esc(o.note || '')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">아직 실전(또는 미리보기) 주문이 없어요.</div>'}
-    <p class="note">가상 주문 중 '대상 종목'이면서 오늘 장 시작에 체결 처리된 것만 실제로 보내요. 국내는 시장가(09:00~15:15). 미국은 <b>주간장(한국 10:00~15:30)</b>에 현재가 ±1% 지정가로 먼저 내고, 주간장 미지원·미체결분은 남은 주문을 취소한 뒤 그날 정규장(현지 09:31~15:45)에서 다시 내요. 매도는 이 프로그램이 산 수량까지만 — <b>대상 종목은 직접 사고팔지 마세요</b> (잔고 변화로 체결을 확인해서 섞이면 헷갈려요). 끄려면 GitHub 저장소 변수 LIVE_TRADING 을 off 로.</p></div>`;
-}
 function renderPerf() {
   const el = $('#perfPanel'); if (!el) return;
   if (!state.perfOpen) { el.innerHTML = ''; return; }
-  el.innerHTML = acctCard() + liveCard() + vtCard() + simAllCard();
+  el.innerHTML = simAllCard();
 }
 async function loadRemote() {
   try {
@@ -2238,7 +2174,7 @@ async function loadRemote() {
     Object.keys(D.tickers).forEach(s => { if (!order.includes(s)) order.push(s); });
     D.order = order.filter(s => D.tickers[s]);
     D.bases = {}; Object.entries(j.bases || {}).forEach(([k, B]) => { D.bases[k] = { kr: !!B.kr, d: unpack(B.d), h1: unpack(B.h1), h30: unpack(B.h30), m5: unpack(B.m5) }; }); D.pending = false;
-    D.remoteAt = j.updatedAt; D.remoteLoaded = true; D.acct = j.acct || null; D.vtrade = j.vtrade || null; D.live = j.live || null;
+    D.remoteAt = j.updatedAt; D.remoteLoaded = true;
     state.view = null; save(); renderAll();
   } catch (e) {
     if (D.pending) { D = Object.keys(D.tickers).length ? D : makeDemo(); D.pending = false; renderAll(); }
