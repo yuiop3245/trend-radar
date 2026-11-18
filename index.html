@@ -206,6 +206,7 @@ table.rt{font-size:13.5px;min-width:820px}
 .lockkeep{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}.lockmsg{min-height:18px;font-size:13px;color:var(--up)}
 .topbtns{display:flex;gap:6px;align-items:center}#perfBtn.on{background:var(--ink);color:var(--bg)}#perfPanel{margin-top:14px}#perfPanel:empty{display:none}
 th.click{cursor:pointer;user-select:none}
+.vtab tr.on td{background:var(--hl)}.vtab td{white-space:nowrap}.vtab td:first-child{white-space:normal}
 .livetag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:#fff4e0;color:#b26a00;font-size:11px;font-weight:700;white-space:nowrap}
 #cv.drawing{cursor:crosshair}.gchip[disabled]{opacity:.45;cursor:default}
 </style>
@@ -1265,11 +1266,11 @@ function parseRec(text) {
 /* ============ 상태 ============ */
 let D = load();
 const ui = (() => { try { return JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) { return {}; } })();
-const state = { draw: 'off', mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd', simPer: ui.simPer || '1y', perfOpen: !!ui.perfOpen, simSort: 'diff' };
+const state = { draw: 'off', mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd', simPer: ui.simPer || '1y', simVar: ui.simVar || 'D', perfOpen: !!ui.perfOpen, simSort: 'diff' };
 const CAT_DEF = () => Object.fromEntries(GCATS.map(x => [x[0], !!x[2]]));
 state.cats = Object.assign(CAT_DEF(), ui.cats || {}); state.catAll = ui.catAll !== false;
 state.ovl = Object.assign(Object.fromEntries(GOVL.map(x => [x[0], !!x[2]])), ui.ovl || {});
-function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl, simPer: state.simPer, perfOpen: state.perfOpen })); } catch (e) {} }
+function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl, simPer: state.simPer, simVar: state.simVar, perfOpen: state.perfOpen })); } catch (e) {} }
 function syms() { return (D.order || Object.keys(D.tickers)).filter(s => D.tickers[s]); }
 
 /* ============ 목록 (쭈야식 표) ============ */
@@ -2078,22 +2079,32 @@ function lockNow() { siteRaw = null; try { localStorage.removeItem(LOCKKEY); } c
 /* ============ 신호대로 했다면 (가상 매매) ============ */
 // 규칙: 신호가 난 다음 거래일 시가에 체결 · 사 = 자금의 50% · 불태워 = 자금의 25%씩 최대 2번 · 분할매도 = 보유의 절반 · 다정리 = 전부 · 수수료·슬리피지 편도 0.1%
 const SIM_COST = .001, SIMP = [['1y', '1년', 252], ['3y', '3년', 756], ['5y', '5년', 1260]];
+// 매매 비율 방식 — 같은 쭈야 신호로 '얼마나 사고 얼마나 파느냐'만 다르다
+const SIMV = {
+  A: { n: 'A 조심', d: '처음 50% · 불태워 25%×2 · 분할매도 때 1/2', f0: .5, fa: .25, fp: .5 },
+  B: { n: 'B 크게', d: '처음 100% · 불태워 없음 · 분할매도 때 1/4', f0: 1, fa: 0, fp: .25 },
+  C: { n: 'C 안전', d: '처음 60% · 불태워 20%×2 · 분할매도 때 1/4', f0: .6, fa: .2, fp: .25 },
+  D: { n: 'D 균형', d: '처음 70% · 불태워 15%×2 · 분할매도 때 1/4', f0: .7, fa: .15, fp: .25 },
+  F: { n: 'F 버티기', d: '처음 60% · 불태워 20%×2 · 과열·익절 신호는 무시, 이탈 신호 때만 1/2', f0: .6, fa: .2, fp: .5, skip: ['HOT', 'TRIM', 'TP1', 'TP2'] }
+};
+const simVk = () => SIMV[state.simVar] ? state.simVar : 'D';
 const simCache = new WeakMap();
-function gobSim(sym, days) {
+function gobSim(sym, days, vk) {
   const G = gobCalc(sym); if (!G) return null;
-  let byD = simCache.get(G); if (!byD) simCache.set(G, byD = {}); if (byD[days]) return byD[days];
+  vk = SIMV[vk] ? vk : simVk(); const V = SIMV[vk], ck = days + vk;
+  let byD = simCache.get(G); if (!byD) simCache.set(G, byD = {}); if (byD[ck]) return byD[ck];
   // 전체 기간을 처음부터 신호대로 굴린 뒤, 고른 기간(1년·3년·5년)만 잘라서 잰다.
   // 그래야 기간 시작 때 이미 들고 있던 포지션(그 전에 산 것)도 빠지지 않는다.
   const b = D.tickers[sym].d, n = b.length, iS = 61, i0 = Math.max(iS, n - days);
-  const evAt = new Map(); G.ev.forEach(e => { if (ACT[e.k] && ACT[e.k] !== 'hold' && e.i >= iS - 1) { if (!evAt.has(e.i)) evAt.set(e.i, []); evAt.get(e.i).push(e); } });
+  const evAt = new Map(); G.ev.forEach(e => { if (ACT[e.k] && ACT[e.k] !== 'hold' && e.i >= iS - 1 && !(V.skip && V.skip.includes(e.k))) { if (!evAt.has(e.i)) evAt.set(e.i, []); evAt.get(e.i).push(e); } });
   let cash = 1, sh = 0, cyc = null; const cycles = [], eqF = [], trades = [];
   for (let i = iS; i < n; i++) {
     const px = b[i].o || b[i - 1].c;
     (evAt.get(i - 1) || []).forEach(e => {
       const a = ACT[e.k], val = cash + sh * px;
-      if (a === 'buy' && sh === 0) { const sp = val * .5; sh = sp * (1 - SIM_COST) / px; cash -= sp; cyc = { t0: b[i].t, e0: e.k, inv: sp, out: 0, adds: 0 }; trades.push({ t: b[i].t, k: e.k, a, px }); }
-      else if (a === 'add' && sh > 0 && cyc && cyc.adds < 2) { const sp = Math.min(cash, val * .25); if (sp > val * .01) { sh += sp * (1 - SIM_COST) / px; cash -= sp; cyc.inv += sp; cyc.adds++; trades.push({ t: b[i].t, k: e.k, a, px }); } }
-      else if (a === 'part' && sh > 0 && cyc) { const q = sh / 2, got = q * px * (1 - SIM_COST); cash += got; cyc.out += got; sh -= q; trades.push({ t: b[i].t, k: e.k, a, px }); }
+      if (a === 'buy' && sh === 0) { const sp = val * V.f0; sh = sp * (1 - SIM_COST) / px; cash -= sp; cyc = { t0: b[i].t, e0: e.k, inv: sp, out: 0, adds: 0 }; trades.push({ t: b[i].t, k: e.k, a, px }); }
+      else if (a === 'add' && sh > 0 && cyc && cyc.adds < 2 && V.fa > 0) { const sp = Math.min(cash, val * V.fa); if (sp > val * .01) { sh += sp * (1 - SIM_COST) / px; cash -= sp; cyc.inv += sp; cyc.adds++; trades.push({ t: b[i].t, k: e.k, a, px }); } }
+      else if (a === 'part' && sh > 0 && cyc) { const q = sh * V.fp, got = q * px * (1 - SIM_COST); cash += got; cyc.out += got; sh -= q; trades.push({ t: b[i].t, k: e.k, a, px }); }
       else if (a === 'exit' && sh > 0 && cyc) { const got = sh * px * (1 - SIM_COST); cash += got; cyc.out += got; sh = 0; cyc.t1 = b[i].t; cyc.e1 = e.k; cyc.r = cyc.out / cyc.inv - 1; cycles.push(cyc); cyc = null; trades.push({ t: b[i].t, k: e.k, a, px }); }
     });
     eqF.push(cash + sh * b[i].c);
@@ -2108,8 +2119,8 @@ function gobSim(sym, days) {
   const done = inWin.filter(x => !x.open);
   const pend = (evAt.get(n - 1) || []).map(e => e.k);
   const out = { sym, i0, t0: tw, ret: end / eqBase - 1, hold: last / hBase - 1, mdd, cycles: inWin, trades: trades.filter(t => t.t >= tw), n: done.length,
-    win: done.length ? done.filter(x => x.r > 0).length / done.length : null, expo: end ? sh * last / end : 0, pend, eq, holdA, short: !mid, preHeld: inWin.some(c => c.pre) };
-  return byD[days] = out;
+    win: done.length ? done.filter(x => x.r > 0).length / done.length : null, expo: end ? sh * last / end : 0, pend, eq, holdA, short: !mid, preHeld: inWin.some(c => c.pre), vk };
+  return byD[ck] = out;
 }
 const simName = k => GN[k] ? GN[k][0] : k;
 function spark(series, w = 600, h = 150, log = false) {
@@ -2127,6 +2138,7 @@ function simCard(sym) {
   const cyc = s.cycles.slice(-8).reverse();
   return `<div class="card" id="simCard"><div class="perfhead"><h2>${E('쭈야 신호대로 샀다 팔았다면?', '신호대로 매매했다면 (가상)')}</h2>
     <div class="seg small" id="simSeg">${SIMP.map(p => `<button data-sim="${p[0]}" class="${p[0] === per[0] ? 'on' : ''}">${p[1]}</button>`).join('')}</div></div>
+    ${simVarPick(sym, per)}
     <div class="tiles"><div class="tile"><span>신호대로 매매</span><b class="${pcls(s.ret)}">${pct(s.ret)}</b><small>${esc(s.t0.slice(0, 10))}부터${s.short ? ' (상장 이후 전부)' : ''}${s.preHeld ? ' · 시작 때 이미 보유 중' : ''}</small></div>
       <div class="tile"><span>그냥 사서 보유</span><b class="${pcls(s.hold)}">${pct(s.hold)}</b><small>차이 <b class="${pcls(s.ret - s.hold)}" style="display:inline;font-size:inherit">${pct(s.ret - s.hold)}p</b></small></div>
       <div class="tile"><span>최대 낙폭 (신호대로)</span><b class="down">${pct(s.mdd)}</b><small>보유했다면 ${pct(Math.min(...s.holdA.map((v, i, a) => v / Math.max(...a.slice(0, i + 1)) - 1)))}</small></div>
@@ -2134,15 +2146,22 @@ function simCard(sym) {
     ${spark([{ v: s.holdA, c: 'var(--faint)', wd: 1.5, base: 1 }, { v: s.eq, c: 'var(--up)' }], 600, 150, true)}
     <div class="legend" style="margin-top:6px"><span><i style="background:var(--up)"></i>신호대로 매매한 자산</span><span><i style="background:var(--faint)"></i>그냥 보유</span><span>점선 = 시작 금액 · 세로축은 비율(로그) 눈금</span></div>
     ${cyc.length ? `<div class="scroll" style="margin-top:10px"><table><thead><tr><th>들어간 날</th><th>나온 날</th><th class="r">수익률</th><th>신호</th></tr></thead><tbody>${cyc.map(c => `<tr class="click" data-jump="${esc(c.t0)}"><td class="num">${esc(c.t0.slice(0, 10))}${c.pre ? ' <span class="muted" style="font-size:11.5px">(기간 전 진입)</span>' : ''}</td><td class="num">${c.open ? '<b>보유 중</b>' : esc(c.t1.slice(0, 10))}</td><td class="r ${pcls(c.r)}">${pct(c.r)}</td><td class="muted">${esc(simName(c.e0))}${c.adds ? ` · 불태워 ${c.adds}번` : ''}${c.open ? '' : ' → ' + esc(simName(c.e1))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">이 기간에 사 신호가 없었어요</div>'}
-    <p class="note">가정: 신호가 난 <b>다음 거래일 시가</b>에 체결 · 사 = 자금의 50% · 불태워 = 25%씩 최대 2번 · 분할매도 = 가진 것의 절반 · 다정리 = 전부 · 수수료·미끄러짐 편도 0.1%. 실제 체결·세금·환율과는 달라요. 가지고있어(유지) 신호는 매매하지 않아요.</p>
+    <p class="note">가정: 신호가 난 <b>다음 거래일 시가</b>에 체결 · <b>${esc(SIMV[s.vk].n)}</b>: ${esc(SIMV[s.vk].d)} · 다정리 = 전부 · 수수료·미끄러짐 편도 0.1%. 실제 체결·세금·환율과는 달라요. 가지고있어(유지) 신호는 매매하지 않아요.</p>
   </div>`;
 }
 /* ============ 내 수익률 패널 (계좌 + 전체 종목 가상 성과) ============ */
 const won = x => ok(x) ? Math.round(x).toLocaleString('ko-KR') + '원' : '–';
 const usd = x => ok(x) ? (x < 0 ? '-$' : '$') + Math.abs(x).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '–';
+// 이 종목에서 방식별 결과를 한 번에 비교하고 고르는 표
+function simVarPick(sym, per) {
+  const cur = simVk(), rows = Object.keys(SIMV).map(k => [k, gobSim(sym, per[2], k)]).filter(x => x[1]);
+  const best = rows.reduce((m, x) => x[1].ret > m[1].ret ? x : m, rows[0])[0];
+  return `<div class="scroll" style="margin:2px 0 10px"><table class="vtab"><thead><tr><th>매매 방식 (${per[1]})</th><th class="r">수익률</th><th class="r">최대 낙폭</th><th class="r">매매·승률</th></tr></thead><tbody>${rows.map(([k, r]) =>
+    `<tr class="click${k === cur ? ' on' : ''}" data-var="${k}"><td><b>${esc(SIMV[k].n)}</b>${k === best ? ' <span class="tag buy">이 종목 최고</span>' : ''} <span class="muted" style="font-size:12px">${esc(SIMV[k].d)}</span></td><td class="r ${pcls(r.ret)}"><b>${pct(r.ret)}</b></td><td class="r down">${pct(r.mdd)}</td><td class="r">${r.n} · ${r.win == null ? '–' : Math.round(r.win * 100) + '%'}</td></tr>`).join('')}</tbody></table></div>`;
+}
 function simAllCard() {
   const per = SIMP.find(p => p[0] === state.simPer) || SIMP[0];
-  const R = syms().map(s => ({ s, r: gobSim(s, per[2]) })).filter(x => x.r);
+  const R = syms().map(s => ({ s, r: gobSim(s, per[2]) })).filter(x => x.r), vk = simVk();
   if (!R.length) return '';
   const k = state.simSort || 'diff', key = { diff: x => x.r.ret - x.r.hold, ret: x => x.r.ret, hold: x => x.r.hold, mdd: x => x.r.mdd };
   R.sort((a, b) => key[k](b) - key[k](a));
@@ -2150,7 +2169,8 @@ function simAllCard() {
   const beat = R.filter(x => x.r.ret > x.r.hold).length;
   const th = (id, t) => `<th class="r click" data-ssort="${id}">${t}${k === id ? ' ▾' : ''}</th>`;
   return `<div class="card"><div class="perfhead"><h2>${E('쭈야 신호대로 했다면 — 전체 종목', '신호대로 매매 (가상) — 전체 종목')}</h2>
-    <div class="seg small" id="simSegAll">${SIMP.map(p => `<button data-sim="${p[0]}" class="${p[0] === per[0] ? 'on' : ''}">${p[1]}</button>`).join('')}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg small" id="simVarAll">${Object.keys(SIMV).map(k => `<button data-var="${k}" class="${k === vk ? 'on' : ''}" title="${esc(SIMV[k].d)}">${esc(SIMV[k].n)}</button>`).join('')}</div>
+    <div class="seg small" id="simSegAll">${SIMP.map(p => `<button data-sim="${p[0]}" class="${p[0] === per[0] ? 'on' : ''}">${p[1]}</button>`).join('')}</div></div></div>
     <div class="tiles"><div class="tile"><span>신호대로 (종목 평균)</span><b class="${pcls(avg(x => x.r.ret))}">${pct(avg(x => x.r.ret))}</b><small>${R.length}종목 같은 금액씩</small></div>
       <div class="tile"><span>그냥 보유 (종목 평균)</span><b class="${pcls(avg(x => x.r.hold))}">${pct(avg(x => x.r.hold))}</b></div>
       <div class="tile"><span>보유보다 나았던 종목</span><b>${beat} / ${R.length}</b></div>
@@ -2158,7 +2178,7 @@ function simAllCard() {
     <div class="scroll"><table><thead><tr><th>종목</th>${th('ret', '신호대로')}${th('hold', '그냥 보유')}${th('diff', '차이')}${th('mdd', '최대 낙폭')}<th class="r">매매 · 승률</th><th>지금</th></tr></thead><tbody>
     ${R.map(({ s, r }) => `<tr class="click" data-sel="${esc(s)}"><td><b>${esc(symLabel(s))}</b>${symLabel(s) !== s ? ` <span class="muted">${esc(s)}</span>` : ''}</td><td class="r ${pcls(r.ret)}">${pct(r.ret)}</td><td class="r ${pcls(r.hold)}">${pct(r.hold)}</td><td class="r ${pcls(r.ret - r.hold)}"><b>${pct(r.ret - r.hold)}</b></td><td class="r down">${pct(r.mdd)}</td><td class="r">${r.n} · ${r.win == null ? '–' : Math.round(r.win * 100) + '%'}</td><td style="white-space:nowrap">${r.expo > .001 ? '보유 ' + Math.round(r.expo * 100) + '%' : '<span class="muted">현금</span>'}${r.pend.length ? ' · <b>다음 거래일 ' + esc(r.pend.map(simName).join(', ')) + '</b>' : ''}</td></tr>`).join('')}
     </tbody></table></div>
-    <p class="note">${per[1]} 전부터(상장이 더 늦으면 그때부터) 각 종목에 같은 금액을 넣고 쭈야 신호대로만 매매했다고 친 결과예요. 가정: 다음 거래일 시가 체결 · 사 50% · 불태워 25%×최대 2번 · 분할매도 절반 · 다정리 전부 · 편도 0.1% 비용. 지난 성과가 앞으로를 보장하진 않아요.</p></div>`;
+    <p class="note">${per[1]} 전부터(상장이 더 늦으면 그때부터) 각 종목에 같은 금액을 넣고 쭈야 신호대로만 매매했다고 친 결과예요. 가정: 다음 거래일 시가 체결 · ${esc(SIMV[vk].n)}(${esc(SIMV[vk].d)}) · 다정리 전부 · 편도 0.1% 비용. 지난 성과가 앞으로를 보장하진 않아요.</p></div>`;
 }
 function renderPerf() {
   const el = $('#perfPanel'); if (!el) return;
@@ -2208,6 +2228,7 @@ $('#list').onclick = e => {
 };
 $('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.filter = c.dataset.f; renderList(); };
 $('#detail').onclick = e => {
+  const sv = e.target.closest('#simCard [data-var]'); if (sv) { state.simVar = sv.dataset.var; saveUI(); const c = $('#simCard'); if (c) c.outerHTML = simCard(state.sel); renderPerf(); return; }
   const sp = e.target.closest('#simSeg [data-sim]'); if (sp) { state.simPer = sp.dataset.sim; saveUI(); const c = $('#simCard'); if (c) c.outerHTML = simCard(state.sel); renderPerf(); return; }
   const gc = e.target.closest('#gobBar .gchip');
   if (gc && gc.dataset.draw) { state.draw = gc.dataset.draw; chart.tlA = null; $('#gobBar').outerHTML = gobBar(); const cv = $('#cv'); if (cv) cv.classList.toggle('drawing', state.draw !== 'off'); drawChart(); return; }
@@ -2300,6 +2321,7 @@ renderAll();
 $('#perfBtn').onclick = () => { state.perfOpen = !state.perfOpen; saveUI(); renderAll(); if (state.perfOpen) $('#perfPanel').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 $('#lockBtn').onclick = lockNow;
 $('#perfPanel').onclick = e => {
+  const sv = e.target.closest('[data-var]'); if (sv) { state.simVar = sv.dataset.var; saveUI(); renderPerf(); if (state.sel) renderDetail(); return; }
   const sb = e.target.closest('[data-sim]'); if (sb) { state.simPer = sb.dataset.sim; saveUI(); renderPerf(); if (state.sel) renderDetail(); return; }
   const so = e.target.closest('[data-ssort]'); if (so) { state.simSort = so.dataset.ssort; renderPerf(); return; }
   const r = e.target.closest('tr[data-sel]'); if (r) { state.sel = r.dataset.sel; state.hl = null; state.tf = 'd'; state.per = 126; state.view = null; renderList(); renderDetail(); $('#detail').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
