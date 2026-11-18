@@ -227,7 +227,9 @@ class KIS:
         if have_recent:  # 캐시된 과거 + 새로 받은 최근(겹치는 날은 새 값)
             prev = {b[0]: b for b in old}
             # 분할·병합 등으로 과거 가격이 다시 계산됐으면(겹치는 날 종가가 0.5% 넘게 다름) 캐시를 버리고 처음부터
-            if any(k in prev and abs(prev[k][4] - v[4]) > abs(v[4]) * .005 for k, v in got.items()):
+            # 캐시의 마지막 날은 장중(미확정)이었을 수 있으니 비교에서 뺀다
+            last_old = old[-1][0]
+            if any(k in prev and k < last_old and abs(prev[k][4] - v[4]) > abs(v[4]) * .005 for k, v in got.items()):
                 self.cache["d"].pop(sym, None)
                 self.notes.append(f"{sym}: 수정주가 변경 감지 → 전체 다시 받음")
                 return self.daily(sym, years)
