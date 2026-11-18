@@ -14,13 +14,16 @@ import datetime as dt
 import json
 import math
 import os
+import subprocess
 import sys
+import tempfile
 import time
 
 import yfinance as yf
 
 from kis import KIS
 import secure
+import vtrade
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data.json")
@@ -288,6 +291,30 @@ def account_snapshot(key):
     return out
 
 
+def virtual_orders(data, key):
+    """2단계 가상 주문: 홈페이지와 같은 신호 엔진(node)으로 신호를 읽어 주문을 '기록만' 한다."""
+    conf = vtrade.load_conf(os.path.join(ROOT, "trade.json"))
+    if conf.get("mode") == "off":
+        return None
+    try:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
+            json.dump({"order": data["order"], "tickers": {s: {"kr": e.get("kr", False), "d": e.get("d", [])} for s, e in data["tickers"].items()},
+                       "bases": {s: {"kr": e.get("kr", False), "d": e.get("d", [])} for s, e in data["bases"].items()}}, f)
+            tmp = f.name
+        r = subprocess.run(["node", os.path.join(ROOT, "scripts", "signals.mjs"), os.path.join(ROOT, "index.html"), tmp],
+                           capture_output=True, text=True, timeout=300)
+        os.remove(tmp)
+        if r.returncode != 0:
+            raise RuntimeError("신호 엔진 실패: " + (r.stderr or "")[:200])
+        sigs = json.loads(r.stdout)
+        out = vtrade.run(sigs, conf, KISC.cache, key)
+        print(f"가상 주문: 신호 {len(sigs)}종목 확인", flush=True)
+        return out
+    except Exception as ex:
+        print(f"가상 주문 실패: {str(ex)[:200]}", file=sys.stderr)
+        return {"mode": conf.get("mode"), "err": str(ex)[:300], "pos": [], "orders": []}
+
+
 def main():
     tickers = load_json(os.path.join(ROOT, "tickers.json"), [])
     if not tickers:
@@ -336,6 +363,9 @@ def main():
         acct = account_snapshot(secure.key_of(pw))
         if acct:
             data["acct"] = acct
+        vt = virtual_orders(data, secure.key_of(pw))
+        if vt:
+            data["vtrade"] = vt
     if KISC.ok:
         try:
             KISC.save()
