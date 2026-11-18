@@ -191,7 +191,8 @@ table.rt{font-size:13.5px;min-width:820px}
 .ezsum{background:var(--panel2);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:13.5px}
 .ezrow{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:14px}.ezrow b{font-size:18px}.ezrow.sm{padding:0 0 4px;font-size:12px}
 .ezst{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:center;font-size:13.5px;margin:8px 0}.ezst .pill{text-align:center}
-@media (max-width:900px){.ezgrid,.pro .ezgrid{grid-template-columns:1fr}}
+@media (max-width:900px){.ezgrid,.pro .ezgrid{grid-template-columns:1fr}.ezmain{display:contents}#chartCard{order:1}.ezgrid>aside{order:2}#simCard{order:3}}
+.ezmain{min-width:0}
 .gobgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:4px}.gobgrid h3{font-size:14px;margin:0 0 8px}.checks li .q{align-self:center}
 @media (max-width:800px){.gobgrid{grid-template-columns:1fr}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
@@ -1401,7 +1402,7 @@ function renderDetail() {
   const ezR = ezEvents(sym).slice(-10).reverse();
   const ezRecent = `<div class="card easy-only"><div class="perfhead"><h2>최근 신호, 그리고 그 뒤에 어떻게 됐나</h2><span class="muted" style="font-size:12.5px">행을 누르면 차트가 그 날짜로 이동합니다</span></div>
     ${ezR.length ? `<div class="scroll"><table><thead><tr><th>날짜</th><th>신호</th><th class="r">10일 뒤</th><th>무슨 뜻이었나</th></tr></thead><tbody>${ezR.map(x => { const r = fwd(b, x.i, 10); return `<tr class="click" data-jump="${esc(x.t)}" data-type="Z:${x.k}"><td class="num">${esc(x.t.slice(2, 10).replace(/-/g, '.'))}</td><td>${ezPill(x.z)}</td><td class="r num ${pcls(r)}">${r == null ? '아직' : pct(r)}</td><td class="muted">${EZ[x.z].easy}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty">이 기간엔 신호가 없어요</div>'}</div>`;
-  el.innerHTML = headCard(sym) + gobTiles(sym) + `<div class="ezgrid">${chart}${ezSide(sym)}${gobDash(sym)}</div>` + gobScen(sym) + simCard(sym) + ezRecent + gobLogCards(sym) + tvCard() + mineBox(sym, e);
+  el.innerHTML = headCard(sym) + gobTiles(sym) + `<div class="ezgrid"><div class="ezmain">${chart}${simCard(sym)}</div>${ezSide(sym)}${gobDash(sym)}</div>` + gobScen(sym) + ezRecent + gobLogCards(sym) + tvCard() + mineBox(sym, e);
   setupChart();
   const tb = $('#tvBox'); if (tb) { tb.addEventListener('toggle', () => { state.tvOpen = tb.open; if (tb.open) loadTV(); }); if (state.tvOpen) loadTV(); }
   const mb = $('#mineBox'); if (mb) mb.addEventListener('toggle', () => { state.mineOpen = mb.open; });
@@ -2081,11 +2082,12 @@ const simCache = new WeakMap();
 function gobSim(sym, days) {
   const G = gobCalc(sym); if (!G) return null;
   let byD = simCache.get(G); if (!byD) simCache.set(G, byD = {}); if (byD[days]) return byD[days];
-  const b = D.tickers[sym].d, n = b.length, i0 = Math.max(61, n - days);
-  const evAt = new Map(); G.ev.forEach(e => { if (ACT[e.k] && ACT[e.k] !== 'hold' && e.i >= i0 - 1) { if (!evAt.has(e.i)) evAt.set(e.i, []); evAt.get(e.i).push(e); } });
-  let cash = 1, sh = 0, cyc = null, peak = 1, mdd = 0; const cycles = [], eq = [], hold = [], trades = [];
-  const h0 = b[i0].o || b[i0 - 1].c;
-  for (let i = i0; i < n; i++) {
+  // 전체 기간을 처음부터 신호대로 굴린 뒤, 고른 기간(1년·3년·5년)만 잘라서 잰다.
+  // 그래야 기간 시작 때 이미 들고 있던 포지션(그 전에 산 것)도 빠지지 않는다.
+  const b = D.tickers[sym].d, n = b.length, iS = 61, i0 = Math.max(iS, n - days);
+  const evAt = new Map(); G.ev.forEach(e => { if (ACT[e.k] && ACT[e.k] !== 'hold' && e.i >= iS - 1) { if (!evAt.has(e.i)) evAt.set(e.i, []); evAt.get(e.i).push(e); } });
+  let cash = 1, sh = 0, cyc = null; const cycles = [], eqF = [], trades = [];
+  for (let i = iS; i < n; i++) {
     const px = b[i].o || b[i - 1].c;
     (evAt.get(i - 1) || []).forEach(e => {
       const a = ACT[e.k], val = cash + sh * px;
@@ -2094,15 +2096,19 @@ function gobSim(sym, days) {
       else if (a === 'part' && sh > 0 && cyc) { const q = sh / 2, got = q * px * (1 - SIM_COST); cash += got; cyc.out += got; sh -= q; trades.push({ t: b[i].t, k: e.k, a, px }); }
       else if (a === 'exit' && sh > 0 && cyc) { const got = sh * px * (1 - SIM_COST); cash += got; cyc.out += got; sh = 0; cyc.t1 = b[i].t; cyc.e1 = e.k; cyc.r = cyc.out / cyc.inv - 1; cycles.push(cyc); cyc = null; trades.push({ t: b[i].t, k: e.k, a, px }); }
     });
-    const v = cash + sh * b[i].c; eq.push(v); hold.push(b[i].c / h0);
-    peak = Math.max(peak, v); mdd = Math.min(mdd, v / peak - 1);
+    eqF.push(cash + sh * b[i].c);
   }
   const last = b[n - 1].c, end = cash + sh * last;
   if (cyc) cycles.push({ ...cyc, open: true, r: (cyc.out + sh * last) / cyc.inv - 1 });
-  const done = cycles.filter(x => !x.open);
+  // 기간 기준점: 기간 시작 전날 종가 (데이터가 기간보다 짧으면 첫 거래일 시가부터, 빈손으로)
+  const mid = i0 > iS, eqBase = mid ? eqF[i0 - 1 - iS] : 1, hBase = mid ? b[i0 - 1].c : (b[iS].o || b[iS - 1].c), tw = b[i0].t;
+  const eq = eqF.slice(i0 - iS).map(v => v / eqBase), holdA = b.slice(i0).map(x => x.c / hBase);
+  let peak = 1, mdd = 0; eq.forEach(v => { peak = Math.max(peak, v); mdd = Math.min(mdd, v / peak - 1); });
+  const inWin = cycles.filter(c => c.open || c.t1 >= tw).map(c => ({ ...c, pre: c.t0 < tw }));
+  const done = inWin.filter(x => !x.open);
   const pend = (evAt.get(n - 1) || []).map(e => e.k);
-  const out = { sym, i0, t0: b[i0].t, ret: end - 1, hold: last / h0 - 1, mdd, cycles, trades, n: done.length, win: done.length ? done.filter(x => x.r > 0).length / done.length : null,
-    expo: end ? sh * last / end : 0, pend, eq, holdA: hold, short: n - 61 < days };
+  const out = { sym, i0, t0: tw, ret: end / eqBase - 1, hold: last / hBase - 1, mdd, cycles: inWin, trades: trades.filter(t => t.t >= tw), n: done.length,
+    win: done.length ? done.filter(x => x.r > 0).length / done.length : null, expo: end ? sh * last / end : 0, pend, eq, holdA, short: !mid, preHeld: inWin.some(c => c.pre) };
   return byD[days] = out;
 }
 const simName = k => GN[k] ? GN[k][0] : k;
@@ -2121,13 +2127,13 @@ function simCard(sym) {
   const cyc = s.cycles.slice(-8).reverse();
   return `<div class="card" id="simCard"><div class="perfhead"><h2>${E('쭈야 신호대로 샀다 팔았다면?', '신호대로 매매했다면 (가상)')}</h2>
     <div class="seg small" id="simSeg">${SIMP.map(p => `<button data-sim="${p[0]}" class="${p[0] === per[0] ? 'on' : ''}">${p[1]}</button>`).join('')}</div></div>
-    <div class="tiles"><div class="tile"><span>신호대로 매매</span><b class="${pcls(s.ret)}">${pct(s.ret)}</b><small>${esc(s.t0.slice(0, 10))}부터${s.short ? ' (상장 이후 전부)' : ''}</small></div>
+    <div class="tiles"><div class="tile"><span>신호대로 매매</span><b class="${pcls(s.ret)}">${pct(s.ret)}</b><small>${esc(s.t0.slice(0, 10))}부터${s.short ? ' (상장 이후 전부)' : ''}${s.preHeld ? ' · 시작 때 이미 보유 중' : ''}</small></div>
       <div class="tile"><span>그냥 사서 보유</span><b class="${pcls(s.hold)}">${pct(s.hold)}</b><small>차이 <b class="${pcls(s.ret - s.hold)}" style="display:inline;font-size:inherit">${pct(s.ret - s.hold)}p</b></small></div>
       <div class="tile"><span>최대 낙폭 (신호대로)</span><b class="down">${pct(s.mdd)}</b><small>보유했다면 ${pct(Math.min(...s.holdA.map((v, i, a) => v / Math.max(...a.slice(0, i + 1)) - 1)))}</small></div>
       <div class="tile"><span>끝난 매매 · 이긴 비율</span><b>${s.n}번 · ${s.win == null ? '–' : Math.round(s.win * 100) + '%'}</b><small>지금 ${s.expo > .001 ? '보유 비중 ' + Math.round(s.expo * 100) + '%' : '현금 대기'}${s.pend.length ? ' · 다음 날 시가 체결 예정: ' + esc(s.pend.map(simName).join(', ')) : ''}</small></div></div>
     ${spark([{ v: s.holdA, c: 'var(--faint)', wd: 1.5, base: 1 }, { v: s.eq, c: 'var(--up)' }], 600, 150, true)}
     <div class="legend" style="margin-top:6px"><span><i style="background:var(--up)"></i>신호대로 매매한 자산</span><span><i style="background:var(--faint)"></i>그냥 보유</span><span>점선 = 시작 금액 · 세로축은 비율(로그) 눈금</span></div>
-    ${cyc.length ? `<div class="scroll" style="margin-top:10px"><table><thead><tr><th>들어간 날</th><th>나온 날</th><th class="r">수익률</th><th>신호</th></tr></thead><tbody>${cyc.map(c => `<tr class="click" data-jump="${esc(c.t0)}"><td class="num">${esc(c.t0.slice(0, 10))}</td><td class="num">${c.open ? '<b>보유 중</b>' : esc(c.t1.slice(0, 10))}</td><td class="r ${pcls(c.r)}">${pct(c.r)}</td><td class="muted">${esc(simName(c.e0))}${c.adds ? ` · 불태워 ${c.adds}번` : ''}${c.open ? '' : ' → ' + esc(simName(c.e1))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">이 기간에 사 신호가 없었어요</div>'}
+    ${cyc.length ? `<div class="scroll" style="margin-top:10px"><table><thead><tr><th>들어간 날</th><th>나온 날</th><th class="r">수익률</th><th>신호</th></tr></thead><tbody>${cyc.map(c => `<tr class="click" data-jump="${esc(c.t0)}"><td class="num">${esc(c.t0.slice(0, 10))}${c.pre ? ' <span class="muted" style="font-size:11.5px">(기간 전 진입)</span>' : ''}</td><td class="num">${c.open ? '<b>보유 중</b>' : esc(c.t1.slice(0, 10))}</td><td class="r ${pcls(c.r)}">${pct(c.r)}</td><td class="muted">${esc(simName(c.e0))}${c.adds ? ` · 불태워 ${c.adds}번` : ''}${c.open ? '' : ' → ' + esc(simName(c.e1))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">이 기간에 사 신호가 없었어요</div>'}
     <p class="note">가정: 신호가 난 <b>다음 거래일 시가</b>에 체결 · 사 = 자금의 50% · 불태워 = 25%씩 최대 2번 · 분할매도 = 가진 것의 절반 · 다정리 = 전부 · 수수료·미끄러짐 편도 0.1%. 실제 체결·세금·환율과는 달라요. 가지고있어(유지) 신호는 매매하지 않아요.</p>
   </div>`;
 }
