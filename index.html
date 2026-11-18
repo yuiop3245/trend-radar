@@ -1027,7 +1027,7 @@ function headCard(sym) {
   return `<div class="ghead"><span class="sym">${esc(symLabel(sym))}</span><span class="nm">${esc(T.label ? sym + ' · ' + (T.name || '') : (T.name || ''))}</span>
     <span class="px num">${last ? fmt(last.c) : '–'}</span><span class="num ${pcls(chg)}" style="font-weight:700">${pct(chg)}</span>
     ${G ? `<span class="pro-only">${statePill(G.status)}</span>` : ''}${S ? `<span class="spill easy-only" style="background:${S.light.bg};color:${S.light.col}">${S.light.t}</span>` : ''}
-    <span class="muted" style="font-size:12px">${last ? esc(last.t.slice(0, 10)) + ' 일봉 기준' + (T.dsrc === 'pykrx' || T.dsrc === 'fdr' ? ' (한국거래소 시세)' : '') + (last.syn ? ' (일봉 지연 → 30분봉으로 채움)' : '') + ' · 장중엔 30분마다 갱신' : ''}</span>${liveTag(sym)}</div>`;
+    <span class="muted" style="font-size:12px">${last ? esc(last.t.slice(0, 10)) + ' 일봉 기준' + (T.dsrc === 'kis' ? ' (한투 시세)' : T.dsrc === 'pykrx' || T.dsrc === 'fdr' ? ' (한국거래소 시세)' : '') + (last.syn ? ' (일봉 지연 → 30분봉으로 채움)' : '') + ' · 장중엔 30분마다 갱신' : ''}</span>${liveTag(sym)}</div>`;
 }
 function gobTiles(sym) {
   const G = gobCalc(sym); if (!G) return ''; const L = gobLP(G), b = D.tickers[sym].d, last = b[b.length - 1], chg = last.c / b[b.length - 2].c - 1;
