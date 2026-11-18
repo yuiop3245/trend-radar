@@ -14,23 +14,16 @@ import datetime as dt
 import json
 import math
 import os
-import subprocess
 import sys
-import tempfile
 import time
 
 import yfinance as yf
 
-from kis import KIS
 import secure
-import vtrade
-import live
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data.json")
 ENC = os.path.join(ROOT, "data.bin")
-KISC = KIS(os.path.join(ROOT, ".kis_cache", "cache.json"))  # 한투 시세 (키가 없으면 자동으로 건너뜀)
-KIS_NOTES = {}
 
 # (키, yfinance 기간, 간격, 장중 여부)
 FRAMES = [
@@ -109,21 +102,9 @@ def fetch(sym, keys, prev, failed):
             failed.append(f"{sym}:{interval}")
         entry[key] = bars
         time.sleep(0.2)
-    # 일봉: 한투(공식) 우선. 실패하거나 너무 짧으면 아래 기존 출처 그대로
-    if "d" in keys and KISC.ok and not sym.startswith("^"):
-        try:
-            kb = KISC.daily(sym)
-            ref = len(entry.get("d") or [])
-            if kb and len(kb) >= min(200, int(ref * .9)):
-                entry["d"] = kb
-                entry["dsrc"] = "kis"
-            else:
-                KIS_NOTES[sym] = f"한투 일봉 {len(kb)}개 (야후 {ref}개) → 사용 안 함"
-        except Exception as ex:
-            KIS_NOTES[sym] = str(ex)[:200]
     if kr:
         entry["kr"] = True
-        if "d" in keys and entry.get("dsrc") != "kis":
+        if "d" in keys:
             bars, src, errs = kr_daily(sym)
             if bars:
                 entry["d"] = bars
@@ -242,93 +223,6 @@ def load_signals(path):
     return recs
 
 
-def usd_krw():
-    try:
-        h = yf.Ticker("KRW=X").history(period="5d", interval="1d", auto_adjust=False)
-        v = float(h["Close"].dropna().iloc[-1])
-        return round(v, 2) if 500 < v < 3000 else None
-    except Exception as ex:
-        print(f"환율 실패: {ex}", file=sys.stderr)
-        return None
-
-
-def account_snapshot(key):
-    """한투 계좌 잔고(조회만). 비밀번호 잠금이 켜져 있을 때만 부른다. 일별 기록은 캐시에 암호화해서 쌓는다."""
-    acc = KISC.account()
-    if not acc:
-        return None
-    out = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"), "err": {}}
-    try:
-        out["kr"], out["krSum"] = KISC.balance_kr(acc)
-    except Exception as ex:
-        out["err"]["kr"] = str(ex)[:200]
-    try:
-        out["us"], out["usSum"] = KISC.balance_us(acc)
-    except Exception as ex:
-        out["err"]["us"] = str(ex)[:200]
-    out["fx"] = usd_krw()
-    # 일별 기록 (한국 날짜 기준, 그날 마지막 값으로 덮어씀)
-    hist = []
-    blob = KISC.cache.get("acct")
-    if blob:
-        try:
-            hist = json.loads(secure.open_(bytes.fromhex(blob), key))
-        except Exception:
-            hist = []
-            out["err"]["hist"] = "지난 기록을 풀지 못함(비밀번호가 바뀌었으면 새로 쌓임)"
-    ks, us = out.get("krSum") or {}, out.get("usSum") or {}
-    if "kr" not in out["err"] or "us" not in out["err"]:
-        day = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).date().isoformat()
-        row = {"t": day, "krE": ks.get("eval", 0), "krB": ks.get("buy", 0), "krC": ks.get("cash", 0), "krT": ks.get("total", 0),
-               "usE": us.get("eval", 0), "usB": us.get("buy", 0), "fx": out["fx"]}
-        hist = [h for h in hist if h.get("t") != day] + [row]
-        hist = hist[-2000:]
-        KISC.cache["acct"] = secure.seal(json.dumps(hist).encode(), key).hex()
-    out["hist"] = hist
-    if not out["err"]:
-        del out["err"]
-    # Actions 로그는 공개라서 계좌 내용은 찍지 않는다
-    print("계좌 조회: " + ("완료" if "err" not in out else "일부 실패 " + ",".join(out["err"])), flush=True)
-    return out
-
-
-def virtual_orders(data, key):
-    """2단계 가상 주문: 홈페이지와 같은 신호 엔진(node)으로 신호를 읽어 주문을 '기록만' 한다."""
-    conf = vtrade.load_conf(os.path.join(ROOT, "trade.json"))
-    if conf.get("mode") == "off":
-        return None
-    try:
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
-            json.dump({"order": data["order"], "tickers": {s: {"kr": e.get("kr", False), "d": e.get("d", [])} for s, e in data["tickers"].items()},
-                       "bases": {s: {"kr": e.get("kr", False), "d": e.get("d", [])} for s, e in data["bases"].items()}}, f)
-            tmp = f.name
-        r = subprocess.run(["node", os.path.join(ROOT, "scripts", "signals.mjs"), os.path.join(ROOT, "index.html"), tmp],
-                           capture_output=True, text=True, timeout=300)
-        os.remove(tmp)
-        if r.returncode != 0:
-            raise RuntimeError("신호 엔진 실패: " + (r.stderr or "")[:200])
-        sigs = json.loads(r.stdout)
-        out = vtrade.run(sigs, conf, KISC.cache, key, day_quote=(lambda s: KISC.us_price(s, daytime=True)[0]) if KISC.ok else None)
-        print(f"가상 주문: 신호 {len(sigs)}종목 확인", flush=True)
-        return out
-    except Exception as ex:
-        print(f"가상 주문 실패: {str(ex)[:200]}", file=sys.stderr)
-        return {"mode": conf.get("mode"), "err": str(ex)[:300], "pos": [], "orders": []}
-
-
-def live_orders(vt, acct, key):
-    """3단계 실전 주문 — 스위치(LIVE_TRADING=on)와 trade.json live 목록이 모두 있어야 실제로 보낸다."""
-    conf = vtrade.load_conf(os.path.join(ROOT, "trade.json"))
-    try:
-        out = live.run(vt.get("orders") or [], conf, KISC, acct, key)
-        # Actions 로그는 공개라서 종목·수량은 찍지 않는다
-        print(f"실전 주문 단계: 스위치 {'켜짐' if out.get('on') else '꺼짐'}", flush=True)
-        return out
-    except Exception as ex:
-        print(f"실전 주문 단계 오류: {type(ex).__name__}", file=sys.stderr)
-        return {"on": live.switch_on(), "live": False, "err": str(ex)[:300], "log": [], "bot": {}}
-
-
 def main():
     tickers = load_json(os.path.join(ROOT, "tickers.json"), [])
     if not tickers:
@@ -373,24 +267,6 @@ def main():
     if KR_NOTES:
         data["krNotes"] = KR_NOTES
     pw = secure.password()
-    if pw and KISC.ok:
-        acct = account_snapshot(secure.key_of(pw))
-        if acct:
-            data["acct"] = acct
-        vt = virtual_orders(data, secure.key_of(pw))
-        if vt:
-            data["vtrade"] = vt
-        if vt and not vt.get("err"):
-            lv = live_orders(vt, acct, secure.key_of(pw))
-            if lv:
-                data["live"] = lv
-    if KISC.ok:
-        try:
-            KISC.save()
-        except OSError as ex:
-            KIS_NOTES["_cache"] = str(ex)[:200]
-        data["kis"] = {"calls": KISC.calls, "notes": KISC.notes[:20], "errors": KIS_NOTES}
-        print(f"한투 호출 {KISC.calls}회 · 오류 {len(KIS_NOTES)}건")
     raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     with open(OUT, "wb") as f:
         f.write(raw)
