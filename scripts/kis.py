@@ -320,7 +320,9 @@ class KIS:
         except ValueError:
             return {"rt_cd": "?", "msg1": f"HTTP {r.status_code}"}
 
-    def us_price(self, sym):
+    def us_price(self, sym, daytime=False):
+        """미국 현재가. daytime=True 면 주간거래 시세(BAQ·BAY·BAA)"""
         ex = self.cache["excd"].get(sym, "NAS")
-        j, _ = self.get("/uapi/overseas-price/v1/quotations/price", "HHDFS00000300", {"AUTH": "", "EXCD": ex, "SYMB": sym})
+        q = {"NAS": "BAQ", "NYS": "BAY", "AMS": "BAA"}.get(ex, "BAQ") if daytime else ex
+        j, _ = self.get("/uapi/overseas-price/v1/quotations/price", "HHDFS00000300", {"AUTH": "", "EXCD": q, "SYMB": sym})
         return self._f((j.get("output") or {}).get("last")), ex

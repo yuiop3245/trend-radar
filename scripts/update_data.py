@@ -308,7 +308,7 @@ def virtual_orders(data, key):
         if r.returncode != 0:
             raise RuntimeError("신호 엔진 실패: " + (r.stderr or "")[:200])
         sigs = json.loads(r.stdout)
-        out = vtrade.run(sigs, conf, KISC.cache, key)
+        out = vtrade.run(sigs, conf, KISC.cache, key, day_quote=(lambda s: KISC.us_price(s, daytime=True)[0]) if KISC.ok else None)
         print(f"가상 주문: 신호 {len(sigs)}종목 확인", flush=True)
         return out
     except Exception as ex:

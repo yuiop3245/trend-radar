@@ -38,7 +38,25 @@ def final_day(kr, bars, now):
     return last
 
 
-def run(sigs, conf, cache, key, now=None):
+def daytime_now(now):
+    """미국 주식 주간거래 시간(한국 10:00~15:30, 평일)인지 — 끝나기 30분 전까지만 새 주문"""
+    loc = now.astimezone(KST)
+    m = loc.hour * 60 + loc.minute
+    return loc.weekday() < 5 and 10 * 60 <= m <= 15 * 60 + 30
+
+
+def next_session(now):
+    """다음(또는 지금 진행 중인) 미국 정규장 날짜 (현지 날짜, 공휴일은 무시)"""
+    loc = now.astimezone(ET)
+    d = loc.date()
+    if loc.weekday() >= 5 or loc.hour * 60 + loc.minute >= 16 * 60 + 10:
+        d += dt.timedelta(days=1)
+    while d.weekday() >= 5:
+        d += dt.timedelta(days=1)
+    return d.isoformat()
+
+
+def run(sigs, conf, cache, key, now=None, day_quote=None):
     now = now or dt.datetime.now(dt.timezone.utc)
     st = {}
     if cache.get("vt"):
@@ -51,16 +69,26 @@ def run(sigs, conf, cache, key, now=None):
     st.setdefault("since", (now - dt.timedelta(days=1)).astimezone(KST).date().isoformat())
     pos, orders, done = st.setdefault("pos", {}), st.setdefault("orders", []), set(st.get("done", []))
 
-    # 1) 대기 주문 체결 (신호 다음 거래일 시가)
+    # 1) 대기 주문 체결 — 미국은 주간거래 시간이면 주간 시세로 먼저, 아니면 신호 다음 거래일 정규장 시가
+    dtime = day_quote is not None and conf.get("daytime", True) and daytime_now(now)
     for o in orders:
         if o["st"] != "대기":
             continue
-        bars = (sigs.get(o["sym"]) or {}).get("bars") or []
-        nxt = next((b for b in bars if b[0] > o["sigT"]), None)
-        if not nxt or not nxt[1]:
-            continue
+        px, fillT, dflag = None, None, False
+        if dtime and o["cur"] == "USD":
+            try:
+                q = float(day_quote(o["sym"]) or 0)
+            except Exception:
+                q = 0
+            if q > 0:
+                px, fillT, dflag = q, next_session(now), True
+        if px is None:
+            bars = (sigs.get(o["sym"]) or {}).get("bars") or []
+            nxt = next((b for b in bars if b[0] > o["sigT"]), None)
+            if not nxt or not nxt[1]:
+                continue
+            px, fillT = float(nxt[1]), nxt[0]
         p = pos.setdefault(o["sym"], {"q": 0, "avg": 0.0, "real": 0.0, "cur": o["cur"]})
-        px = float(nxt[1])
         if o["side"] == "buy":
             p["avg"] = (p["q"] * p["avg"] + o["q"] * px) / (p["q"] + o["q"])
             p["q"] += o["q"]
@@ -69,7 +97,9 @@ def run(sigs, conf, cache, key, now=None):
             p["real"] += (px - p["avg"]) * q
             p["q"] -= q
             o["pl"] = round((px - p["avg"]) * q, 4)
-        o.update(st="체결", fillT=nxt[0], px=round(px, 4), note="")
+        o.update(st="체결", fillT=fillT, px=round(px, 4), note="주간장 체결" if dflag else "")
+        if dflag:
+            o["dt"] = True
 
     # 2) 새 신호 → 가상 주문
     syms = list(sigs) if conf["symbols"] == "all" else [s for s in conf["symbols"] if s in sigs]
