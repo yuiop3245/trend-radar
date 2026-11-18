@@ -24,6 +24,7 @@ import yfinance as yf
 from kis import KIS
 import secure
 import vtrade
+import live
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data.json")
@@ -315,6 +316,19 @@ def virtual_orders(data, key):
         return {"mode": conf.get("mode"), "err": str(ex)[:300], "pos": [], "orders": []}
 
 
+def live_orders(vt, acct, key):
+    """3단계 실전 주문 — 스위치(LIVE_TRADING=on)와 trade.json live 목록이 모두 있어야 실제로 보낸다."""
+    conf = vtrade.load_conf(os.path.join(ROOT, "trade.json"))
+    try:
+        out = live.run(vt.get("orders") or [], conf, KISC, acct, key)
+        # Actions 로그는 공개라서 종목·수량은 찍지 않는다
+        print(f"실전 주문 단계: 스위치 {'켜짐' if out.get('on') else '꺼짐'}", flush=True)
+        return out
+    except Exception as ex:
+        print(f"실전 주문 단계 오류: {type(ex).__name__}", file=sys.stderr)
+        return {"on": live.switch_on(), "live": False, "err": str(ex)[:300], "log": [], "bot": {}}
+
+
 def main():
     tickers = load_json(os.path.join(ROOT, "tickers.json"), [])
     if not tickers:
@@ -366,6 +380,10 @@ def main():
         vt = virtual_orders(data, secure.key_of(pw))
         if vt:
             data["vtrade"] = vt
+        if vt and not vt.get("err"):
+            lv = live_orders(vt, acct, secure.key_of(pw))
+            if lv:
+                data["live"] = lv
     if KISC.ok:
         try:
             KISC.save()

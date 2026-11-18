@@ -297,3 +297,30 @@ class KIS:
                                  "pl": f(r.get("frcr_evlu_pfls_amt")), "rt": f(r.get("evlu_pfls_rt")), "ex": r.get("ovrs_excg_cd", ex)}
         hold = list(seen.values())
         return hold, {"buy": sum(h["buy"] for h in hold), "eval": sum(h["eval"] for h in hold), "pl": sum(h["pl"] for h in hold)}
+
+    # ── 3단계 실전 주문용 (live.py 에서만 부름) ─────────────────
+    def post(self, path, tr_id, body):
+        self._check()
+        wait = GAP - (time.time() - self._last)
+        if wait > 0:
+            time.sleep(wait)
+        base = {"content-type": "application/json; charset=utf-8", "appkey": self.key, "appsecret": self.secret}
+        try:
+            hk = requests.post(BASE + "/uapi/hashkey", headers=base, json=body, timeout=(5, 10)).json().get("HASH", "")
+        except (requests.RequestException, ValueError):
+            hk = ""
+        h = {**base, "authorization": "Bearer " + self.token(), "tr_id": tr_id, "custtype": "P"}
+        if hk:
+            h["hashkey"] = hk
+        self._last = time.time()
+        self.calls += 1
+        r = requests.post(BASE + path, headers=h, json=body, timeout=(5, 15))
+        try:
+            return r.json()
+        except ValueError:
+            return {"rt_cd": "?", "msg1": f"HTTP {r.status_code}"}
+
+    def us_price(self, sym):
+        ex = self.cache["excd"].get(sym, "NAS")
+        j, _ = self.get("/uapi/overseas-price/v1/quotations/price", "HHDFS00000300", {"AUTH": "", "EXCD": ex, "SYMB": sym})
+        return self._f((j.get("output") or {}).get("last")), ex
