@@ -132,6 +132,7 @@ summary{cursor:pointer;font-weight:700}
 .addq{margin-top:6px}
 .radar{background:var(--panel);border:1px solid var(--line);border-radius:18px;margin-top:16px;overflow:hidden}
 .chips{display:flex;gap:8px;flex-wrap:wrap;padding:16px 18px 0}
+.chips.mkt+.chips{padding-top:8px}.chips.mkt .lbl{align-self:center;color:var(--muted);font-size:13px;margin-right:2px}.chips.mkt .chip{padding:4px 12px;font-size:13px}
 .chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:500;color:var(--ink);white-space:nowrap}
 .chip b{margin-left:5px;font-weight:900}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -233,6 +234,7 @@ th.click{cursor:pointer;user-select:none}
   </section>
   <section id="perfPanel"></section>
   <section class="radar">
+    <div class="chips mkt" id="mktChips"></div>
     <div class="chips" id="chips"></div>
     <div class="toolbar">
       <input id="q" type="search" placeholder="종목 찾기 (예: SOXL, 반도체)" autocomplete="off">
@@ -1266,15 +1268,25 @@ function parseRec(text) {
 /* ============ 상태 ============ */
 let D = load();
 const ui = (() => { try { return JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) { return {}; } })();
-const state = { draw: 'off', mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd', simPer: ui.simPer || '1y', simVar: ui.simVar || 'D', perfOpen: !!ui.perfOpen, simSort: 'diff' };
+const state = { draw: 'off', mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd', simPer: ui.simPer || '1y', simVar: ui.simVar || 'D', mkt: ui.mkt || 'all', perfOpen: !!ui.perfOpen, simSort: 'diff' };
 const CAT_DEF = () => Object.fromEntries(GCATS.map(x => [x[0], !!x[2]]));
 state.cats = Object.assign(CAT_DEF(), ui.cats || {}); state.catAll = ui.catAll !== false;
 state.ovl = Object.assign(Object.fromEntries(GOVL.map(x => [x[0], !!x[2]])), ui.ovl || {});
-function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl, simPer: state.simPer, simVar: state.simVar, perfOpen: state.perfOpen })); } catch (e) {} }
+function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl, simPer: state.simPer, simVar: state.simVar, mkt: state.mkt, perfOpen: state.perfOpen })); } catch (e) {} }
 function syms() { return (D.order || Object.keys(D.tickers)).filter(s => D.tickers[s]); }
 
 /* ============ 목록 (쭈야식 표) ============ */
 const CAT = { buy: 'buy', wait: 'wait', neutral: 'neutral', partial: 'sell', exit: 'sell', none: 'none' };
+// 시장 구분: 미장 주식 · 미장 ETF · 국장 주식 · 국장 ETF · 지수 (tickers.json 에 kind 를 적으면 그게 우선)
+const MKTS = [['all', '전체'], ['us_stock', '미장 주식'], ['us_etf', '미장 ETF'], ['kr_stock', '국장 주식'], ['kr_etf', '국장 ETF'], ['idx', '지수']];
+function mktOf(sym) {
+  const T = D.tickers[sym] || {}, txt = `${T.label || ''} ${T.name || ''}`;
+  if (T.kind && MKTS.some(m => m[0] === T.kind)) return T.kind;
+  if (sym.startsWith('^')) return 'idx';
+  if (T.kr || /\.(KS|KQ)$/.test(sym)) return /KODEX|TIGER|KBSTAR|ACE|SOL|RISE|HANARO|KOSEF|ARIRANG|PLUS|ETF|ETN|레버리지|인버스/i.test(txt) ? 'kr_etf' : 'kr_stock';
+  return /\d배|인버스|레버리지|ETF|ETN/i.test(txt) ? 'us_etf' : 'us_stock';
+}
+const mktOk = sym => !state.mkt || state.mkt === 'all' || mktOf(sym) === state.mkt;
 const CHIPS = [['all', '전체'], ['today', '오늘 새 신호'], ['hold', '보유'], ['wait', '매수 대기'], ['watch', '관망'], ['risk', '위험']];
 const LKEY = { '보유': 'hold', '매수 대기': 'wait', '관망': 'watch', '위험': 'risk' }, LRANK = { hold: 0, wait: 1, watch: 2, risk: 3, none: 9 };
 const VDOT = { 'v-buy': 'var(--up)', 'v-wait': 'var(--amber)', 'v-neutral': 'var(--faint)', 'v-warn': 'var(--down)', 'v-sell': 'var(--down)', 'v-none': 'var(--line)' };
@@ -1315,15 +1327,18 @@ function rowInfo(sym) {
 function renderList() {
   const q = state.q.trim().toLowerCase();
   const all = syms().map(rowInfo);
-  const cnt = k => k === 'all' ? all.length : k === 'today' ? all.filter(e => e.today.length).length : all.filter(e => e.cat === k).length;
+  const mc = k => k === 'all' ? all.length : all.filter(e => mktOf(e.sym) === k).length;
+  $('#mktChips').innerHTML = '<span class="lbl">시장</span>' + MKTS.filter(([k]) => k === 'all' || mc(k)).map(([k, l]) => `<button class="chip${(state.mkt || 'all') === k ? ' on' : ''}" data-m="${k}">${l}<b>${mc(k)}</b></button>`).join('');
+  const allM = all.filter(e => mktOk(e.sym));
+  const cnt = k => k === 'all' ? allM.length : k === 'today' ? allM.filter(e => e.today.length).length : allM.filter(e => e.cat === k).length;
   $('#chips').innerHTML = CHIPS.map(([k, l]) => `<button class="chip${state.filter === k ? ' on' : ''}" data-f="${k}">${l}<b>${cnt(k)}</b></button>`).join('');
-  const day = all.map(e => e.last?.t.slice(0, 10)).filter(Boolean).sort().pop();
-  const ez = all.flatMap(e => e.ezToday), nz = z => ez.filter(x => x.z === z).length, ng = all.reduce((t, e) => t + e.today.length, 0);
+  const day = allM.map(e => e.last?.t.slice(0, 10)).filter(Boolean).sort().pop();
+  const ez = allM.flatMap(e => e.ezToday), nz = z => ez.filter(x => x.z === z).length, ng = allM.reduce((t, e) => t + e.today.length, 0);
   $('#todayBar').innerHTML = `<span class="dt">최근 거래일</span><span class="muted">새로 뜬 신호 (${day || '–'}까지)</span>
     ${['buy', 'add', 'tp', 'sell'].map(z => `<span class="pill" style="background:${EZ[z].bg};color:${EZ[z].col}">${EZ[z].n} ${nz(z)}</span>`).join('')}
     <span class="pill rec pro-only">쭈야 라벨 전체 ${ng}</span>
     <span class="hint2">· 쭈야 규칙(일봉) 기준 · 행을 누르면 아래에 그 종목 차트가 열립니다 · 날짜는 종목마다 가장 최근 거래일</span>`;
-  let list = all;
+  let list = all.filter(e => mktOk(e.sym));
   if (state.filter === 'today') list = list.filter(e => e.today.length);
   else if (state.filter !== 'all') list = list.filter(e => e.cat === state.filter);
   if (q) list = list.filter(e => e.sym.toLowerCase().includes(q) || (e.T.name || '').toLowerCase().includes(q) || (e.T.label || '').toLowerCase().includes(q));
@@ -2161,7 +2176,7 @@ function simVarPick(sym, per) {
 }
 function simAllCard() {
   const per = SIMP.find(p => p[0] === state.simPer) || SIMP[0];
-  const R = syms().map(s => ({ s, r: gobSim(s, per[2]) })).filter(x => x.r), vk = simVk();
+  const R = syms().filter(mktOk).map(s => ({ s, r: gobSim(s, per[2]) })).filter(x => x.r), vk = simVk(), mk = MKTS.find(m => m[0] === (state.mkt || 'all'));
   if (!R.length) return '';
   const k = state.simSort || 'diff', key = { diff: x => x.r.ret - x.r.hold, ret: x => x.r.ret, hold: x => x.r.hold, mdd: x => x.r.mdd };
   R.sort((a, b) => key[k](b) - key[k](a));
@@ -2171,7 +2186,7 @@ function simAllCard() {
   return `<div class="card"><div class="perfhead"><h2>${E('쭈야 신호대로 했다면 — 전체 종목', '신호대로 매매 (가상) — 전체 종목')}</h2>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg small" id="simVarAll">${Object.keys(SIMV).map(k => `<button data-var="${k}" class="${k === vk ? 'on' : ''}" title="${esc(SIMV[k].d)}">${esc(SIMV[k].n)}</button>`).join('')}</div>
     <div class="seg small" id="simSegAll">${SIMP.map(p => `<button data-sim="${p[0]}" class="${p[0] === per[0] ? 'on' : ''}">${p[1]}</button>`).join('')}</div></div></div>
-    <div class="tiles"><div class="tile"><span>신호대로 (종목 평균)</span><b class="${pcls(avg(x => x.r.ret))}">${pct(avg(x => x.r.ret))}</b><small>${R.length}종목 같은 금액씩</small></div>
+    <div class="tiles"><div class="tile"><span>신호대로 (종목 평균)</span><b class="${pcls(avg(x => x.r.ret))}">${pct(avg(x => x.r.ret))}</b><small>${mk && mk[0] !== 'all' ? esc(mk[1]) + ' ' : ''}${R.length}종목 같은 금액씩 · 아래 목록의 '시장' 칩으로 거를 수 있어요</small></div>
       <div class="tile"><span>그냥 보유 (종목 평균)</span><b class="${pcls(avg(x => x.r.hold))}">${pct(avg(x => x.r.hold))}</b></div>
       <div class="tile"><span>보유보다 나았던 종목</span><b>${beat} / ${R.length}</b></div>
       <div class="tile"><span>평균 최대 낙폭</span><b class="down">${pct(avg(x => x.r.mdd))}</b><small>신호대로 매매 기준</small></div></div>
@@ -2226,6 +2241,7 @@ $('#list').onclick = e => {
   renderList(); renderDetail();
   $('#detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
+$('#mktChips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.mkt = c.dataset.m; saveUI(); renderList(); renderPerf(); };
 $('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.filter = c.dataset.f; renderList(); };
 $('#detail').onclick = e => {
   const sv = e.target.closest('#simCard [data-var]'); if (sv) { state.simVar = sv.dataset.var; saveUI(); const c = $('#simCard'); if (c) c.outerHTML = simCard(state.sel); renderPerf(); return; }
