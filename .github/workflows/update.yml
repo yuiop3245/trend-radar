@@ -42,8 +42,25 @@ jobs:
       - name: 국내 시세 패키지 설치 (실패해도 계속 — 그땐 야후 일봉 사용)
         run: pip install pykrx finance-datareader || echo "국내 패키지 설치 실패"
 
+      - name: 한투 캐시 불러오기 (토큰·일봉 재사용 — 토큰 알림톡을 하루 1번 정도로)
+        uses: actions/cache/restore@v4
+        with:
+          path: .kis_cache
+          key: kis-${{ github.run_id }}
+          restore-keys: kis-
+
       - name: 시세 받기
+        env:
+          KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
+          KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
         run: python scripts/update_data.py
+
+      - name: 한투 캐시 저장
+        if: always() && hashFiles('.kis_cache/cache.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: .kis_cache
+          key: kis-${{ github.run_id }}
 
       - name: 배포 폴더 준비
         run: |
