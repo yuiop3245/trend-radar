@@ -106,6 +106,7 @@ tr.thin td{color:var(--faint)}
 .tag{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:6px;white-space:nowrap}
 .tag.buy{background:var(--upS);color:var(--up)}
 .tag.sell{background:var(--downS);color:var(--down)}
+td.warn{color:var(--amber);font-weight:700}
 .tag.rec{background:color-mix(in srgb,var(--rec) 14%,transparent);color:var(--rec)}
 .perfhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
 .base{font-size:12.5px;color:var(--muted)}
@@ -2132,7 +2133,7 @@ function simCard(sym) {
 }
 /* ============ 내 수익률 패널 (계좌 + 전체 종목 가상 성과) ============ */
 const won = x => ok(x) ? Math.round(x).toLocaleString('ko-KR') + '원' : '–';
-const usd = x => ok(x) ? '$' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '–';
+const usd = x => ok(x) ? (x < 0 ? '-$' : '$') + Math.abs(x).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '–';
 function acctSym(h, us) {
   if (us) return D.tickers[h.sym] ? h.sym : null;
   return ['.KS', '.KQ'].map(x => h.sym + x).find(s => D.tickers[s]) || null;
@@ -2186,10 +2187,27 @@ function simAllCard() {
     </tbody></table></div>
     <p class="note">${per[1]} 전부터(상장이 더 늦으면 그때부터) 각 종목에 같은 금액을 넣고 쭈야 신호대로만 매매했다고 친 결과예요. 가정: 다음 거래일 시가 체결 · 사 50% · 불태워 25%×최대 2번 · 분할매도 절반 · 다정리 전부 · 편도 0.1% 비용. 지난 성과가 앞으로를 보장하진 않아요.</p></div>`;
 }
+function vtCard() {
+  const V = D.vtrade; if (!V) return '';
+  const money = (x, cur) => cur === 'KRW' ? won(x) : usd(x);
+  const tot = {}; (V.pos || []).forEach(p => { const t = tot[p.cur] || (tot[p.cur] = { u: 0, r: 0 }); t.u += p.unreal; t.r += p.real; });
+  const sideT = { buy: '<span class="tag buy">매수</span>', sell: '<span class="tag sell">매도</span>', '-': '<span class="muted">–</span>' };
+  const stC = { '체결': '', '대기': 'warn', '건너뜀': 'muted' };
+  const ords = (V.orders || []).slice().reverse().slice(0, 40);
+  const held = (V.pos || []).filter(p => p.q > 0);
+  return `<div class="card"><div class="perfhead"><h2>가상 주문 기록 <span class="muted" style="font-size:13px;font-weight:600">(2단계 · 실제 주문은 안 보내요)</span></h2><span class="muted" style="font-size:12.5px">${esc(V.since)}부터</span></div>
+    ${V.err ? `<p class="note down">가상 주문 계산 실패: ${esc(V.err)}</p>` : ''}${V.note ? `<p class="note">${esc(V.note)}</p>` : ''}
+    <div class="tiles">${['USD', 'KRW'].map(c => `<div class="tile"><span>${c === 'USD' ? '미국' : '국내'} 가상 손익</span><b class="${pcls((tot[c]?.u || 0) + (tot[c]?.r || 0))}">${money((tot[c]?.u || 0) + (tot[c]?.r || 0), c)}</b><small>실현 ${money(tot[c]?.r || 0, c)} · 평가 ${money(tot[c]?.u || 0, c)}</small></div>`).join('')}
+      <div class="tile"><span>가상 보유</span><b>${held.length}종목</b><small>대기 주문 ${(V.orders || []).filter(o => o.st === '대기').length}건</small></div></div>
+    ${held.length ? `<div class="scroll"><table><thead><tr><th>종목</th><th class="r">수량</th><th class="r">평단</th><th class="r">현재가</th><th class="r">평가손익</th><th class="r">실현손익</th></tr></thead><tbody>${held.map(p => `<tr class="click" data-sel="${esc(p.sym)}"><td><b>${esc(symLabel(p.sym))}</b></td><td class="r num">${p.q}</td><td class="r num">${fmt(p.avg, p.cur === 'KRW' ? 0 : 2)}</td><td class="r num">${fmt(p.last, p.cur === 'KRW' ? 0 : 2)}</td><td class="r num ${pcls(p.unreal)}">${money(p.unreal, p.cur)}</td><td class="r num ${pcls(p.real)}">${money(p.real, p.cur)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    <h3 style="margin:14px 0 6px;font-size:14px">주문 기록 (최근 40건)</h3>
+    ${ords.length ? `<div class="scroll"><table><thead><tr><th>신호일</th><th>종목</th><th>신호</th><th>주문</th><th class="r">수량</th><th>상태</th><th class="r">체결가</th><th>메모</th></tr></thead><tbody>${ords.map(o => `<tr class="click" data-sel="${esc(o.sym)}"><td class="num">${esc(o.sigT.slice(5))}</td><td><b>${esc(symLabel(o.sym))}</b></td><td>${esc(o.nm)}</td><td>${sideT[o.side] || ''}</td><td class="r num">${o.q || ''}</td><td class="${stC[o.st] || ''}">${esc(o.st)}${o.fillT ? ' <span class="muted">' + esc(o.fillT.slice(5)) + '</span>' : ''}</td><td class="r num">${o.px != null ? fmt(o.px, o.cur === 'KRW' ? 0 : 2) : ''}${o.pl != null ? ` <span class="${pcls(o.pl)}">(${o.pl > 0 ? '+' : ''}${fmt(o.pl, o.cur === 'KRW' ? 0 : 2)})</span>` : ''}</td><td class="muted">${esc(o.note || '')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">아직 가상 주문이 없어요. 장 마감 뒤 확정된 신호가 나오면 여기 쌓여요.</div>'}
+    <p class="note">규칙: 장 마감으로 확정된 일봉 신호만 · 다음 거래일 시가 체결로 기록 · 사 = ${V.conf?.unit * 2 || 2}주 · 불태워 = ${V.conf?.unit || 1}주씩 최대 2번 · 분할매도 = 보유의 절반(1주면 유지) · 다정리 = 전부 · 하루 매수 ${V.conf?.maxBuysPerDay ?? '–'}건, ${won(V.conf?.maxBuyKRW)} / ${usd(V.conf?.maxBuyUSD)}까지 (매도는 한도 없이 항상 실행). 설정은 저장소 trade.json.</p></div>`;
+}
 function renderPerf() {
   const el = $('#perfPanel'); if (!el) return;
   if (!state.perfOpen) { el.innerHTML = ''; return; }
-  el.innerHTML = acctCard() + simAllCard();
+  el.innerHTML = acctCard() + vtCard() + simAllCard();
 }
 async function loadRemote() {
   try {
@@ -2206,7 +2224,7 @@ async function loadRemote() {
     Object.keys(D.tickers).forEach(s => { if (!order.includes(s)) order.push(s); });
     D.order = order.filter(s => D.tickers[s]);
     D.bases = {}; Object.entries(j.bases || {}).forEach(([k, B]) => { D.bases[k] = { kr: !!B.kr, d: unpack(B.d), h1: unpack(B.h1), h30: unpack(B.h30), m5: unpack(B.m5) }; }); D.pending = false;
-    D.remoteAt = j.updatedAt; D.remoteLoaded = true; D.acct = j.acct || null;
+    D.remoteAt = j.updatedAt; D.remoteLoaded = true; D.acct = j.acct || null; D.vtrade = j.vtrade || null;
     state.view = null; save(); renderAll();
   } catch (e) {
     if (D.pending) { D = Object.keys(D.tickers).length ? D : makeDemo(); D.pending = false; renderAll(); }

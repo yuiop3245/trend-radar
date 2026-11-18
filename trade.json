@@ -1,0 +1,10 @@
+{
+  "mode": "virtual",
+  "unit": 1,
+  "symbols": "all",
+  "exclude": [],
+  "unitBy": {},
+  "maxBuysPerDay": 6,
+  "maxBuyKRW": 3000000,
+  "maxBuyUSD": 2000
+}
