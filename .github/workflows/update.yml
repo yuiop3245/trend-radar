@@ -43,16 +43,13 @@ jobs:
         run: pip install -r requirements-kr.txt || echo "국내 패키지 설치 실패"
 
       - name: 시세 받기
-        env:
-          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
         run: python scripts/update_data.py
 
       - name: 배포 폴더 준비
         run: |
           mkdir -p _site
           cp index.html _site/
-          # 잠금(SITE_PASSWORD)이 켜져 있으면 암호화된 data.bin 만 배포 — 평문 data.json 은 올리지 않음
-          if [ -f data.bin ]; then cp data.bin _site/; else cp data.json _site/; fi
+          cp data.json _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
