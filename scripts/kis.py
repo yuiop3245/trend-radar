@@ -41,6 +41,10 @@ class KIS:
         self.calls = 0
         self._last = 0.0
         self._token = None
+        self._t0 = time.time()
+        self.dead = None   # 이유 문자열이 들어가면 이번 실행에선 한투를 더 부르지 않음
+        self._fails = 0
+        self.budget = 600  # 한 번 실행에서 한투에 쓰는 최대 시간(초) — 넘으면 나머지는 기존 출처로
 
     # ── 토큰 (가려서 저장) ──────────────────────────────
     def _mask(self, data: bytes) -> bytes:
@@ -50,9 +54,25 @@ class KIS:
             i += 1
         return bytes(a ^ b for a, b in zip(data, out))
 
+    def _check(self):
+        if self.dead:
+            raise RuntimeError("한투 건너뜀: " + self.dead)
+        if time.time() - self._t0 > self.budget:
+            self.dead = f"이번 실행 한투 시간 {self.budget}초 초과"
+            self.notes.append(self.dead)
+            raise RuntimeError(self.dead)
+
+    def _net_fail(self, ex):
+        self._fails += 1
+        if self._fails >= 3:
+            self.dead = f"연결 실패 연속 {self._fails}회 ({type(ex).__name__})"
+            self.notes.append(self.dead)
+        raise RuntimeError(f"연결 실패: {type(ex).__name__}")
+
     def token(self):
         if self._token:
             return self._token
+        self._check()
         t = self.cache.get("token") or {}
         now = time.time()
         if t.get("v") and t.get("exp", 0) > now + 1800:
@@ -61,11 +81,19 @@ class KIS:
                 return self._token
             except Exception:
                 pass
-        r = requests.post(BASE + "/oauth2/tokenP", timeout=15,
-                          json={"grant_type": "client_credentials", "appkey": self.key, "appsecret": self.secret})
-        j = r.json()
+        try:
+            r = requests.post(BASE + "/oauth2/tokenP", timeout=(5, 15),
+                              json={"grant_type": "client_credentials", "appkey": self.key, "appsecret": self.secret})
+            j = r.json()
+        except (requests.RequestException, ValueError) as ex:
+            self.dead = f"토큰 요청 실패 ({type(ex).__name__})"
+            self.notes.append(self.dead)
+            raise RuntimeError(self.dead)
         tok = j.get("access_token")
         if not tok:
+            # 발급이 거절되면 같은 실행에서 다시 조르지 않음 (1분 1회 제한·알림톡)
+            self.dead = "토큰 발급 거절"
+            self.notes.append(f"토큰 발급 실패: {j.get('error_code') or j.get('msg_cd') or r.status_code}")
             raise RuntimeError(f"토큰 발급 실패: {j.get('error_code') or j.get('msg_cd') or r.status_code} {j.get('error_description') or j.get('msg1') or ''}")
         try:
             exp = dt.datetime.strptime(j["access_token_token_expired"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=KST).timestamp()
@@ -89,9 +117,14 @@ class KIS:
         h = {"content-type": "application/json; charset=utf-8", "authorization": "Bearer " + self.token(),
              "appkey": self.key, "appsecret": self.secret, "tr_id": tr_id, "custtype": "P", "tr_cont": tr_cont}
         for attempt in range(3):
+            self._check()
             self._last = time.time()
             self.calls += 1
-            r = requests.get(BASE + path, headers=h, params=params, timeout=15)
+            try:
+                r = requests.get(BASE + path, headers=h, params=params, timeout=(5, 10))
+            except requests.RequestException as ex:
+                self._net_fail(ex)
+            self._fails = 0
             try:
                 j = r.json()
             except ValueError:

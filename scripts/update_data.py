@@ -255,7 +255,7 @@ def main():
                       "dir": item.get("dir", 1), "tv": item.get("tv", ""), "rec": sorted(recs.get(sym, []), key=lambda r: r["t"])})
         data["order"].append(sym)
         data["tickers"][sym] = entry
-        print(f"{sym}: " + " · ".join(f"{k} {len(entry[k])}" for k in ("d", "h1", "h30", "m5")))
+        print(f"{sym}: " + " · ".join(f"{k} {len(entry[k])}" for k in ("d", "h1", "h30", "m5")) + (f" [{entry['dsrc']}]" if entry.get("dsrc") else ""), flush=True)
 
     # 기준지수: 분봉(1시간·30분·5분)만. 단 SPY·코스피는 RS 계산용 일봉도.
     # 종목 목록에 이미 있는 기호는 다시 받지 않는다 (화면에서 종목 데이터를 그대로 씀).
