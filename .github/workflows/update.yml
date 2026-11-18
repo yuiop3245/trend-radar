@@ -37,10 +37,10 @@ jobs:
           python-version: "3.12"
 
       - name: 패키지 설치
-        run: pip install yfinance cryptography
+        run: pip install -r requirements.txt
 
       - name: 국내 시세 패키지 설치 (실패해도 계속 — 그땐 야후 일봉 사용)
-        run: pip install pykrx finance-datareader || echo "국내 패키지 설치 실패"
+        run: pip install -r requirements-kr.txt || echo "국내 패키지 설치 실패"
 
       - name: 한투 캐시 불러오기 (토큰·일봉 재사용 — 토큰 알림톡을 하루 1번 정도로)
         uses: actions/cache/restore@v4
@@ -55,6 +55,8 @@ jobs:
           KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
           KIS_ACCOUNT: ${{ secrets.KIS_ACCOUNT }}
           SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+          # 3단계 실전 주문 스위치 — 저장소 Settings → Secrets and variables → Actions → Variables 의 LIVE_TRADING (on 일 때만 주문)
+          LIVE_TRADING: ${{ vars.LIVE_TRADING }}
         run: python scripts/update_data.py
 
       - name: 한투 캐시 저장
