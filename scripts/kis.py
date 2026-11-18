@@ -11,6 +11,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import time
 
 import requests
@@ -240,3 +241,59 @@ class KIS:
         if bars:
             self.cache["d"][sym] = bars
         return bars
+
+
+    # ── 계좌 (조회만 — 주문 기능은 여기 없음) ────────────────
+    @staticmethod
+    def account():
+        """KIS_ACCOUNT = 계좌번호 앞 8자리 + 상품코드 2자리 (예: 12345678-01). 없으면 None."""
+        raw = re.sub(r"\D", "", os.environ.get("KIS_ACCOUNT") or "")
+        if len(raw) == 8:
+            raw += "01"
+        return (raw[:8], raw[8:]) if len(raw) == 10 else None
+
+    def _paged(self, path, tr_id, params, fk, nk):
+        rows, summ, cont = [], {}, ""
+        for _ in range(10):
+            j, tc = self.get(path, tr_id, params, cont)
+            rows += j.get("output1") or []
+            o2 = j.get("output2")
+            if isinstance(o2, list):
+                o2 = o2[0] if o2 else {}
+            summ = o2 or summ
+            if tc not in ("M", "F"):
+                break
+            params = {**params, fk.upper(): j.get(fk, ""), nk.upper(): j.get(nk, "")}
+            cont = "N"
+        return rows, summ
+
+    def balance_kr(self, acc):
+        rows, s = self._paged("/uapi/domestic-stock/v1/trading/inquire-balance", "TTTC8434R", {
+            "CANO": acc[0], "ACNT_PRDT_CD": acc[1], "AFHR_FLPR_YN": "N", "OFL_YN": "", "INQR_DVSN": "02", "UNPR_DVSN": "01",
+            "FUND_STTL_ICLD_YN": "N", "FNCG_AMT_AUTO_RDPT_YN": "N", "PRCS_DVSN": "00", "CTX_AREA_FK100": "", "CTX_AREA_NK100": ""},
+            "ctx_area_fk100", "ctx_area_nk100")
+        f = self._f
+        hold = [{"sym": r.get("pdno", ""), "name": r.get("prdt_name", ""), "qty": f(r.get("hldg_qty")), "avg": f(r.get("pchs_avg_pric")),
+                 "px": f(r.get("prpr")), "buy": f(r.get("pchs_amt")), "eval": f(r.get("evlu_amt")), "pl": f(r.get("evlu_pfls_amt")),
+                 "rt": f(r.get("evlu_pfls_rt"))} for r in rows if f(r.get("hldg_qty")) > 0]
+        summ = {"cash": f(s.get("dnca_tot_amt")), "total": f(s.get("tot_evlu_amt")), "net": f(s.get("nass_amt")),
+                "buy": f(s.get("pchs_amt_smtl_amt")), "eval": f(s.get("evlu_amt_smtl_amt")), "pl": f(s.get("evlu_pfls_smtl_amt")),
+                "prev": f(s.get("bfdy_tot_asst_evlu_amt")), "chg": f(s.get("asst_icdc_amt"))}
+        return hold, summ
+
+    def balance_us(self, acc):
+        seen = {}
+        for ex in ("NASD", "NYSE", "AMEX"):
+            rows, _ = self._paged("/uapi/overseas-stock/v1/trading/inquire-balance", "TTTS3012R", {
+                "CANO": acc[0], "ACNT_PRDT_CD": acc[1], "OVRS_EXCG_CD": ex, "TR_CRCY_CD": "USD",
+                "CTX_AREA_FK200": "", "CTX_AREA_NK200": ""}, "ctx_area_fk200", "ctx_area_nk200")
+            f = self._f
+            for r in rows:
+                q = f(r.get("ovrs_cblc_qty"))
+                sym = (r.get("ovrs_pdno") or "").strip()
+                if q > 0 and sym and sym not in seen:
+                    seen[sym] = {"sym": sym, "name": r.get("ovrs_item_name", ""), "qty": q, "avg": f(r.get("pchs_avg_pric")),
+                                 "px": f(r.get("now_pric2")), "buy": f(r.get("frcr_pchs_amt1")), "eval": f(r.get("ovrs_stck_evlu_amt")),
+                                 "pl": f(r.get("frcr_evlu_pfls_amt")), "rt": f(r.get("evlu_pfls_rt")), "ex": r.get("ovrs_excg_cd", ex)}
+        hold = list(seen.values())
+        return hold, {"buy": sum(h["buy"] for h in hold), "eval": sum(h["eval"] for h in hold), "pl": sum(h["pl"] for h in hold)}

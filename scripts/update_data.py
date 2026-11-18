@@ -20,9 +20,11 @@ import time
 import yfinance as yf
 
 from kis import KIS
+import secure
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data.json")
+ENC = os.path.join(ROOT, "data.bin")
 KISC = KIS(os.path.join(ROOT, ".kis_cache", "cache.json"))  # 한투 시세 (키가 없으면 자동으로 건너뜀)
 KIS_NOTES = {}
 
@@ -236,6 +238,56 @@ def load_signals(path):
     return recs
 
 
+def usd_krw():
+    try:
+        h = yf.Ticker("KRW=X").history(period="5d", interval="1d", auto_adjust=False)
+        v = float(h["Close"].dropna().iloc[-1])
+        return round(v, 2) if 500 < v < 3000 else None
+    except Exception as ex:
+        print(f"환율 실패: {ex}", file=sys.stderr)
+        return None
+
+
+def account_snapshot(key):
+    """한투 계좌 잔고(조회만). 비밀번호 잠금이 켜져 있을 때만 부른다. 일별 기록은 캐시에 암호화해서 쌓는다."""
+    acc = KISC.account()
+    if not acc:
+        return None
+    out = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"), "err": {}}
+    try:
+        out["kr"], out["krSum"] = KISC.balance_kr(acc)
+    except Exception as ex:
+        out["err"]["kr"] = str(ex)[:200]
+    try:
+        out["us"], out["usSum"] = KISC.balance_us(acc)
+    except Exception as ex:
+        out["err"]["us"] = str(ex)[:200]
+    out["fx"] = usd_krw()
+    # 일별 기록 (한국 날짜 기준, 그날 마지막 값으로 덮어씀)
+    hist = []
+    blob = KISC.cache.get("acct")
+    if blob:
+        try:
+            hist = json.loads(secure.open_(bytes.fromhex(blob), key))
+        except Exception:
+            hist = []
+            out["err"]["hist"] = "지난 기록을 풀지 못함(비밀번호가 바뀌었으면 새로 쌓임)"
+    ks, us = out.get("krSum") or {}, out.get("usSum") or {}
+    if "kr" not in out["err"] or "us" not in out["err"]:
+        day = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).date().isoformat()
+        row = {"t": day, "krE": ks.get("eval", 0), "krB": ks.get("buy", 0), "krC": ks.get("cash", 0), "krT": ks.get("total", 0),
+               "usE": us.get("eval", 0), "usB": us.get("buy", 0), "fx": out["fx"]}
+        hist = [h for h in hist if h.get("t") != day] + [row]
+        hist = hist[-2000:]
+        KISC.cache["acct"] = secure.seal(json.dumps(hist).encode(), key).hex()
+    out["hist"] = hist
+    if not out["err"]:
+        del out["err"]
+    # Actions 로그는 공개라서 계좌 내용은 찍지 않는다
+    print("계좌 조회: " + ("완료" if "err" not in out else "일부 실패 " + ",".join(out["err"])), flush=True)
+    return out
+
+
 def main():
     tickers = load_json(os.path.join(ROOT, "tickers.json"), [])
     if not tickers:
@@ -279,6 +331,11 @@ def main():
         data["failed"] = failed
     if KR_NOTES:
         data["krNotes"] = KR_NOTES
+    pw = secure.password()
+    if pw and KISC.ok:
+        acct = account_snapshot(secure.key_of(pw))
+        if acct:
+            data["acct"] = acct
     if KISC.ok:
         try:
             KISC.save()
@@ -286,9 +343,18 @@ def main():
             KIS_NOTES["_cache"] = str(ex)[:200]
         data["kis"] = {"calls": KISC.calls, "notes": KISC.notes[:20], "errors": KIS_NOTES}
         print(f"한투 호출 {KISC.calls}회 · 오류 {len(KIS_NOTES)}건")
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"data.json 저장 ({os.path.getsize(OUT) // 1024}KB)" + (f" · 실패 {len(failed)}건" if failed else ""))
+    raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    with open(OUT, "wb") as f:
+        f.write(raw)
+    print(f"data.json 저장 ({len(raw) // 1024}KB)" + (f" · 실패 {len(failed)}건" if failed else ""))
+    if pw:
+        # 잠금: 배포에는 암호화된 data.bin 만 올라간다 (data.json 은 배포하지 않음)
+        blob = secure.seal(raw, secure.key_of(pw))
+        with open(ENC, "wb") as f:
+            f.write(blob)
+        print(f"data.bin 암호화 저장 ({len(blob) // 1024}KB)")
+    elif os.path.exists(ENC):
+        os.remove(ENC)
     return 0
 
 
