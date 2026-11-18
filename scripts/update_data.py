@@ -19,8 +19,12 @@ import time
 
 import yfinance as yf
 
+from kis import KIS
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data.json")
+KISC = KIS(os.path.join(ROOT, ".kis_cache", "cache.json"))  # 한투 시세 (키가 없으면 자동으로 건너뜀)
+KIS_NOTES = {}
 
 # (키, yfinance 기간, 간격, 장중 여부)
 FRAMES = [
@@ -99,9 +103,21 @@ def fetch(sym, keys, prev, failed):
             failed.append(f"{sym}:{interval}")
         entry[key] = bars
         time.sleep(0.2)
+    # 일봉: 한투(공식) 우선. 실패하거나 너무 짧으면 아래 기존 출처 그대로
+    if "d" in keys and KISC.ok and not sym.startswith("^"):
+        try:
+            kb = KISC.daily(sym)
+            ref = len(entry.get("d") or [])
+            if kb and len(kb) >= min(200, int(ref * .9)):
+                entry["d"] = kb
+                entry["dsrc"] = "kis"
+            else:
+                KIS_NOTES[sym] = f"한투 일봉 {len(kb)}개 (야후 {ref}개) → 사용 안 함"
+        except Exception as ex:
+            KIS_NOTES[sym] = str(ex)[:200]
     if kr:
         entry["kr"] = True
-        if "d" in keys:
+        if "d" in keys and entry.get("dsrc") != "kis":
             bars, src, errs = kr_daily(sym)
             if bars:
                 entry["d"] = bars
@@ -263,6 +279,13 @@ def main():
         data["failed"] = failed
     if KR_NOTES:
         data["krNotes"] = KR_NOTES
+    if KISC.ok:
+        try:
+            KISC.save()
+        except OSError as ex:
+            KIS_NOTES["_cache"] = str(ex)[:200]
+        data["kis"] = {"calls": KISC.calls, "notes": KISC.notes[:20], "errors": KIS_NOTES}
+        print(f"한투 호출 {KISC.calls}회 · 오류 {len(KIS_NOTES)}건")
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
     print(f"data.json 저장 ({os.path.getsize(OUT) // 1024}KB)" + (f" · 실패 {len(failed)}건" if failed else ""))
