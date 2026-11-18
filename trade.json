@@ -6,5 +6,12 @@
   "unitBy": {},
   "maxBuysPerDay": 6,
   "maxBuyKRW": 3000000,
-  "maxBuyUSD": 2000
+  "maxBuyUSD": 2000,
+  "live": {
+    "symbols": [],
+    "unit": 1,
+    "maxOrdersPerDay": 4,
+    "maxBuyKRW": 500000,
+    "maxBuyUSD": 500
+  }
 }
