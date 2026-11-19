@@ -2,7 +2,7 @@
 
 - '내 종목'(data.json)과 분리해서, 화면에서 그 그룹을 눌렀을 때만 불러온다 (사이트를 가볍게)
 - 일봉만, 최근 약 2년 (쭈야 신호·240일선 계산에 충분)
-- 구성종목 목록: FinanceDataReader → pykrx → 네이버(코스피200) 순서로 시도, 받은 목록은 .uni_cache 에 저장해 재사용
+- 구성종목 목록: FinanceDataReader → pykrx → 네이버(코스피200) → 시가총액 상위(근사) 순서로 시도, 받은 목록은 .uni_cache 에 저장해 재사용
   (구성종목은 6월·12월 정기변경 때만 바뀜 → 7일마다 다시 확인)
 """
 import datetime as dt
@@ -17,6 +17,7 @@ import requests
 import yfinance as yf
 
 GROUPS = {"kospi200": ("1028", ".KS", "코스피200"), "kosdaq150": ("2203", ".KQ", "코스닥150")}
+KST = dt.timezone(dt.timedelta(hours=9))
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36"}
 
 
@@ -66,6 +67,43 @@ def from_naver_k200():
     return out
 
 
+CAP_RAW = "https://raw.githubusercontent.com/FinanceData/fdr_krx_data_cache/master/data/listing/krx/"
+
+
+def from_cap(g):
+    """정확한 구성종목을 못 받을 때: 거래소 상장목록에서 시가총액 상위로 근사 (코스피 200 / 코스닥 150).
+    보통주만, 스팩·리츠 제외. 실제 지수(업종 대표성·유동성 심사)와 몇 종목 다를 수 있음."""
+    import csv
+    import io
+    want, n = ("KOSPI", 200) if g == "kospi200" else ("KOSDAQ", 150)
+    day = dt.datetime.now(KST).date()
+    for _ in range(12):
+        rows = []
+        try:
+            r = requests.get(CAP_RAW + day.isoformat() + ".csv", headers=UA, timeout=30)
+            text = r.content.decode("utf-8-sig") if r.status_code == 200 else ""
+        except requests.RequestException:
+            text = ""
+        day -= dt.timedelta(days=1)
+        for row in csv.DictReader(io.StringIO(text)):
+            code, name, mk = (row.get("Code") or "").strip(), (row.get("Name") or "").strip(), row.get("Market") or ""
+            try:
+                cap = float(row.get("Marcap") or 0)
+            except ValueError:
+                cap = 0
+            if cap <= 0 or not mk.startswith(want) or mk == "KONEX" or not re.fullmatch(r"\d{5}0", code):
+                continue
+            if "스팩" in name or name.endswith("리츠"):
+                continue
+            rows.append((cap, code, name))
+        if len(rows) >= n * 2:  # 장 시작 전 파일은 시총이 비어 있음 → 전날 파일로
+            break
+    else:
+        return []
+    rows.sort(reverse=True)
+    return [(c, nm) for _, c, nm in rows[:n]]
+
+
 def members(cache_dir):
     os.makedirs(cache_dir, exist_ok=True)
     path = os.path.join(cache_dir, "members.json")
@@ -74,6 +112,9 @@ def members(cache_dir):
     except (OSError, ValueError):
         old = {}
     fresh = old.get("at") and (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(old["at"])).days < 7
+    approx = any("근사" in v for v in old.get("src", {}).values())
+    if approx and old.get("at") and (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(old["at"])).days >= 1:
+        fresh = False
     if fresh and all(old.get("groups", {}).get(g) for g in GROUPS):
         return old, "저장된 목록"
     groups, src = {}, {}
@@ -81,6 +122,7 @@ def members(cache_dir):
         tries = [("FinanceDataReader", lambda: from_fdr(idx)), ("pykrx", lambda: from_pykrx(idx))]
         if g == "kospi200":
             tries.append(("네이버", from_naver_k200))
+        tries.append(("시총 상위 근사", lambda g=g: from_cap(g)))
         for name, fn in tries:
             try:
                 m = fn()
@@ -117,8 +159,6 @@ def _bars(df):
         out.append([ts.strftime("%Y-%m-%d"), rd(o), rd(max(h, o, c)), rd(min(l, o, c)), rd(c), v])
     return out
 
-
-KST = dt.timezone(dt.timedelta(hours=9))
 
 
 def _last_close(now):
