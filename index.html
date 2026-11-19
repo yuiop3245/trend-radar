@@ -1293,7 +1293,7 @@ async function loadUni(force) {
         D.tickers[s] = { name: T.name || '', label: T.label || '', kr: true, tv: 'KRX:' + (T.name || ''), base: T.base || '^KS11', dir: 1, demo: false, auto: true, uni: true,
           dsyn: [], dsrc: '', d: unpack(T.d), h1: [], h30: [], m5: [], rec: [] };
       });
-      D.grps = j.groups || {}; D.uniAt = j.updatedAt; D.uniErr = null;
+      D.grps = j.groups || {}; D.uniAt = j.updatedAt; D.uniSrc = j.src || {}; D.uniErr = null;
     } catch (e) { D.uniErr = String(e.message || e); }
   })();
   try { await uniLoading; } finally { uniLoading = null; }
@@ -1353,7 +1353,7 @@ function renderList() {
   const all = syms().map(rowInfo);
   const gn = g => g === 'mine' ? mySyms().length : D.grps?.[g]?.length;
   $('#grpChips').innerHTML = GRPS.map(([g, l]) => `<button class="chip${(state.grp || 'mine') === g ? ' on' : ''}" data-g="${g}">${l}${gn(g) ? `<b>${gn(g)}</b>` : ''}</button>`).join('')
-    + (state.grp && state.grp !== 'mine' ? `<span class="hint2" style="align-self:center">${uniLoading ? '불러오는 중…' : D.uniErr ? '불러오기 실패: ' + esc(D.uniErr) : '일봉 2년 · 분봉 없음 · ' + (D.uniAt ? new Date(D.uniAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' 갱신' : '')}</span>` : '');
+    + (state.grp && state.grp !== 'mine' ? `<span class="hint2" style="align-self:center">${uniLoading ? '불러오는 중…' : D.uniErr ? '불러오기 실패: ' + esc(D.uniErr) : '일봉 2년 · 분봉 없음 · ' + (/근사/.test((D.uniSrc || {})[state.grp] || '') ? '구성종목은 시가총액 상위로 근사(실제 지수와 몇 종목 다를 수 있음) · ' : '') + (D.uniAt ? new Date(D.uniAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' 갱신' : '')}</span>` : '');
   const mc = k => k === 'all' ? all.length : all.filter(e => mktOf(e.sym) === k).length;
   if (state.grp && state.grp !== 'mine') $('#mktChips').innerHTML = ''; else $('#mktChips').innerHTML = '<span class="lbl">시장</span>' + MKTS.filter(([k]) => k === 'all' || mc(k)).map(([k, l]) => `<button class="chip${(state.mkt || 'all') === k ? ' on' : ''}" data-m="${k}">${l}<b>${mc(k)}</b></button>`).join('');
   const allM = all.filter(e => mktOk(e.sym));
