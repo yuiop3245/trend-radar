@@ -279,6 +279,12 @@ def main():
         print(f"data.bin 암호화 저장 ({len(blob) // 1024}KB)")
     elif os.path.exists(ENC):
         os.remove(ENC)
+    # 코스피200·코스닥150 (따로 data_kr.json — 실패해도 '내 종목'은 그대로)
+    try:
+        import universe
+        universe.build(ROOT)
+    except Exception as ex:
+        print(f"코스피200·코스닥150 실패: {type(ex).__name__} {str(ex)[:150]}", file=sys.stderr)
     return 0
 
 
