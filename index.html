@@ -2245,7 +2245,7 @@ async function loadRemote() {
     D.bases = {}; Object.entries(j.bases || {}).forEach(([k, B]) => { D.bases[k] = { kr: !!B.kr, d: unpack(B.d), h1: unpack(B.h1), h30: unpack(B.h30), m5: unpack(B.m5) }; }); D.pending = false;
     D.remoteAt = j.updatedAt; D.remoteLoaded = true;
     state.view = null; save(); renderAll();
-    if (state.grp && state.grp !== 'mine') loadUni(true).then(() => renderAll());
+    if (state.grp && state.grp !== 'mine') loadUni(true).then(() => enterGroup());
   } catch (e) {
     if (D.pending) { D = Object.keys(D.tickers).length ? D : makeDemo(); D.pending = false; renderAll(); }
   }
@@ -2270,11 +2270,30 @@ $('#list').onclick = e => {
   renderList(); renderDetail();
   $('#detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
-$('#grpChips').onclick = async e => {
+// 코스피200·코스닥150: 처음 열 때 신호 계산이 몇 초 걸려서, 조금씩 나눠 계산하며 진행 상황을 보여줌 (그동안에도 클릭이 먹히게)
+function grpMsg(t) {
+  document.querySelectorAll('#grpChips .chip').forEach(b => b.classList.toggle('on', b.dataset.g === (state.grp || 'mine')));
+  $('#list').innerHTML = `<tbody><tr><td class="empty" style="padding:28px">${t}</td></tr></tbody>`;
+}
+async function enterGroup() {
+  const g = state.grp || 'mine';
+  if (g !== 'mine') {
+    if (!D.grps) { grpMsg('코스피200·코스닥150 종목을 불러오는 중이에요… (처음 한 번만 몇 초 걸려요)'); await loadUni(); if (state.grp !== g) return; }
+    const todo = (D.grps?.[g] || []).filter(s => D.tickers[s] && !gobCache.has(D.tickers[s].d));
+    for (let i = 0; i < todo.length; i += 6) {
+      if (state.grp !== g) return; // 계산 도중 다른 그룹을 누르면 그쪽으로
+      grpMsg(`신호 계산 중이에요… ${i}/${todo.length} (처음 한 번만)`);
+      await new Promise(r => setTimeout(r, 0));
+      todo.slice(i, i + 6).forEach(s => { try { gobCalc(s); } catch (e) { console.warn(s, e); } });
+    }
+    if (state.grp !== g) return;
+  }
+  renderAll();
+}
+$('#grpChips').onclick = e => {
   const c = e.target.closest('.chip'); if (!c) return;
   state.grp = c.dataset.g; state.sel = null; state.view = null; saveUI();
-  if (state.grp !== 'mine' && !D.grps) { renderList(); $('#list').innerHTML = '<tbody><tr><td class="empty" style="padding:28px">코스피200·코스닥150 종목을 불러오는 중이에요… (처음 한 번만 몇 초 걸려요)</td></tr></tbody>'; await loadUni(); }
-  renderAll();
+  enterGroup();
 };
 $('#mktChips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.mkt = c.dataset.m; saveUI(); renderList(); renderPerf(); };
 $('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.filter = c.dataset.f; renderList(); };
@@ -2369,7 +2388,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').
 
 D.remoteLoaded = false;
 renderAll();
-if (state.grp && state.grp !== 'mine') loadUni().then(() => renderAll());
+if (state.grp && state.grp !== 'mine') enterGroup();
 $('#perfBtn').onclick = () => { state.perfOpen = !state.perfOpen; saveUI(); renderAll(); if (state.perfOpen) $('#perfPanel').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 $('#lockBtn').onclick = lockNow;
 $('#perfPanel').onclick = e => {
