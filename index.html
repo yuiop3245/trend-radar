@@ -2238,7 +2238,7 @@ async function loadRemote() {
       [...(T.rec || []).map(x => ({ ...x, src: 'repo' })), ...((old && !old.demo ? old.rec : []) || []).filter(x => !x.src)].forEach(x => recs.set(x.t + '|' + x.sig, x));
       D.tickers[s] = { name: T.name || old?.name || '', label: T.label || '', kr: !!T.kr, tv: T.tv || '', base: T.base || null, dir: T.dir || 1, demo: false, auto: true, dsyn: T.dsyn || [], dsrc: T.dsrc || '', d: unpack(T.d), h1: unpack(T.h1), h30: unpack(T.h30), m5: unpack(T.m5), rec: [...recs.values()].sort((a, b) => a.t < b.t ? -1 : 1) }; fillDaily(D.tickers[s]);
     });
-    Object.keys(D.tickers).forEach(s => { if (D.tickers[s].demo) delete D.tickers[s]; });
+    Object.keys(D.tickers).forEach(s => { const X = D.tickers[s]; if (X.demo || (X.auto && !X.uni && !j.tickers[s])) delete D.tickers[s]; }); // tickers.json 에서 뺀 종목은 화면에서도 정리
     const order = [...(j.order || Object.keys(j.tickers))];
     Object.keys(D.tickers).forEach(s => { if (!order.includes(s) && !D.tickers[s].uni) order.push(s); });
     D.order = order.filter(s => D.tickers[s]);

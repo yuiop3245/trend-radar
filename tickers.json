@@ -31,8 +31,6 @@
   {"symbol": "TSLA", "name": "테슬라", "base": "QQQ", "dir": 1},
   {"symbol": "O", "name": "리얼티인컴 (월배당 리츠)", "base": "SPY", "dir": 1},
   {"symbol": "^KS11", "label": "코스피", "name": "KOSPI 지수", "base": "^KS11", "dir": 1, "tv": "KRX:KOSPI"},
-  {"symbol": "005930.KS", "label": "삼성전자", "name": "005930", "base": "^KS11", "dir": 1, "tv": "KRX:005930"},
-  {"symbol": "000660.KS", "label": "SK하이닉스", "name": "000660", "base": "^KS11", "dir": 1, "tv": "KRX:000660"},
   {"symbol": "122630.KS", "label": "KODEX 레버리지", "name": "122630", "base": "^KS11", "dir": 1, "tv": "KRX:122630"},
   {"symbol": "462330.KS", "label": "KODEX 2차전지산업레버리지", "name": "462330", "base": "305720.KS", "dir": 1, "tv": "KRX:462330"}
 ]
