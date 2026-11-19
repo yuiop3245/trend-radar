@@ -12,6 +12,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      alert:
+        description: "텔레그램 알림 (auto = 장 마감 뒤 새 신호만, test = 연결 확인 메시지)"
+        type: choice
+        options: [auto, test]
+        default: auto
 
 permissions:
   contents: read
@@ -51,6 +57,28 @@ jobs:
 
       - name: 시세 받기
         run: python scripts/update_data.py
+
+      - name: 텔레그램 알림 보낸 기록 불러오기
+        uses: actions/cache/restore@v4
+        with:
+          path: .alert_cache
+          key: alert-${{ github.run_id }}
+          restore-keys: alert-
+
+      - name: 텔레그램 알림 (매수·매도, 장 마감 뒤 새 신호만)
+        continue-on-error: true
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERT_MARKET: ${{ github.event.inputs.alert || 'auto' }}
+        run: node scripts/alert.mjs
+
+      - name: 텔레그램 알림 기록 저장
+        if: always() && hashFiles('.alert_cache/sent.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: .alert_cache
+          key: alert-${{ github.run_id }}
 
       - name: 코스피200·코스닥150 저장
         if: always() && hashFiles('.uni_cache/data_kr.json') != ''
