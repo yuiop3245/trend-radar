@@ -132,7 +132,7 @@ summary{cursor:pointer;font-weight:700}
 .addq{margin-top:6px}
 .radar{background:var(--panel);border:1px solid var(--line);border-radius:18px;margin-top:16px;overflow:hidden}
 .chips{display:flex;gap:8px;flex-wrap:wrap;padding:16px 18px 0}
-.chips.mkt+.chips{padding-top:8px}.chips.mkt .lbl{align-self:center;color:var(--muted);font-size:13px;margin-right:2px}.chips.mkt .chip{padding:4px 12px;font-size:13px}
+.chips.grp .chip{font-weight:700}.chips.grp+.chips,.chips.mkt+.chips{padding-top:8px}.chips.mkt:empty{display:none}.chips.mkt .lbl{align-self:center;color:var(--muted);font-size:13px;margin-right:2px}.chips.mkt .chip{padding:4px 12px;font-size:13px}
 .chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 14px;cursor:pointer;font-weight:500;color:var(--ink);white-space:nowrap}
 .chip b{margin-left:5px;font-weight:900}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -234,6 +234,7 @@ th.click{cursor:pointer;user-select:none}
   </section>
   <section id="perfPanel"></section>
   <section class="radar">
+    <div class="chips grp" id="grpChips"></div>
     <div class="chips mkt" id="mktChips"></div>
     <div class="chips" id="chips"></div>
     <div class="toolbar">
@@ -1199,7 +1200,7 @@ let saveWarned = false;
 function save() {
   D.savedAt = Date.now();
   // 자동으로 받는 종목·기준지수는 매번 새로 받으므로 브라우저에는 직접 입력한 것만 저장
-  const keep = { v: 2, savedAt: D.savedAt, order: syms().filter(s => !D.tickers[s].auto), tickers: {} };
+  const keep = { v: 2, savedAt: D.savedAt, order: mySyms().filter(s => !D.tickers[s].auto), tickers: {} };
   keep.order.forEach(s => keep.tickers[s] = D.tickers[s]);
   try { localStorage.setItem(KEY, JSON.stringify(keep)); }
   catch (e) { if (!saveWarned) { saveWarned = true; flash('브라우저 저장 공간이 부족하거나 저장이 막혀 있어요. [백업]에서 내보내기로 보관해 주세요.', true); } }
@@ -1268,12 +1269,35 @@ function parseRec(text) {
 /* ============ 상태 ============ */
 let D = load();
 const ui = (() => { try { return JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) { return {}; } })();
-const state = { draw: 'off', mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd', simPer: ui.simPer || '1y', simVar: ui.simVar || 'D', mkt: ui.mkt || 'all', perfOpen: !!ui.perfOpen, simSort: 'diff' };
+const state = { draw: 'off', mode: ui.mode || 'easy', sort: ui.sort || 'verdict', q: '', filter: 'all', sel: null, tf: 'd', per: 126, view: null, hl: null, mKind: 'd', simPer: ui.simPer || '1y', simVar: ui.simVar || 'D', mkt: ui.mkt || 'all', grp: ui.grp || 'mine', perfOpen: !!ui.perfOpen, simSort: 'diff' };
 const CAT_DEF = () => Object.fromEntries(GCATS.map(x => [x[0], !!x[2]]));
 state.cats = Object.assign(CAT_DEF(), ui.cats || {}); state.catAll = ui.catAll !== false;
 state.ovl = Object.assign(Object.fromEntries(GOVL.map(x => [x[0], !!x[2]])), ui.ovl || {});
-function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl, simPer: state.simPer, simVar: state.simVar, mkt: state.mkt, perfOpen: state.perfOpen })); } catch (e) {} }
-function syms() { return (D.order || Object.keys(D.tickers)).filter(s => D.tickers[s]); }
+function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify({ mode: state.mode, sort: state.sort, cats: state.cats, catAll: state.catAll, ovl: state.ovl, simPer: state.simPer, simVar: state.simVar, mkt: state.mkt, grp: state.grp, perfOpen: state.perfOpen })); } catch (e) {} }
+// 그룹: 내 종목(data.json) · 코스피200 · 코스닥150(data_kr.json, 그 그룹을 누를 때만 불러옴)
+const GRPS = [['mine', '내 종목'], ['kospi200', '코스피200'], ['kosdaq150', '코스닥150']];
+function mySyms() { return (D.order || Object.keys(D.tickers)).filter(s => D.tickers[s] && !D.tickers[s].uni); }
+function syms() { const g = state.grp; return g && g !== 'mine' && D.grps?.[g] ? D.grps[g].filter(s => D.tickers[s]) : mySyms(); }
+let uniLoading = null;
+async function loadUni(force) {
+  if (uniLoading) return uniLoading;
+  if (D.grps && !force) return;
+  uniLoading = (async () => {
+    try {
+      const r = await fetch('data_kr.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status === 404 ? '아직 준비 안 됨' : 'HTTP ' + r.status);
+      const j = await r.json();
+      if (D.uniAt && j.updatedAt === D.uniAt && D.grps) return;
+      Object.entries(j.tickers || {}).forEach(([s, T]) => {
+        if (D.tickers[s] && !D.tickers[s].uni) return; // 내 종목에 이미 있으면 그쪽(5년+분봉) 데이터를 그대로 씀
+        D.tickers[s] = { name: T.name || '', label: T.label || '', kr: true, tv: 'KRX:' + (T.name || ''), base: T.base || '^KS11', dir: 1, demo: false, auto: true, uni: true,
+          dsyn: [], dsrc: '', d: unpack(T.d), h1: [], h30: [], m5: [], rec: [] };
+      });
+      D.grps = j.groups || {}; D.uniAt = j.updatedAt; D.uniErr = null;
+    } catch (e) { D.uniErr = String(e.message || e); }
+  })();
+  try { await uniLoading; } finally { uniLoading = null; }
+}
 
 /* ============ 목록 (쭈야식 표) ============ */
 const CAT = { buy: 'buy', wait: 'wait', neutral: 'neutral', partial: 'sell', exit: 'sell', none: 'none' };
@@ -1286,7 +1310,7 @@ function mktOf(sym) {
   if (T.kr || /\.(KS|KQ)$/.test(sym)) return /KODEX|TIGER|KBSTAR|ACE|SOL|RISE|HANARO|KOSEF|ARIRANG|PLUS|ETF|ETN|레버리지|인버스/i.test(txt) ? 'kr_etf' : 'kr_stock';
   return /\d배|인버스|레버리지|ETF|ETN/i.test(txt) ? 'us_etf' : 'us_stock';
 }
-const mktOk = sym => !state.mkt || state.mkt === 'all' || mktOf(sym) === state.mkt;
+const mktOk = sym => (state.grp && state.grp !== 'mine') || !state.mkt || state.mkt === 'all' || mktOf(sym) === state.mkt;
 const CHIPS = [['all', '전체'], ['today', '오늘 새 신호'], ['hold', '보유'], ['wait', '매수 대기'], ['watch', '관망'], ['risk', '위험']];
 const LKEY = { '보유': 'hold', '매수 대기': 'wait', '관망': 'watch', '위험': 'risk' }, LRANK = { hold: 0, wait: 1, watch: 2, risk: 3, none: 9 };
 const VDOT = { 'v-buy': 'var(--up)', 'v-wait': 'var(--amber)', 'v-neutral': 'var(--faint)', 'v-warn': 'var(--down)', 'v-sell': 'var(--down)', 'v-none': 'var(--line)' };
@@ -1327,8 +1351,11 @@ function rowInfo(sym) {
 function renderList() {
   const q = state.q.trim().toLowerCase();
   const all = syms().map(rowInfo);
+  const gn = g => g === 'mine' ? mySyms().length : D.grps?.[g]?.length;
+  $('#grpChips').innerHTML = GRPS.map(([g, l]) => `<button class="chip${(state.grp || 'mine') === g ? ' on' : ''}" data-g="${g}">${l}${gn(g) ? `<b>${gn(g)}</b>` : ''}</button>`).join('')
+    + (state.grp && state.grp !== 'mine' ? `<span class="hint2" style="align-self:center">${uniLoading ? '불러오는 중…' : D.uniErr ? '불러오기 실패: ' + esc(D.uniErr) : '일봉 2년 · 분봉 없음 · ' + (D.uniAt ? new Date(D.uniAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' 갱신' : '')}</span>` : '');
   const mc = k => k === 'all' ? all.length : all.filter(e => mktOf(e.sym) === k).length;
-  $('#mktChips').innerHTML = '<span class="lbl">시장</span>' + MKTS.filter(([k]) => k === 'all' || mc(k)).map(([k, l]) => `<button class="chip${(state.mkt || 'all') === k ? ' on' : ''}" data-m="${k}">${l}<b>${mc(k)}</b></button>`).join('');
+  if (state.grp && state.grp !== 'mine') $('#mktChips').innerHTML = ''; else $('#mktChips').innerHTML = '<span class="lbl">시장</span>' + MKTS.filter(([k]) => k === 'all' || mc(k)).map(([k, l]) => `<button class="chip${(state.mkt || 'all') === k ? ' on' : ''}" data-m="${k}">${l}<b>${mc(k)}</b></button>`).join('');
   const allM = all.filter(e => mktOk(e.sym));
   const cnt = k => k === 'all' ? allM.length : k === 'today' ? allM.filter(e => e.today.length).length : allM.filter(e => e.cat === k).length;
   $('#chips').innerHTML = CHIPS.map(([k, l]) => `<button class="chip${state.filter === k ? ' on' : ''}" data-f="${k}">${l}<b>${cnt(k)}</b></button>`).join('');
@@ -1750,7 +1777,8 @@ function drawChart() {
     ctx.clearRect(0, 0, W, 120); ctx.fillStyle = C.muted; ctx.font = font(13);
     ctx.fillText('이 시간프레임 데이터가 없어요. [데이터 입력]에서 붙여넣어 주세요.', 12, 64); tip.style.display = 'none'; return;
   }
-  const I = ind(b); const v = state.view; const pro = state.mode === 'pro';
+  const v = state.view; if (!v) return; // 그룹을 바꾸는 사이 예약된 그리기는 건너뜀
+  const I = ind(b); const pro = state.mode === 'pro';
   const ezD = !pro && state.tf === 'd'; const EZS = ezD ? ezState(state.sel) : null;
   const GG = pro && state.tf === 'd' ? gobCalc(state.sel) : null, LP = GG ? gobLP(GG) : null;
   const atEnd = v.start + v.count >= b.length - .5, scenOn = !!(GG && state.ovl.scen && atEnd);
@@ -2212,11 +2240,12 @@ async function loadRemote() {
     });
     Object.keys(D.tickers).forEach(s => { if (D.tickers[s].demo) delete D.tickers[s]; });
     const order = [...(j.order || Object.keys(j.tickers))];
-    Object.keys(D.tickers).forEach(s => { if (!order.includes(s)) order.push(s); });
+    Object.keys(D.tickers).forEach(s => { if (!order.includes(s) && !D.tickers[s].uni) order.push(s); });
     D.order = order.filter(s => D.tickers[s]);
     D.bases = {}; Object.entries(j.bases || {}).forEach(([k, B]) => { D.bases[k] = { kr: !!B.kr, d: unpack(B.d), h1: unpack(B.h1), h30: unpack(B.h30), m5: unpack(B.m5) }; }); D.pending = false;
     D.remoteAt = j.updatedAt; D.remoteLoaded = true;
     state.view = null; save(); renderAll();
+    if (state.grp && state.grp !== 'mine') loadUni(true).then(() => renderAll());
   } catch (e) {
     if (D.pending) { D = Object.keys(D.tickers).length ? D : makeDemo(); D.pending = false; renderAll(); }
   }
@@ -2240,6 +2269,12 @@ $('#list').onclick = e => {
   state.sel = t.dataset.sym; state.hl = null; state.tf = 'd'; state.per = 126; state.view = null;
   renderList(); renderDetail();
   $('#detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+$('#grpChips').onclick = async e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  state.grp = c.dataset.g; state.sel = null; state.view = null; saveUI();
+  if (state.grp !== 'mine' && !D.grps) { renderList(); $('#list').innerHTML = '<tbody><tr><td class="empty" style="padding:28px">코스피200·코스닥150 종목을 불러오는 중이에요… (처음 한 번만 몇 초 걸려요)</td></tr></tbody>'; await loadUni(); }
+  renderAll();
 };
 $('#mktChips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.mkt = c.dataset.m; saveUI(); renderList(); renderPerf(); };
 $('#chips').onclick = e => { const c = e.target.closest('.chip'); if (!c) return; state.filter = c.dataset.f; renderList(); };
@@ -2284,7 +2319,7 @@ function setKind(k) { state.mKind = k; document.querySelectorAll('#mKind button'
 function msg(id, t, err) { const el = $(id); el.textContent = t; el.className = 'msg ' + (err ? 'err' : 'ok'); }
 function flash(t, err) { msg('#mMsg', t, err); }
 function addTicker(sym, name) {
-  if (!D.tickers[sym]) { D.tickers[sym] = { name: name || '', demo: false, d: [], h1: [], m5: [], rec: [] }; D.order = [...syms(), sym]; save(); }
+  if (!D.tickers[sym]) { D.tickers[sym] = { name: name || '', demo: false, d: [], h1: [], m5: [], rec: [] }; D.order = [...mySyms(), sym]; save(); }
   state.sel = sym; state.view = null; renderAll();
 }
 $('#openData').onclick = () => openModal();
@@ -2328,12 +2363,13 @@ $('#mImport').onclick = () => {
 };
 $('#mClearDemo').onclick = () => { syms().forEach(s => { const T = D.tickers[s]; if (T.demo) { T.d = []; T.h1 = []; T.m5 = []; T.rec = []; T.demo = false; } }); save(); state.view = null; fillSymSelect(); renderAll(); msg('#mMsg2', '데모 데이터를 모두 지웠어요. 종목 목록은 그대로예요.'); };
 const twoStep = (btn, label, fn) => { let armed = false; btn.onclick = () => { if (!armed) { armed = true; btn.textContent = '한 번 더 누르면 실행'; setTimeout(() => { armed = false; btn.textContent = label; }, 3000); return; } armed = false; btn.textContent = label; fn(); }; };
-twoStep($('#mDel'), '선택 종목 삭제', () => { const s = $('#mSym').value; if (!s) return; delete D.tickers[s]; D.order = syms().filter(x => x !== s); save(); state.sel = null; state.view = null; fillSymSelect(); renderAll(); msg('#mMsg2', `${s} 삭제됨`); });
+twoStep($('#mDel'), '선택 종목 삭제', () => { const s = $('#mSym').value; if (!s) return; delete D.tickers[s]; D.order = mySyms().filter(x => x !== s); save(); state.sel = null; state.view = null; fillSymSelect(); renderAll(); msg('#mMsg2', `${s} 삭제됨`); });
 twoStep($('#mReset'), '처음 상태로', () => { D = makeDemo(); try { localStorage.removeItem(KEY); } catch (e) {} state.sel = null; state.view = null; fillSymSelect(); renderAll(); msg('#mMsg2', '처음 상태(데모 5종목)로 되돌렸어요.'); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').classList.add('hidden'); });
 
 D.remoteLoaded = false;
 renderAll();
+if (state.grp && state.grp !== 'mine') loadUni().then(() => renderAll());
 $('#perfBtn').onclick = () => { state.perfOpen = !state.perfOpen; saveUI(); renderAll(); if (state.perfOpen) $('#perfPanel').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 $('#lockBtn').onclick = lockNow;
 $('#perfPanel').onclick = e => {
