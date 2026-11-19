@@ -25,7 +25,7 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -42,14 +42,29 @@ jobs:
       - name: 국내 시세 패키지 설치 (실패해도 계속 — 그땐 야후 일봉 사용)
         run: pip install -r requirements-kr.txt || echo "국내 패키지 설치 실패"
 
+      - name: 코스피200·코스닥150 저장분 불러오기 (구성종목 목록·마감 뒤 일봉 재사용)
+        uses: actions/cache/restore@v4
+        with:
+          path: .uni_cache
+          key: uni-${{ github.run_id }}
+          restore-keys: uni-
+
       - name: 시세 받기
         run: python scripts/update_data.py
+
+      - name: 코스피200·코스닥150 저장
+        if: always() && hashFiles('.uni_cache/data_kr.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: .uni_cache
+          key: uni-${{ github.run_id }}
 
       - name: 배포 폴더 준비
         run: |
           mkdir -p _site
           cp index.html _site/
           cp data.json _site/
+          if [ -f data_kr.json ]; then cp data_kr.json _site/; fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
