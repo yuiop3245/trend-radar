@@ -1344,7 +1344,7 @@ function nextPx(e) {
 }
 function rowInfo(sym) {
   const T = D.tickers[sym], b = T.d || [], last = b[b.length - 1], chg = b.length > 1 ? last.c / b[b.length - 2].c - 1 : null;
-  const S = ezState(sym), G = S?.G, day = last?.t.slice(0, 10);
+  const S = (() => { try { return ezState(sym); } catch (e) { console.warn(sym, e); return null; } })(), G = S?.G, day = last?.t.slice(0, 10);
   const today = G ? G.ev.filter(e => e.t.slice(0, 10) === day) : [];
   return { sym, T, last, chg, S, G, today, ezToday: today.filter(e => EZK[e.k]).map(e => ({ ...e, z: EZK[e.k] })), cat: S ? LKEY[S.light.t] : 'none', dist: S ? S.plan.entry / S.c - 1 : null };
 }
@@ -1559,7 +1559,7 @@ function ezState(sym) {
     if (s200 != null && c < s200) { light = { t: '위험', col: '#d6455d', bg: '#fbe4e8' }; why = `장기 추세선인 240일선(${fmt(s200)}) 아래에 있습니다. 하락 추세에서는 매수 신호를 기다리지 않습니다.`; }
     else if (yes === 3) { light = { t: '매수 대기', col: '#2f6fde', bg: '#e6eefc' }; why = `추세는 살아 있습니다. ${fmt(entry)} 위로 거래량이 붙어 마감하면 매수 신호가 나옵니다.`; }
     else if (c <= e21) { light = { t: '관망', col: '#6b7280', bg: '#eef0f3' }; why = `단기 추세선인 20일선(${fmt(e21)}) 아래로 내려와 쉬는 중입니다.`; }
-    else { light = { t: '관망', col: '#6b7280', bg: '#eef0f3' }; why = `${md(lastSell.t)} 매도 신호 뒤 쉬는 중입니다. 다시 힘이 붙는지 지켜봅니다.`; }
+    else { light = { t: '관망', col: '#6b7280', bg: '#eef0f3' }; why = lastSell ? `${md(lastSell.t)} 매도 신호 뒤 쉬는 중입니다. 다시 힘이 붙는지 지켜봅니다.` : `추세는 위쪽이지만 매수 조건이 아직 다 갖춰지지 않았습니다. 조건이 채워지는지 지켜봅니다.`; }
   }
   return { G, checks, yes, light, why, plan, ev, c };
 }
